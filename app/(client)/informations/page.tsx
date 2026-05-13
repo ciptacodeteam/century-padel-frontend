@@ -47,7 +47,7 @@ export default function InformationsPage() {
       title: 'Customer Service',
       description: 'Contact us for assistance',
       icon: Headphones,
-      href: 'https://wa.me/6282311160880',
+      href: 'https://wa.me/628131626241',
       color: 'from-teal-500 to-cyan-500',
       external: true
     }

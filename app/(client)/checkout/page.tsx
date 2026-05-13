@@ -4,6 +4,7 @@ import MainHeader from '@/components/headers/MainHeader';
 import BottomNavigationWrapper from '@/components/ui/BottomNavigationWrapper';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import SavedCardSelector from '@/components/forms/payment/SavedCardSelector';
 import CreditCardForm, { type CreditCardFormData } from '@/components/forms/payment/CreditCardForm';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
@@ -130,6 +131,7 @@ export default function CheckoutPage() {
   }, []);
 
   const { collectCard, isLoading: isCollectingCard } = useXenditCardCollection();
+  const confirm = useConfirm();
 
   const checkoutMutation = useMutation(
     checkoutMutationOptions({
@@ -469,6 +471,22 @@ export default function CheckoutPage() {
           saveCard: newCardData.saveCard || false
         };
       }
+    }
+
+    // Ask for user confirmation before sending to backend to create Payment Session
+    try {
+      const ok = await confirm({
+        title: 'Konfirmasi Pemesanan',
+        description: 'Apakah pesanan anda sudah sesuai?',
+        confirmText: 'Bayar Sekarang',
+        cancelText: 'Cek Lagi',
+        dismissible: true
+      });
+
+      if (!ok) return;
+    } catch (e) {
+      // If confirm throws or is rejected, bail out
+      return;
     }
 
     // Send to backend to create Payment Session
