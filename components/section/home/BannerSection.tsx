@@ -1,14 +1,11 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselDots, CarouselItem } from '@/components/ui/carousel';
 import { bannersQueryOptions } from '@/queries/banner';
 import type { Banner } from '@/types/model';
 import { useQuery } from '@tanstack/react-query';
 import Autoplay from 'embla-carousel-autoplay';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 const DEFAULT_IMAGE = 'assets/img/banner.webp';
@@ -50,94 +47,53 @@ export default function BannerSection() {
 
   return (
     <section className="mx-auto w-11/12 lg:max-w-7xl">
-      {/* --- WRAPPER GRID UNTUK DESKTOP --- */}
-      <div className="block grid-cols-5 lg:grid lg:gap-2">
-        {/* LEFT: CAROUSEL (3/5) */}
-        <div className="lg:col-span-3">
-          <Carousel
-            plugins={[plugin.current]}
-            className="group/carousel relative lg:px-0"
-            onMouseEnter={plugin.current.stop}
-            onMouseLeave={plugin.current.reset}
-            setApi={setEmblaApi}
-          >
-            <CarouselContent className="">
-              {banners.map((banner, index) => {
-                const image = banner.image || DEFAULT_IMAGE;
+      <div>
+        <Carousel
+          plugins={[plugin.current]}
+          className="group/carousel relative lg:px-0"
+          onMouseEnter={plugin.current.stop}
+          onMouseLeave={plugin.current.reset}
+          setApi={setEmblaApi}
+        >
+          <CarouselContent className="ml-0">
+            {banners.map((banner, index) => {
+              const image = banner.image || DEFAULT_IMAGE;
 
-                const content = (
-                  <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                    <Image
-                      src={image}
-                      alt={banner.id ? `Banner ${banner.id}` : `Banner ${index + 1}`}
-                      fill
-                      unoptimized
-                      className="object-cover"
-                    />
+              const content = (
+                <div className="relative aspect-[calc(4*3+1)/5] w-full overflow-hidden">
+                  <Image
+                    src={image}
+                    alt={banner.id ? `Banner ${banner.id}` : `Banner ${index + 1}`}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                  />
+                </div>
+              );
+
+              return (
+                <CarouselItem className="basis-full pl-0" key={banner.id || `banner-${index}`}>
+                  <div className="overflow-hidden border border-black/10">
+                    {banner.link ? (
+                      <a
+                        href={banner.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block h-full w-full"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      content
+                    )}
                   </div>
-                );
+                </CarouselItem>
+              );
+            })}
+          </CarouselContent>
 
-                return (
-                  <CarouselItem className="basis-full" key={banner.id || `banner-${index}`}>
-                    <div>
-                      <Card className="py-0 shadow-none">
-                        <CardContent className="flex min-h-40 items-center justify-center p-0 md:min-h-0">
-                          {banner.link ? (
-                            <a
-                              href={banner.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block h-full w-full"
-                            >
-                              {content}
-                            </a>
-                          ) : (
-                            content
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                );
-              })}
-            </CarouselContent>
-
-            <CarouselDots className="absolute bottom-0 left-1/2 mb-4 -translate-x-1/2 lg:bottom-2" />
-          </Carousel>
-        </div>
-
-        {/* RIGHT: CTA (2/5) */}
-        <div className="hidden lg:col-span-2 lg:block">
-          <div className="bg-primary item relative h-full rounded-lg">
-            <div className="grid grid-cols-2 items-center gap-4">
-              <div className="relative z-10 flex h-full flex-col items-center justify-center p-6">
-                <h2 className="mt-28 text-left font-semibold text-white md:text-3xl">
-                  Gabung <br className="lg:hidden" />
-                  Membership <br /> Sekarang!
-                </h2>
-
-                <span className="text-muted mt-4 text-left text-xs">
-                  Dapatkan prioritas booking dan promo menarik lainnya!
-                </span>
-              </div>
-              <div className="flex items-center justify-end">
-                <Image
-                  src="/assets/img/player.png"
-                  alt="Membership Cta"
-                  preload
-                  width={500}
-                  height={500}
-                  className="absolute right-0 -bottom-30 h-auto w-[400px] -translate-y-1/2 object-contain"
-                />
-              </div>
-            </div>
-            <footer className="flex w-full px-6">
-              <Button asChild variant="secondary" className="mt-14 w-full">
-                <Link href="/membership">Gabung Sekarang</Link>
-              </Button>
-            </footer>
-          </div>
-        </div>
+          <CarouselDots className="absolute bottom-0 left-1/2 mb-4 -translate-x-1/2 lg:bottom-2" />
+        </Carousel>
       </div>
     </section>
   );

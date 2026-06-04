@@ -200,7 +200,7 @@ const BookingCalendar = ({
   return (
     <div className="w-full">
       {/* Fixed date header - no horizontal scroll */}
-      <div className="sticky top-0 z-[5] border-b bg-white pb-2 shadow-sm">
+      <div className="sticky top-0 z-5 border-b bg-white pb-2 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="flex items-center px-2 pl-4">
             <DatePickerModal onChange={handleSelectDate} label="Select Booking Date">

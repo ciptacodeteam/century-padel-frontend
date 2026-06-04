@@ -190,7 +190,7 @@ const MyClubPage = () => {
       <>
         <MainHeader title="Club Saya" withLogo={false} withBorder />
         <main className="pt-24 pb-16">
-          <div className="mx-auto w-11/12 flex-1">
+          <div className="mx-auto lg:max-w-7xl w-11/12 flex-1">
             <div className="text-muted-foreground space-y-4 py-20 text-center">
               <p className="text-sm">Anda belum memiliki atau bergabung dengan club manapun.</p>
               <div className="flex justify-center gap-3">
@@ -215,202 +215,209 @@ const MyClubPage = () => {
     <>
       <MainHeader title="Club Saya" withLogo={false} withBorder />
 
-      <main className="pt-24 pb-16">
-        <div className="mx-auto w-11/12 max-w-7xl flex-1 space-y-4 lg:mt-6">
-          {/* Club Header */}
-          <Card>
-            <CardContent>
-              <div className="flex items-start gap-4">
-                <Avatar className="size-20 rounded-lg">
-                  <AvatarImage src={club.logo || undefined} alt={club.name} />
-                  <AvatarFallback className="bg-primary/10 text-primary rounded-lg text-xl font-bold">
-                    {club.name?.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+      <main className="pt-26 pb-32 lg:relative lg:left-1/2 lg:w-screen lg:-translate-x-1/2 lg:pb-20">
+        <div className="mx-auto w-11/12 flex-1 space-y-4 lg:mt-6 lg:grid lg:max-w-7xl lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)_minmax(280px,340px)] lg:items-start lg:gap-6 lg:space-y-0">
+          <aside className="space-y-4 lg:sticky lg:top-28">
+            {/* Club Header */}
+            <Card className="lg:overflow-hidden">
+              <CardContent>
+                <div className="flex items-start gap-4 lg:flex-col">
+                  <Avatar className="size-20 lg:size-28">
+                    <AvatarImage src={club.logo || undefined} alt={club.name} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold lg:text-3xl">
+                      {club.name?.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
 
-                <div className="flex-1">
-                  <div className="mb-2 flex items-start justify-between">
-                    <h1 className="text-xl font-bold">{club.name}</h1>
-                  </div>
+                  <div className="flex-1 lg:w-full">
+                    <div className="mb-2 flex items-start justify-between">
+                      <h1 className="text-xl font-bold lg:text-2xl">{club.name}</h1>
+                    </div>
 
-                  <div className="text-muted-foreground flex items-center gap-4 text-sm">
-                    <Badge
-                      variant={club.visibility === 'PUBLIC' ? 'default' : 'secondary'}
-                      className="shrink-0"
-                    >
-                      {club.visibility === 'PUBLIC' ? (
-                        <>
-                          <IconWorld className="mr-1 size-3" /> Public
-                        </>
-                      ) : (
-                        <>
-                          <IconLock className="mr-1 size-3" /> Private
-                        </>
-                      )}
-                    </Badge>
-                    <div className="flex items-center gap-2">
-                      <IconUsers className="size-4" />
-                      <span>{club._count?.clubMember || club.clubMember?.length || 0} Anggota</span>
+                    <div className="text-muted-foreground flex items-center gap-4 text-sm lg:flex-wrap">
+                      <Badge
+                        variant={club.visibility === 'PUBLIC' ? 'default' : 'secondary'}
+                        className="shrink-0"
+                      >
+                        {club.visibility === 'PUBLIC' ? (
+                          <>
+                            <IconWorld className="mr-1 size-3" /> Public
+                          </>
+                        ) : (
+                          <>
+                            <IconLock className="mr-1 size-3" /> Private
+                          </>
+                        )}
+                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <IconUsers className="size-4" />
+                        <span>
+                          {club._count?.clubMember || club.clubMember?.length || 0} Anggota
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Button */}
-              <div className="mt-4">
-                {isLeader ? (
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={isDeleting}
-                  >
-                    <IconTrash className="size-4" />
-                    Hapus Club
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground w-full"
-                    onClick={() => leaveClub(primaryClubId!)}
-                    disabled={isLeaving}
-                    loading={isLeaving}
-                  >
-                    <IconLogout className="mr-2 size-4" />
-                    Keluar Club
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                {/* Action Button */}
+                <div className="mt-4">
+                  {isLeader ? (
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={isDeleting}
+                    >
+                      <IconTrash className="size-4" />
+                      Hapus Club
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground w-full"
+                      onClick={() => leaveClub(primaryClubId!)}
+                      disabled={isLeaving}
+                      loading={isLeaving}
+                    >
+                      <IconLogout className="mr-2 size-4" />
+                      Keluar Club
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Warning Banner - Club Pending Approval */}
-          {!club.isActive && (
-            <Alert variant="warning">
-              <IconAlertTriangle />
-              <AlertTitle>Club Menunggu Persetujuan Admin</AlertTitle>
-              <AlertDescription>
-                Club Anda sedang menunggu persetujuan dari admin. Anda tidak dapat menggunakan fitur
-                club hingga club Anda disetujui. Harap tunggu notifikasi atau hubungi admin untuk
-                informasi lebih lanjut.
-              </AlertDescription>
-            </Alert>
-          )}
+            {/* Leader */}
+            {club.leader && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <IconCrown className="size-5 text-yellow-500" />
+                    Club Leader
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="size-12">
+                      <AvatarImage src={club.leader.image || undefined} alt={club.leader.name} />
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {club.leader.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{club.leader.name}</p>
+                      {club.leader.email && (
+                        <p className="text-muted-foreground truncate text-sm">
+                          {club.leader.email}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </aside>
 
-          {/* Description */}
-          {club.description && (
+          <section className="space-y-4">
+            {/* Warning Banner - Club Pending Approval */}
+            {!club.isActive && (
+              <Alert variant="warning">
+                <IconAlertTriangle />
+                <AlertTitle>Club Menunggu Persetujuan Admin</AlertTitle>
+                <AlertDescription>
+                  Club Anda sedang menunggu persetujuan dari admin. Anda tidak dapat menggunakan
+                  fitur club hingga club Anda disetujui. Harap tunggu notifikasi atau hubungi admin
+                  untuk informasi lebih lanjut.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Description */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Tentang Club</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-                  {club.description}
+                  {club.description || 'Deskripsi club belum ditambahkan.'}
                 </p>
               </CardContent>
             </Card>
-          )}
 
-          {/* Rules */}
-          {club.rules && (
+            {/* Rules */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Peraturan Club</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-muted-foreground text-sm whitespace-pre-wrap">
-                  {club.rules}
+                  {club.rules || 'Peraturan club belum ditambahkan.'}
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Leader */}
-          {club.leader && (
+            {/* Join Requests - Only visible to club leader for private clubs when club is active */}
+            {isAuth && isHydrated && club.visibility === 'PRIVATE' && club.isActive && (
+              <ClubJoinRequests clubId={primaryClubId!} isLeader={isLeader} />
+            )}
+          </section>
+
+          <aside className="space-y-4 lg:sticky lg:top-28">
+            {/* Members List */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <IconCrown className="size-5 text-yellow-500" />
-                  Club Leader
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Members ({club.clubMember?.length || club._count?.clubMember || 0})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-12">
-                    <AvatarImage src={club.leader.image || undefined} alt={club.leader.name} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                      {club.leader.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{club.leader.name}</p>
-                    {club.leader.email && (
-                      <p className="text-muted-foreground text-sm">{club.leader.email}</p>
-                    )}
+                {club.clubMember && club.clubMember.length > 0 ? (
+                  <div className="space-y-3">
+                    {club.clubMember.map((member: any, index: number) => (
+                      <div key={member.user?.id || index} className="flex items-center gap-3">
+                        <Avatar className="size-10">
+                          <AvatarImage
+                            src={member.user?.image || undefined}
+                            alt={member.user?.name || 'Member'}
+                          />
+                          <AvatarFallback className="bg-muted text-sm">
+                            {(member.user?.name || 'M').substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">
+                            {member.user?.name || 'Unknown Member'}
+                          </p>
+                        </div>
+                        {isLeader && member.user?.id !== club.leaderId && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() =>
+                              removeMember({ clubId: primaryClubId!, userId: member.user.id })
+                            }
+                            disabled={isRemovingMember}
+                          >
+                            <IconUserMinus className="size-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </div>
+                ) : (
+                  <div className="text-muted-foreground py-8 text-center text-sm">
+                    <IconUsers className="mx-auto mb-2 size-12 opacity-50" />
+                    <p>
+                      Club ini punya {club._count?.clubMember || club.clubMember?.length || 0}{' '}
+                      Anggota
+                    </p>
+                    <p className="mt-1 text-xs">Anggota tidak tersedia</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
-
-          {/* Join Requests - Only visible to club leader for private clubs when club is active */}
-          {isAuth && isHydrated && club.visibility === 'PRIVATE' && club.isActive && (
-            <ClubJoinRequests clubId={primaryClubId!} isLeader={isLeader} />
-          )}
-
-          {/* Members List */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between text-lg">
-                <span>Members ({club.clubMember?.length || club._count?.clubMember || 0})</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {club.clubMember && club.clubMember.length > 0 ? (
-                <div className="space-y-3">
-                  {club.clubMember.map((member: any, index: number) => (
-                    <div key={member.user?.id || index} className="flex items-center gap-3">
-                      <Avatar className="size-10">
-                        <AvatarImage
-                          src={member.user?.image || undefined}
-                          alt={member.user?.name || 'Member'}
-                        />
-                        <AvatarFallback className="bg-muted text-sm">
-                          {(member.user?.name || 'M').substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {member.user?.name || 'Unknown Member'}
-                        </p>
-                      </div>
-                      {isLeader && member.user?.id !== club.leaderId && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() =>
-                            removeMember({ clubId: primaryClubId!, userId: member.user.id })
-                          }
-                          disabled={isRemovingMember}
-                        >
-                          <IconUserMinus className="size-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-muted-foreground py-8 text-center text-sm">
-                  <IconUsers className="mx-auto mb-2 size-12 opacity-50" />
-                  <p>
-                    Club ini punya {club._count?.clubMember || club.clubMember?.length || 0} Anggota
-                  </p>
-                  <p className="mt-1 text-xs">Anggota tidak tersedia</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </aside>
         </div>
       </main>
 

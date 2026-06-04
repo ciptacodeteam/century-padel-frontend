@@ -308,6 +308,7 @@ export const useBookingStore = create<BookingState>()(
         set({
           bookingItems: [],
           selectedCoaches: [],
+          selectedBallboys: [],
           selectedInventories: [],
           selectedCustomerId: null,
           selectedCustomerName: null,
@@ -336,34 +337,7 @@ export const useBookingStore = create<BookingState>()(
     }),
     {
       name: 'booking-storage',
-      storage:
-        typeof window !== 'undefined'
-          ? createJSONStorage(() => ({
-              getItem: (name) => {
-                // Clear storage on page refresh/reload
-                // Check if this is a fresh page load (not navigation)
-                const isPageRefresh =
-                  window.performance?.navigation?.type === 1 || // Legacy
-                  window.performance
-                    ?.getEntriesByType('navigation')
-                    ?.some((nav: any) => nav.type === 'reload'); // Modern
-
-                if (isPageRefresh) {
-                  sessionStorage.removeItem(name);
-                  return null;
-                }
-
-                const value = sessionStorage.getItem(name);
-                return value;
-              },
-              setItem: (name, value) => {
-                sessionStorage.setItem(name, value);
-              },
-              removeItem: (name) => {
-                sessionStorage.removeItem(name);
-              }
-            }))
-          : undefined,
+      storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
       partialize: (state) => ({
         bookingItems: state.bookingItems,
         selectedDate: state.selectedDate,
@@ -373,6 +347,7 @@ export const useBookingStore = create<BookingState>()(
         walkInName: state.walkInName,
         walkInPhone: state.walkInPhone,
         selectedCoaches: state.selectedCoaches,
+        selectedBallboys: state.selectedBallboys,
         selectedInventories: state.selectedInventories,
         courtTotal: state.courtTotal,
         coachTotal: state.coachTotal,

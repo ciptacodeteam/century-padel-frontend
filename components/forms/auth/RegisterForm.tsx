@@ -93,22 +93,22 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
   };
 
   return (
-    <form className="p-0 md:p-8 md:pb-4" onSubmit={form.handleSubmit(onSubmit)}>
+    <form className="p-0 md:p-6 md:pb-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldSet>
         <FieldGroup>
           <header className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-lg font-bold md:text-2xl">Create your account</h1>
             <p className="text-muted-foreground text-sm text-balance md:text-base">
-              Please register to start using Quantum Sport.
+              Please register to start using Century Padel.
             </p>
           </header>
           <Field>
-            <FieldLabel htmlFor="name">Name</FieldLabel>
+            <FieldLabel htmlFor="name" className='-mb-1'>Name</FieldLabel>
             <Input id="name" {...form.register('name')} placeholder="e.g. John Doe" />
             <FieldError>{form.formState.errors.name?.message}</FieldError>
           </Field>
           <Field>
-            <FieldLabel htmlFor="phone">Phone</FieldLabel>
+            <FieldLabel htmlFor="phone" className='-mb-1'>Phone</FieldLabel>
             <InputGroup>
               <InputGroupText className="px-3">+62</InputGroupText>
               <Input
@@ -135,7 +135,7 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
             <FieldError>{form.formState.errors.phone?.message}</FieldError>
           </Field>
           <Field>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <FieldLabel htmlFor="password" className='-mb-1'>Password</FieldLabel>
             <PasswordInput
               id="password"
               {...form.register('password')}
@@ -144,7 +144,7 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
             <FieldError>{form.formState.errors.password?.message}</FieldError>
           </Field>
           <Field>
-            <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+            <FieldLabel htmlFor="confirmPassword" className='-mb-1'>Confirm Password</FieldLabel>
             <PasswordInput
               id="confirmPassword"
               {...form.register('confirmPassword')}

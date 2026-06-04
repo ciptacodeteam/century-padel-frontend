@@ -7,7 +7,7 @@ import { inventoryAvailabilityQueryOptions } from '@/queries/inventory';
 import { useBookingStore, type BookingItem } from '@/stores/useBookingStore';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, PackageCheck, Plus, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -91,6 +91,7 @@ export default function AddOnsPage() {
   // const coachList = coachAvailability ?? [];
 
   const inventoryList = inventoryAvailability ?? [];
+  const inventoryTotal = selectedInventories.reduce((total, item) => total + item.price, 0);
 
   const primaryBookingDate = useMemo(() => {
     if (bookingTimeRange.startAt) {
@@ -174,9 +175,38 @@ export default function AddOnsPage() {
 
   return (
     <>
-      <MainHeader onBack={() => router.back()} title="Produk Tambahan" withLogo={false} />
+      <MainHeader
+        onBack={() => router.back()}
+        title="Produk Tambahan"
+        withLogo={false}
+        withBorder
+      />
 
-      <div className="mx-auto w-11/12 pt-16">
+      <main className="mx-auto h-screen w-11/12 pt-24 lg:relative lg:left-1/2 lg:min-h-screen lg:w-screen lg:max-w-none lg:-translate-x-1/2 lg:bg-neutral-50 lg:pt-28 lg:pb-16">
+        <div className="mx-auto grid w-full gap-6 lg:w-11/12 lg:max-w-7xl lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-4">
+          <section className="space-y-6">
+            <div className="hidden border bg-white p-6 lg:block">
+              <p className="text-primary text-sm font-semibold">Add-Ons</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-normal">Produk Tambahan</h1>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Tambahkan perlengkapan untuk melengkapi jadwal bermain yang sudah kamu pilih.
+              </p>
+            </div>
+
+            {!hasBookingSelection && (
+              <Card className="lg:border-neutral-200 lg:bg-white">
+                <div className="px-4 py-3 lg:p-6">
+                  <p className="font-semibold">Belum ada booking lapangan</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Tambahkan pemesanan lapangan terlebih dahulu sebelum memilih add-ons.
+                  </p>
+                  <Button className="mt-4" onClick={() => router.push('/booking')}>
+                    Pilih Jadwal
+                  </Button>
+                </div>
+              </Card>
+            )}
+
         {/* Tabs utama */}
         {/* <div className="mb-4 flex gap-2">
           {['Coach', 'Raket'].map((item) => (
@@ -310,26 +340,26 @@ export default function AddOnsPage() {
 
         {/* === RAKET === */}
         {activeTab === 'raket' && (
-          <div className="mb-4 flex flex-col gap-3">
+          <div className="mb-4 flex flex-col gap-3 lg:mb-0 lg:grid lg:grid-cols-2 lg:gap-5">
             {isInventoryPending && (
-              <Card>
-                <div className="px-4 py-3">
+              <Card className="lg:col-span-2 lg:border-neutral-200 lg:bg-white">
+                <div className="px-4 py-3 lg:p-6">
                   <p className="text-muted-foreground text-sm">Memuat ketersediaan...</p>
                 </div>
               </Card>
             )}
 
             {isInventoryError && (
-              <Card>
-                <div className="px-4 py-3">
+              <Card className="lg:col-span-2 lg:border-neutral-200 lg:bg-white">
+                <div className="px-4 py-3 lg:p-6">
                   <p className="text-destructive text-sm">Gagal memuat ketersediaan inventori.</p>
                 </div>
               </Card>
             )}
 
             {!isInventoryPending && !isInventoryError && inventoryList.length === 0 && (
-              <Card>
-                <div className="px-4 py-3">
+              <Card className="lg:col-span-2 lg:border-neutral-200 lg:bg-white">
+                <div className="px-4 py-3 lg:p-6">
                   <p className="text-muted-foreground text-sm">Inventori tidak tersedia.</p>
                 </div>
               </Card>
@@ -348,14 +378,22 @@ export default function AddOnsPage() {
                 const unitPrice = inventory.price ?? 0;
 
                 return (
-                  <Card key={inventory.id}>
-                    <div className="px-4 py-3">
+                  <Card
+                    key={inventory.id}
+                    className="lg:h-full lg:border-neutral-200 lg:bg-white lg:transition-shadow lg:hover:shadow-md"
+                  >
+                    <div className="px-4 py-3 lg:flex lg:h-full lg:flex-col lg:p-6">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold">{inventory.name}</p>
+                        <div className="flex items-start gap-3">
+                          <div className="bg-primary/10 text-primary hidden size-12 items-center justify-center lg:flex">
+                            <PackageCheck className="size-6" />
+                          </div>
+                          <div>
+                          <p className="font-semibold lg:text-lg">{inventory.name}</p>
                           <p className="text-muted-foreground text-xs">
                             Tersedia {availableQuantity} equipment
                           </p>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -379,7 +417,7 @@ export default function AddOnsPage() {
                         </div>
                       </div>
 
-                      <div className="bg-muted mt-4 flex rounded-sm px-4 py-2">
+                      <div className="bg-muted mt-4 flex rounded-sm px-4 py-2 lg:mt-auto lg:rounded-none">
                         <p className="text-foreground">
                           <span className="text-primary font-semibold">
                             Rp{unitPrice.toLocaleString('id-ID')}{' '}
@@ -399,7 +437,56 @@ export default function AddOnsPage() {
               })}
           </div>
         )}
-      </div>
+          </section>
+
+          <aside className="hidden lg:block">
+            <Card className="sticky top-28 border-neutral-200 bg-white py-0">
+              <div className="space-y-6 p-6">
+                <div>
+                  <div className="bg-primary/10 text-primary flex size-12 items-center justify-center">
+                    <ShoppingCart className="size-6" />
+                  </div>
+                  <h2 className="mt-4 text-xl font-bold">Ringkasan Add-Ons</h2>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {selectedInventories.length} produk dipilih
+                  </p>
+                </div>
+
+                <div className="space-y-3 border-t pt-5">
+                  {selectedInventories.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">Belum ada produk tambahan.</p>
+                  ) : (
+                    selectedInventories.map((item) => (
+                      <div
+                        key={`${item.inventoryId}-${item.timeSlot ?? 'default'}`}
+                        className="flex items-start justify-between gap-4 text-sm"
+                      >
+                        <div>
+                          <p className="font-medium">{item.inventoryName}</p>
+                          <p className="text-muted-foreground text-xs">Qty: {item.quantity}</p>
+                        </div>
+                        <p className="font-semibold">Rp{item.price.toLocaleString('id-ID')}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="border-t pt-5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold">Total Add-Ons</span>
+                    <span className="text-primary text-lg font-bold">
+                      Rp{inventoryTotal.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <Button className="mt-5 w-full" size="lg" onClick={() => router.push('/checkout')}>
+                    Lanjut Checkout
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </aside>
+        </div>
+      </main>
 
       {/* Seleksi coach & inventori langsung melalui kartu */}
     </>

@@ -12,7 +12,7 @@ import { createClubMutationOptions } from '@/mutations/club';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { IconWorld, IconLock } from '@tabler/icons-react';
+import { IconWorld, IconLock, IconUsers, IconShieldCheck, IconPhoto } from '@tabler/icons-react';
 import useAuthStore from '@/stores/useAuthStore';
 import { toast } from 'sonner';
 
@@ -134,17 +134,90 @@ const CreateClubPage = () => {
     <>
       <MainHeader backHref="/clubs" title="Buat Club" withLogo={false} />
 
-      <main className="pt-28 pb-16">
-        <div className="mx-auto w-11/12 flex-1">
-          <form onSubmit={handleSubmit}>
+      <main className="pt-28 pb-16 lg:relative lg:left-1/2 lg:w-screen lg:-translate-x-1/2 lg:bg-neutral-50 lg:pt-32 lg:pb-24">
+        <div className="mx-auto w-11/12 flex-1 lg:grid lg:max-w-7xl lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start lg:gap-8">
+          <aside className="hidden space-y-5 lg:block lg:sticky lg:top-28">
+            <div className="border bg-white p-8">
+              <p className="text-primary text-sm font-semibold">Create Club</p>
+              <h1 className="mt-3 text-4xl font-bold tracking-normal text-neutral-950">
+                Buat komunitas bermain kamu
+              </h1>
+              <p className="text-muted-foreground mt-4 text-base leading-7">
+                Lengkapi identitas club, tambahkan aturan, lalu pilih akses public atau private.
+              </p>
+            </div>
+
             <Card>
               <CardHeader>
-                <CardTitle>Buat Club Baru</CardTitle>
-                <CardDescription className="mb-4">
+                <CardTitle className="text-lg">Preview Club</CardTitle>
+                <CardDescription>Tampilan singkat sebelum club dibuat.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start gap-4">
+                  <Avatar className="size-20 rounded-lg">
+                    <AvatarImage src={logoPreview || undefined} alt="Club logo preview" />
+                    <AvatarFallback className="bg-primary/10 text-primary rounded-lg text-xl font-semibold">
+                      {formData.name ? formData.name.substring(0, 2).toUpperCase() : 'CL'}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xl font-semibold">
+                      {formData.name || 'Nama Club'}
+                    </p>
+                    <div className="text-muted-foreground mt-3 flex items-center gap-3 text-sm">
+                      <span className="inline-flex items-center gap-1">
+                        {formData.visibility === 'PUBLIC' ? (
+                          <IconWorld className="size-4" />
+                        ) : (
+                          <IconLock className="size-4" />
+                        )}
+                        {formData.visibility === 'PUBLIC' ? 'Public' : 'Private'}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <IconUsers className="size-4" /> 0 Anggota
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-muted-foreground mt-5 line-clamp-4 text-sm leading-6">
+                  {formData.description || 'Deskripsi club akan tampil di sini.'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-3">
+              <div className="flex gap-3 border bg-white p-4">
+                <IconPhoto className="text-primary mt-0.5 size-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Logo opsional</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Gunakan gambar jelas agar club mudah dikenali.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3 border bg-white p-4">
+                <IconShieldCheck className="text-primary mt-0.5 size-5 shrink-0" />
+                <div>
+                  <p className="font-semibold">Atur akses member</p>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Public untuk bergabung cepat, private untuk persetujuan leader.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <form onSubmit={handleSubmit}>
+            <Card className="lg:border-neutral-200 lg:bg-white">
+              <CardHeader className="lg:border-b lg:px-8 lg:py-7">
+                <CardTitle className="lg:text-2xl">Buat Club Baru</CardTitle>
+                <CardDescription className="mb-4 lg:mb-0">
                   Isi form dibawah untuk membuat club baru Kamu.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 lg:p-8">
                 {/* Club Name */}
                 <div className="space-y-2">
                   <Label htmlFor="name" aria-required>
@@ -265,17 +338,22 @@ const CreateClubPage = () => {
                 </div>
 
                 {/* Submit Buttons */}
-                <div className="flex gap-3 pt-2">
+                <div className="flex gap-3 pt-2 lg:justify-end lg:border-t lg:pt-6">
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 lg:flex-none lg:px-8"
                     onClick={() => router.back()}
                     disabled={isPending}
                   >
                     Batal
                   </Button>
-                  <Button type="submit" className="flex-1" disabled={isPending} loading={isPending}>
+                  <Button
+                    type="submit"
+                    className="flex-1 lg:flex-none lg:px-8"
+                    disabled={isPending}
+                    loading={isPending}
+                  >
                     Buat Club
                   </Button>
                 </div>

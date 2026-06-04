@@ -53,6 +53,8 @@ const ClubsPage = () => {
   );
 
   const clubs = data ?? [];
+  const publicClubsCount = clubs.filter((club) => club.visibility === 'PUBLIC').length;
+  const privateClubsCount = clubs.filter((club) => club.visibility === 'PRIVATE').length;
 
   // Filter clubs based on selected filter and search query
   const filteredClubs = clubs.filter((club) => {
@@ -79,10 +81,38 @@ const ClubsPage = () => {
     <>
       <MainHeader backHref="/" title="Clubs" withLogo={false} withBorder />
 
-      <main className="mt-24 flex w-full flex-col pb-20">
-        <div className="z-10 w-full border-b bg-white">
+      <main className="mt-24 flex w-full flex-col pb-20 lg:relative lg:left-1/2 lg:w-screen lg:-translate-x-1/2 lg:bg-neutral-50">
+        <div className="z-10 w-full border-b bg-white lg:border-b">
+          <div className="mx-auto hidden w-11/12 max-w-7xl items-end justify-between gap-8 py-8 lg:flex">
+            <div className="max-w-2xl">
+              <p className="text-primary text-sm font-semibold">Century Padel Club</p>
+              <h1 className="mt-2 text-4xl font-bold tracking-normal text-neutral-950">
+                Temukan komunitas bermain padel
+              </h1>
+              <p className="text-muted-foreground mt-3 text-base leading-7">
+                Jelajahi club public atau private, lihat leader, dan masuk ke detail club yang
+                sesuai dengan gaya bermain kamu.
+              </p>
+            </div>
+
+            <div className="grid min-w-90 grid-cols-3 border bg-white">
+              <div className="border-r p-4">
+                <p className="text-muted-foreground text-xs font-medium">Total</p>
+                <p className="mt-1 text-2xl font-bold">{clubs.length}</p>
+              </div>
+              <div className="border-r p-4">
+                <p className="text-muted-foreground text-xs font-medium">Public</p>
+                <p className="mt-1 text-2xl font-bold">{publicClubsCount}</p>
+              </div>
+              <div className="p-4">
+                <p className="text-muted-foreground text-xs font-medium">Private</p>
+                <p className="mt-1 text-2xl font-bold">{privateClubsCount}</p>
+              </div>
+            </div>
+          </div>
+
           {/* Search Bar */}
-          <div className="mx-auto w-11/12 max-w-7xl">
+          <div className="mx-auto w-11/12 max-w-7xl lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:pb-6">
             <div className="relative">
               <IconSearch className="text-muted-foreground absolute top-1/2 left-3 size-5 -translate-y-1/2" />
               <Input
@@ -93,14 +123,19 @@ const ClubsPage = () => {
                 className="pr-4 pl-10"
               />
             </div>
+
+            <Button className="hidden gap-2 lg:inline-flex" onClick={handleCreateClub}>
+              <IconPlus className="size-4" />
+              Buat Club
+            </Button>
           </div>
 
           {/* Filter Tabs */}
-          <div className="mx-auto mt-4 w-11/12 max-w-7xl pb-4">
+          <div className="mx-auto mt-4 w-11/12 max-w-7xl pb-4 lg:mt-0 lg:pb-6">
             <Tabs
               value={filter}
               onValueChange={(value) => setFilter(value as any)}
-              className="w-full"
+              className="w-full lg:max-w-xl"
             >
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="ALL">Semua Club</TabsTrigger>
@@ -118,19 +153,21 @@ const ClubsPage = () => {
         </div>
 
         {/* Clubs List */}
-        <div className="mx-auto mt-8 w-11/12 max-w-7xl flex-1">
+        <div className="mx-auto mt-4 w-11/12 max-w-7xl flex-1 lg:mt-10">
           {isLoading && (
-            <div className="text-muted-foreground py-20 text-center text-sm">Loading clubs...</div>
+            <div className="text-muted-foreground py-20 text-center text-sm lg:border lg:bg-white">
+              Loading clubs...
+            </div>
           )}
 
           {isError && !isLoading && (
-            <div className="text-destructive py-20 text-center text-sm">
+            <div className="text-destructive py-20 text-center text-sm lg:border lg:bg-white">
               Gagal memuat data club. Silahkan coba lagi.
             </div>
           )}
 
           {!isLoading && !isError && filteredClubs.length === 0 && (
-            <div className="text-muted-foreground py-20 text-center text-sm">
+            <div className="text-muted-foreground py-20 text-center text-sm lg:border lg:bg-white">
               {searchQuery ? (
                 <>Tidak ada club ditemukan.</>
               ) : filter === 'ALL' ? (
@@ -142,13 +179,16 @@ const ClubsPage = () => {
           )}
 
           {!isLoading && !isError && filteredClubs.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-5 lg:space-y-0">
               {filteredClubs.map((club) => (
-                <Card key={club.id} className="overflow-hidden transition-shadow hover:shadow-md">
-                  <CardContent>
-                    <div className="flex items-start gap-4">
+                <Card
+                  key={club.id}
+                  className="overflow-hidden transition-shadow hover:shadow-md lg:h-full lg:border-neutral-200 lg:bg-white"
+                >
+                  <CardContent className="lg:flex lg:h-full lg:flex-col">
+                    <div className="flex items-start gap-4 lg:flex-1 lg:flex-col">
                       {/* Club Avatar/Logo */}
-                      <Avatar className="size-16 shrink-0 rounded-lg">
+                      <Avatar className="size-16 shrink-0 rounded-lg lg:size-20">
                         <AvatarImage src={club.logo || undefined} alt={club.name} />
                         <AvatarFallback className="bg-primary/10 text-primary rounded-lg font-semibold">
                           {club.name.substring(0, 2).toUpperCase()}
@@ -156,9 +196,9 @@ const ClubsPage = () => {
                       </Avatar>
 
                       {/* Club Info */}
-                      <div className="flex-1">
+                      <div className="flex-1 lg:flex lg:w-full lg:flex-col">
                         <div className="mb-1 flex items-start gap-2">
-                          <h3 className="mb-2 flex-1 text-base leading-tight font-semibold">
+                          <h3 className="mb-2 flex-1 text-base leading-tight font-semibold lg:text-xl">
                             {club.name}
                           </h3>
                           <Badge
@@ -184,7 +224,7 @@ const ClubsPage = () => {
                         )}
 
                         {/* Leader and Members Info */}
-                        <div className="text-muted-foreground mb-4 flex items-center gap-4 text-xs">
+                        <div className="text-muted-foreground mb-4 flex items-center gap-4 text-xs lg:mt-auto lg:grid lg:grid-cols-2 lg:gap-3">
                           <div className="flex items-center gap-1">
                             <IconUserCircle className="size-4" />
                             <span className="capitalize">
@@ -220,7 +260,7 @@ const ClubsPage = () => {
       {isHydrated && (
         <Button
           size="lg"
-          className="fixed right-6 bottom-10 z-30 gap-2 rounded-full px-6 shadow-lg"
+          className="fixed right-6 bottom-10 z-30 gap-2 rounded-full px-6 shadow-lg lg:hidden"
           onClick={handleCreateClub}
         >
           <IconPlus className="size-4" />

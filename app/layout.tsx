@@ -1,13 +1,14 @@
 import AppProvider from '@/providers/AppProvider';
+import DesktopFooter from '@/components/footers/DesktopFooter';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import '@/styles/globals.css';
 import { cn } from '@/lib/utils';
 
 import Script from 'next/script';
 
-const inter = Inter({
-  variable: '--font-inter',
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: '--font-plus-jakarta-sans',
   subsets: ['latin']
 });
 
@@ -71,8 +72,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className={cn('antialiased', inter.variable)}>
+      <body className={cn('antialiased', plusJakartaSans.className, plusJakartaSans.variable)}>
         <AppProvider>{children}</AppProvider>
+        <DesktopFooter />
 
         {/* ✅ JSON-LD Structured Data */}
         <Script

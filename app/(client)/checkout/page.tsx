@@ -568,8 +568,31 @@ export default function CheckoutPage() {
     });
   };
 
+  const checkoutButtonLabel = isUserPending
+    ? 'Memuat...'
+    : !isAuthenticated
+      ? 'Login untuk Checkout'
+      : isCollectingCard
+        ? 'Memproses Kartu...'
+        : checkoutMutation.isPending
+          ? 'Memproses...'
+          : selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData
+            ? 'Pilih Kartu'
+            : selectedPaymentMethod
+              ? 'Bayar Sekarang'
+              : 'Pilih Metode';
+
+  const isCheckoutDisabled =
+    (((!selectedPaymentMethod ||
+      checkoutMutation.isPending ||
+      isCollectingCard ||
+      (selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData) ||
+      (selectedPaymentMethod?.channel === 'CARDS' && !!selectedCard && !selectedCardCvv)) &&
+      isAuthenticated) ||
+      false);
+
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-screen pb-16 lg:bg-neutral-50 lg:pb-0">
       <MainHeader
         title="Detail Pembayaran"
         backHref="/booking"
@@ -578,97 +601,107 @@ export default function CheckoutPage() {
         withBorder
       />
 
-      <main className="mx-auto flex w-11/12 max-w-4xl flex-col gap-6 pt-28 pb-10">
-        <section className="border-muted space-y-4 rounded-lg border bg-white p-4">
-          {groupedCourts.map((group, index) => (
-            <div
-              key={`${group.courtName}-${group.date}`}
-              className={cn(
-                'space-y-3',
-                index < groupedCourts.length - 1 && 'border-muted/80 border-b border-dashed pb-4'
-              )}
-            >
-              <header className="space-y-1">
-                <h2 className="text-primary text-base font-semibold">{group.courtName}</h2>
-                <p className="text-muted-foreground text-sm">
-                  {dayjs(group.date).format('dddd, DD MMM YYYY')}
-                </p>
-              </header>
+      <main className="mx-auto flex w-11/12 max-w-4xl flex-col gap-6 pt-24 pb-10 lg:relative lg:left-1/2 lg:min-h-screen lg:w-screen lg:max-w-none lg:-translate-x-1/2 lg:bg-neutral-50 lg:pt-28 lg:pb-12">
+        <div className="mx-auto grid w-full gap-6 lg:w-11/12 lg:max-w-7xl lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-4">
+        <div className="space-y-6">
+          <div className="hidden border bg-white p-6 lg:block">
+            <p className="text-primary text-sm font-semibold">Checkout</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-normal">Detail Pembayaran</h1>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Periksa pesanan, pilih metode pembayaran, lalu lanjutkan pembayaran.
+            </p>
+          </div>
 
-              <div className="space-y-2">
-                {[...group.slots]
-                  .sort((a, b) => {
-                    const dateCompare = a.date.localeCompare(b.date);
-                    if (dateCompare !== 0) return dateCompare;
-                    return a.timeSlot.localeCompare(b.timeSlot);
-                  })
-                  .map((slot, slotIndex) => {
-                    // Check if this slot is free due to membership
-                    const sortedBookings = [...bookingItems].sort((a, b) => {
+          <section className="border-muted space-y-4 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+            {groupedCourts.map((group, index) => (
+              <div
+                key={`${group.courtName}-${group.date}`}
+                className={cn(
+                  'space-y-3',
+                  index < groupedCourts.length - 1 && 'border-muted/80 border-b border-dashed pb-4'
+                )}
+              >
+                <header className="space-y-1">
+                  <h2 className="text-primary text-base font-semibold">{group.courtName}</h2>
+                  <p className="text-muted-foreground text-sm">
+                    {dayjs(group.date).format('dddd, DD MMM YYYY')}
+                  </p>
+                </header>
+
+                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                  {[...group.slots]
+                    .sort((a, b) => {
                       const dateCompare = a.date.localeCompare(b.date);
                       if (dateCompare !== 0) return dateCompare;
                       return a.timeSlot.localeCompare(b.timeSlot);
-                    });
-                    const bookingIndex = sortedBookings.findIndex(
-                      (b) =>
-                        b.courtId === slot.courtId &&
-                        b.timeSlot === slot.timeSlot &&
-                        b.date === slot.date
-                    );
-                    const isFree =
-                      membershipDiscount.canUseMembership &&
-                      bookingIndex >= 0 &&
-                      bookingIndex < membershipDiscount.slotsToDeduct;
+                    })
+                    .map((slot, slotIndex) => {
+                      // Check if this slot is free due to membership
+                      const sortedBookings = [...bookingItems].sort((a, b) => {
+                        const dateCompare = a.date.localeCompare(b.date);
+                        if (dateCompare !== 0) return dateCompare;
+                        return a.timeSlot.localeCompare(b.timeSlot);
+                      });
+                      const bookingIndex = sortedBookings.findIndex(
+                        (b) =>
+                          b.courtId === slot.courtId &&
+                          b.timeSlot === slot.timeSlot &&
+                          b.date === slot.date
+                      );
+                      const isFree =
+                        membershipDiscount.canUseMembership &&
+                        bookingIndex >= 0 &&
+                        bookingIndex < membershipDiscount.slotsToDeduct;
 
-                    return (
-                      <div
-                        key={`${slot.courtId}-${slot.timeSlot}-${slotIndex}`}
-                        className={cn(
-                          'border-muted/60 flex items-center justify-between rounded-md border px-4 py-3',
-                          isFree ? 'border-green-200 bg-green-50' : 'bg-muted/50'
-                        )}
-                      >
-                        <div className="flex flex-col">
-                          {(() => {
-                            const range = getSlotDisplayRange(slot.timeSlot);
-                            return (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">
-                                  {range.start} - {range.end}
-                                </span>
-                                {isFree && (
-                                  <span className="text-xs font-medium text-green-600">
-                                    (Gratis)
-                                  </span>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <span
+                      return (
+                        <div
+                          key={`${slot.courtId}-${slot.timeSlot}-${slotIndex}`}
                           className={cn(
-                            'text-sm font-semibold',
-                            isFree && 'text-green-600 line-through'
+                            'border-muted/60 flex items-center justify-between rounded-md border px-4 py-3 lg:rounded-none',
+                            isFree ? 'border-green-200 bg-green-50' : 'bg-muted/50'
                           )}
                         >
-                          {isFree ? (
-                            <>
-                              <span className="text-muted-foreground">
-                                {formatCurrency(slot.price)}
-                              </span>{' '}
-                              <span className="ml-1">Gratis</span>
-                            </>
-                          ) : (
-                            formatCurrency(slot.price)
-                          )}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          <div className="flex flex-col">
+                            {(() => {
+                              const range = getSlotDisplayRange(slot.timeSlot);
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium">
+                                    {range.start} - {range.end}
+                                  </span>
+                                  {isFree && (
+                                    <span className="text-xs font-medium text-green-600">
+                                      (Gratis)
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <span
+                            className={cn(
+                              'text-sm font-semibold',
+                              isFree && 'text-green-600 line-through'
+                            )}
+                          >
+                            {isFree ? (
+                              <>
+                                <span className="text-muted-foreground">
+                                  {formatCurrency(slot.price)}
+                                </span>{' '}
+                                <span className="ml-1">Gratis</span>
+                              </>
+                            ) : (
+                              formatCurrency(slot.price)
+                            )}
+                          </span>
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </section>
 
         {/* Coach section - commented out as not in use */}
         {/* {selectedCoaches.length > 0 && (
@@ -708,8 +741,8 @@ export default function CheckoutPage() {
           </section>
         )} */}
 
-        {selectedInventories.length > 0 && (
-          <section className="border-muted space-y-3 rounded-lg border bg-white p-4">
+          {selectedInventories.length > 0 && (
+          <section className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
             <header className="space-y-1">
               <h3 className="text-base font-semibold">Peralatan</h3>
               <p className="text-muted-foreground text-sm">
@@ -745,18 +778,27 @@ export default function CheckoutPage() {
               ))}
             </div>
           </section>
-        )}
+          )}
 
-        <section className="grid gap-4">
           <Button
             variant="outline"
-            className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 flex items-center justify-center gap-2 rounded-2xl border border-dashed py-3 text-sm font-semibold transition-colors"
+            className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 flex items-center justify-center gap-2 rounded-2xl border border-dashed py-3 text-sm font-semibold transition-colors lg:rounded-none w-full lg:w-fit"
+            onClick={() => router.push('/add-ons')}
+          >
+            Tambah Add-Ons
+          </Button>
+        </div>
+
+        <aside className="grid gap-4 lg:sticky lg:top-28">
+          <Button
+            variant="outline"
+            className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 hidden items-center justify-center gap-2 rounded-none border border-dashed py-3 text-sm font-semibold transition-colors"
             onClick={() => router.push('/add-ons')}
           >
             Tambah Add-Ons
           </Button>
 
-          <div className="border-muted rounded-lg border bg-white p-4">
+          <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {selectedPaymentMethod ? (
@@ -798,7 +840,7 @@ export default function CheckoutPage() {
 
           {/* Card Payment Selection - Show only if CARDS channel is selected */}
           {selectedPaymentMethod?.channel === 'CARDS' && (
-            <div className="border-muted rounded-lg border bg-white p-4">
+            <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
               {!newCardData ? (
                 <SavedCardSelector
                   onCardSelect={(card, cvv) => {
@@ -832,7 +874,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <div className="border-muted space-y-3 rounded-lg border bg-white p-4">
+          <div className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Kode Promo</p>
@@ -873,7 +915,7 @@ export default function CheckoutPage() {
 
           {/* Membership Information */}
           {isAuthenticated && membershipDiscount.activeMembership && (
-            <div className="border-muted bg-primary/5 rounded-lg border p-4">
+            <div className="border-muted bg-primary/5 rounded-lg border p-4 lg:rounded-none">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-primary text-sm font-medium">Membership Aktif</span>
                 <span
@@ -911,7 +953,7 @@ export default function CheckoutPage() {
             </div>
           )}
 
-          <div className="border-muted mb-5 rounded-lg border bg-white p-4">
+          <div className="border-muted mb-5 rounded-lg border bg-white p-4 lg:mb-0 lg:rounded-none lg:p-6">
             <h3 className="mb-3 text-base font-semibold">Ringkasan Pembayaran</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
@@ -954,8 +996,17 @@ export default function CheckoutPage() {
                 <span className="text-primary">{formatCurrency(totalAfterPromo)}</span>
               </div>
             </div>
+            <Button
+              size="lg"
+              className="mt-5 hidden w-full lg:inline-flex"
+              onClick={handleCheckout}
+              disabled={isCheckoutDisabled}
+            >
+              {checkoutButtonLabel}
+            </Button>
           </div>
-        </section>
+        </aside>
+        </div>
       </main>
 
       <BottomNavigationWrapper className="pb-4">
@@ -971,31 +1022,9 @@ export default function CheckoutPage() {
               size="lg"
               className="min-w-40"
               onClick={handleCheckout}
-              disabled={
-                ((!selectedPaymentMethod ||
-                  checkoutMutation.isPending ||
-                  isCollectingCard ||
-                  (selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData) ||
-                  (selectedPaymentMethod?.channel === 'CARDS' &&
-                    !!selectedCard &&
-                    !selectedCardCvv)) &&
-                  isAuthenticated) ||
-                false
-              }
+              disabled={isCheckoutDisabled}
             >
-              {isUserPending
-                ? 'Memuat...'
-                : !isAuthenticated
-                  ? 'Login untuk Checkout'
-                  : isCollectingCard
-                    ? 'Memproses Kartu...'
-                    : checkoutMutation.isPending
-                      ? 'Memproses...'
-                      : selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData
-                        ? 'Pilih Kartu'
-                        : selectedPaymentMethod
-                          ? 'Bayar Sekarang'
-                          : 'Pilih Metode'}
+              {checkoutButtonLabel}
             </Button>
           </div>
         </div>

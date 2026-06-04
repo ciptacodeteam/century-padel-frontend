@@ -14,12 +14,11 @@ const SponsorshipMarqueSection = () => {
   }
 
   return (
-    <section className="mx-auto my-6 w-11/12 lg:max-w-7xl">
-      <header className="flex-between py-2">
-        <h2 className="text-primary text-xl font-semibold lg:text-xl">Partners & Sponsorship</h2>
-      </header>
-
-      <main className="mx-auto py-4">
+    <section className="mx-auto lg:my-28 w-11/12 lg:max-w-7xl pb-38 lg:pb-0">
+      <main className="mx-auto">
+        <div className='text-center mb-8'>
+          <h1 className='text-gray-500'>Sponsor & Partnership</h1>
+        </div>
         <div className="relative overflow-hidden">
           {/* left gradient overlay */}
           <div className="pointer-events-none absolute top-0 left-0 z-10 h-full w-8 bg-linear-to-r from-white via-white/80 to-transparent" />
@@ -33,9 +32,10 @@ const SponsorshipMarqueSection = () => {
                 key={partnership.id}
                 src={partnership.logo || ''}
                 alt={partnership.name}
-                className="h-auto w-30 object-contain px-4 transition duration-300 ease-in-out sm:h-12 md:w-42 lg:w-42 lg:px-4"
-                width={200}
-                height={200}
+                unoptimized
+                className="h-auto w-30 object-contain px-4 transition duration-300 ease-in-out sm:h-12 md:w-42 lg:w-46 lg:px-8"
+                width={100}
+                height={100}
               />
             ))}
           </Marquee>

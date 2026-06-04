@@ -162,25 +162,26 @@ const ClubDetailPage = () => {
     <>
       <MainHeader backHref="/clubs" title="Detail Club" withLogo={false} />
 
-      <main className="pt-24 pb-16">
-        <div className="mx-auto w-11/12 flex-1 space-y-4">
+      <main className="pt-24 pb-16 lg:relative lg:left-1/2 lg:w-screen lg:-translate-x-1/2 lg:bg-neutral-50 lg:pb-24">
+        <div className="mx-auto w-11/12 flex-1 space-y-4 lg:mt-6 lg:grid lg:max-w-7xl lg:grid-cols-[minmax(280px,340px)_minmax(0,1fr)_minmax(280px,340px)] lg:items-start lg:gap-6 lg:space-y-0">
           {/* Club Header */}
-          <Card>
+          <aside className="space-y-4 lg:sticky lg:top-28">
+          <Card className="lg:overflow-hidden lg:border-neutral-200 lg:bg-white">
             <CardContent>
-              <div className="flex items-start gap-4">
-                <Avatar className="size-20 rounded-lg">
+              <div className="flex items-start gap-4 lg:flex-col">
+                <Avatar className="size-20 rounded-lg lg:size-28">
                   <AvatarImage src={club.logo || undefined} alt={club.name} />
-                  <AvatarFallback className="bg-primary/10 text-primary rounded-lg text-xl font-bold">
+                  <AvatarFallback className="bg-primary/10 text-primary rounded-lg text-xl font-bold lg:text-3xl">
                     {club.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="flex-1">
+                <div className="flex-1 lg:w-full">
                   <div className="mb-2 flex items-start justify-between">
-                    <h1 className="text-xl font-bold">{club.name}</h1>
+                    <h1 className="text-xl font-bold lg:text-3xl">{club.name}</h1>
                   </div>
 
-                  <div className="text-muted-foreground flex items-center gap-4 text-sm">
+                  <div className="text-muted-foreground flex items-center gap-4 text-sm lg:flex-wrap">
                     <Badge
                       variant={club.visibility === 'PUBLIC' ? 'default' : 'secondary'}
                       className="shrink-0"
@@ -252,38 +253,38 @@ const ClubDetailPage = () => {
               </div>
             </CardContent>
           </Card>
+          </aside>
 
+          <section className="space-y-4">
           {/* Description */}
-          {club.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Tentang Club</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-                  {club.description}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="lg:border-neutral-200 lg:bg-white">
+            <CardHeader>
+              <CardTitle className="text-lg">Tentang Club</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                {club.description || 'Deskripsi club belum ditambahkan.'}
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Rules */}
-          {club.rules && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Peraturan Club</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-muted-foreground text-sm whitespace-pre-wrap">
-                  {club.rules}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <Card className="lg:border-neutral-200 lg:bg-white">
+            <CardHeader>
+              <CardTitle className="text-lg">Peraturan Club</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-muted-foreground text-sm whitespace-pre-wrap">
+                {club.rules || 'Peraturan club belum ditambahkan.'}
+              </div>
+            </CardContent>
+          </Card>
+          </section>
 
+          <aside className="space-y-4 lg:sticky lg:top-28">
           {/* Leader */}
           {club.leader && (
-            <Card>
+            <Card className="lg:border-neutral-200 lg:bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <IconCrown className="size-5 text-yellow-500" />
@@ -315,7 +316,7 @@ const ClubDetailPage = () => {
           )}
 
           {/* Members List */}
-          <Card>
+          <Card className="lg:border-neutral-200 lg:bg-white">
             <CardHeader>
               <CardTitle className="flex items-center justify-between text-lg">
                 <span>Members ({club.clubMember?.length ?? club._count?.clubMember ?? 0})</span>
@@ -363,6 +364,7 @@ const ClubDetailPage = () => {
               )}
             </CardContent>
           </Card>
+          </aside>
         </div>
       </main>
 

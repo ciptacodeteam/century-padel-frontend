@@ -181,11 +181,12 @@ export default function ProfilePage() {
     <>
       <MainHeader title="Akun Saya" withLogo={false} withBorder />
 
-      <main className="mt-24 pb-24 lg:mt-28">
-        <div className="mx-auto w-11/12 max-w-7xl space-y-4">
+      <main className="mt-24 pb-24 lg:relative lg:left-1/2 lg:mt-0 lg:min-h-screen lg:w-screen lg:-translate-x-1/2 lg:bg-neutral-50 lg:pt-28 lg:pb-24">
+        <div className="mx-auto w-11/12 max-w-7xl space-y-4 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:space-y-0">
+          <aside className="space-y-4 lg:sticky lg:top-28">
           {/* Profile Header Card */}
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="lg:border-neutral-200 lg:bg-white">
+            <CardContent className="pt-6 lg:p-8">
               <div className="flex flex-col items-center space-y-4">
                 {/* Profile Image */}
                 <div className="border-primary/10 relative h-24 w-24 overflow-hidden rounded-full border-4">
@@ -216,8 +217,61 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
+          <div className="hidden space-y-4 lg:block">
+            <Card className="lg:border-neutral-200 lg:bg-white">
+              <CardHeader>
+                <CardTitle className="mb-1">Kata Sandi</CardTitle>
+                <CardDescription>Mengelola Kata Sandi</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full" onClick={() => setPasswordModalOpen(true)}>
+                  Ganti Kata Sandi
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:border-neutral-200 lg:bg-white">
+              <CardHeader>
+                <CardTitle className="mb-1">Syarat & Ketentuan</CardTitle>
+                <CardDescription>Baca ketentuan penggunaan layanan kami</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/terms-and-conditions')}
+                >
+                  <IconFileText className="mr-2 size-4" />
+                  Lihat Syarat & Ketentuan
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Button
+              variant="destructive"
+              className="w-full"
+              size="lg"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              loading={isLoggingOut}
+            >
+              <IconLogout className="size-5" />
+              Keluar
+            </Button>
+          </div>
+          </aside>
+
+          <section className="space-y-4">
+            <div className="hidden border bg-white p-6 lg:block">
+              <p className="text-primary text-sm font-semibold">Profile</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-normal">Akun Saya</h1>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Kelola informasi akun, verifikasi kontak, dan status membership kamu.
+              </p>
+            </div>
+
           {/* Profile Details Card */}
-          <Card>
+          <Card className="lg:border-neutral-200 lg:bg-white">
             <CardHeader>
               <CardTitle className="mb-1">Informasi Akun</CardTitle>
               <CardDescription>Detail akun dan status akun</CardDescription>
@@ -321,7 +375,7 @@ export default function ProfilePage() {
 
           {/* Active Membership Card */}
           {!isMembershipsLoading && myMemberships && myMemberships.active.length > 0 && (
-            <Card>
+            <Card className="lg:border-neutral-200 lg:bg-white">
               <CardHeader>
                 <CardTitle className="mb-1">Membership Aktif</CardTitle>
                 <CardDescription>Informasi membership yang sedang aktif</CardDescription>
@@ -403,7 +457,7 @@ export default function ProfilePage() {
           )}
 
           {/* Change Password (trigger) */}
-          <Card>
+          <Card className="lg:hidden">
             <CardHeader>
               <CardTitle className="mb-1">Kata Sandi</CardTitle>
               <CardDescription>Mengelola Kata Sandi</CardDescription>
@@ -416,7 +470,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Terms & Conditions */}
-          <Card>
+          <Card className="lg:hidden">
             <CardHeader>
               <CardTitle className="mb-1">Syarat & Ketentuan</CardTitle>
               <CardDescription>Baca ketentuan penggunaan layanan kami</CardDescription>
@@ -430,7 +484,7 @@ export default function ProfilePage() {
           </Card>
 
           {/* Logout Button */}
-          <footer className="mb-6">
+          <footer className="mb-6 lg:hidden">
             <Button
               variant="destructive"
               className="w-full"
@@ -443,6 +497,7 @@ export default function ProfilePage() {
               Keluar
             </Button>
           </footer>
+          </section>
         </div>
       </main>
 

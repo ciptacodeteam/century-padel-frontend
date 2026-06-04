@@ -191,17 +191,17 @@ const LoginForm = ({ onRegisterClick, openVerifyPhoneOtpModal, onLoginSuccess }:
   };
 
   return (
-    <form className="p-0 md:p-8 md:pb-4" onSubmit={form.handleSubmit(onSubmit)}>
+    <form className="p-0 md:p-6 md:pb-4" onSubmit={form.handleSubmit(onSubmit)}>
       <FieldSet>
         <FieldGroup>
           <header className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-lg font-bold md:text-2xl">Welcome back</h1>
-            <p className="text-muted-foreground text-sm text-balance md:text-base">
-              Please login to your Quantum Sport account.
+            <p className="text-muted-foreground text-balance md:text-base">
+              Sign in to your Century Padel account to booking courts.
             </p>
           </header>
           <Field>
-            <FieldLabel htmlFor="phone">Phone</FieldLabel>
+            <FieldLabel htmlFor="phone" className='-mb-1'>Phone</FieldLabel>
             <InputGroup>
               <InputGroupText className="px-3">+62</InputGroupText>
               <Input

@@ -81,7 +81,7 @@ export default function CartSheet() {
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="flex h-full w-full flex-col overflow-hidden bg-white sm:w-[420px] [&>button]:hidden"
+        className="flex h-full w-full flex-col overflow-hidden bg-white sm:w-105 [&>button]:hidden"
       >
         <div className="flex h-full flex-col">
           <SheetHeader className="mb-4 flex flex-row items-center justify-between border border-b px-5 py-7">
@@ -105,7 +105,7 @@ export default function CartSheet() {
                     {groupedBookings.map(([date, items]) => (
                       <div
                         key={date}
-                        className="border-muted space-y-3 rounded-lg border bg-white px-3 py-3"
+                        className="border-muted space-y-3 border bg-white px-3 py-3"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-primary text-sm font-semibold">
@@ -122,7 +122,7 @@ export default function CartSheet() {
                             .map((item, idx) => (
                               <div
                                 key={`${item.courtId}-${item.timeSlot}-${idx}`}
-                                className="border-muted/70 flex items-start justify-between gap-3 rounded-lg border bg-white px-3 py-2"
+                                className="border-muted/70 flex items-start justify-between gap-3 border bg-white px-3 py-2"
                               >
                                 <div>
                                   <p className="text-sm font-medium">{item.courtName}</p>
@@ -171,7 +171,7 @@ export default function CartSheet() {
                     {selectedCoaches.map((coach, idx) => (
                       <div
                         key={idx}
-                        className="border-muted/70 flex items-start justify-between gap-3 rounded-lg border bg-white px-3 py-2"
+                        className="border-muted/70 flex items-start justify-between gap-3  border bg-white px-3 py-2"
                       >
                         <div>
                           <p className="text-sm font-medium">{coach.coachName}</p>
@@ -220,7 +220,7 @@ export default function CartSheet() {
               )}
 
               {/* TOTAL */}
-              <section className="border-muted/70 bg-muted/20 mb-4 space-y-2 rounded-lg border px-4 py-4">
+              <section className="border-muted/70 bg-muted/20 mb-4 space-y-2  border px-4 py-4">
                 <div className="text-muted-foreground flex justify-between text-sm">
                   <span>Sub total</span>
                   <span className="text-foreground text-base font-semibold">
@@ -243,10 +243,10 @@ export default function CartSheet() {
             {(bookingItems.length > 0 ||
               selectedCoaches.length > 0 ||
               selectedInventories.length > 0) && (
-              <Button variant="outline" className="w-full" onClick={clearAll}>
-                Hapus Semua
-              </Button>
-            )}
+                <Button variant="outline" className="w-full" onClick={clearAll}>
+                  Hapus Semua
+                </Button>
+              )}
           </div>
         </div>
       </SheetContent>
