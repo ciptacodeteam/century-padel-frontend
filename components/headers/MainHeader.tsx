@@ -203,7 +203,7 @@ const MainHeader = ({
                         <span className="sr-only">Akun</span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem asChild>
                         <Link href="/profile">Profil</Link>
                       </DropdownMenuItem>
@@ -215,7 +215,7 @@ const MainHeader = ({
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <div className="p-1">
-                        <LogoutButton />
+                        <LogoutButton className="w-full" />
                       </div>
                     </DropdownMenuContent>
                   </DropdownMenu>

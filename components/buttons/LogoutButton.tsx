@@ -5,7 +5,7 @@ import useAuthStore from '@/stores/useAuthStore';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../ui/button';
 
-const LogoutButton = () => {
+const LogoutButton = ({ className }: { className?: string }) => {
   const queryClient = useQueryClient();
 
   const logout = useAuthStore((state) => state.logout);
@@ -24,7 +24,12 @@ const LogoutButton = () => {
   };
 
   return (
-    <Button variant={'destructive'} onClick={handleLogout} disabled={isPending}>
+    <Button
+      variant={'destructive'}
+      onClick={handleLogout}
+      disabled={isPending}
+      className={className}
+    >
       Logout
     </Button>
   );
