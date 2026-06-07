@@ -49,6 +49,7 @@ const CreateBannerForm = () => {
     adminCreateBannerMutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: adminBannersQueryOptions.queryKey });
+        queryClient.invalidateQueries({ queryKey: ['banners'] });
         closeDialog('create-banner');
       },
       onError: (err) => {

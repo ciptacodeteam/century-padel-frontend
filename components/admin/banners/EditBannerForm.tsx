@@ -58,6 +58,7 @@ const EditBannerForm = ({ data }: Props) => {
     adminUpdateBannerMutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: adminBannersQueryOptions.queryKey });
+        queryClient.invalidateQueries({ queryKey: ['banners'] });
         closeDialog(`edit-banner-${data.id}`);
       },
       onError: (err) => {

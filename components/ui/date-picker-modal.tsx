@@ -47,7 +47,7 @@ function DatePickerModal({
     <Dialog open={open} onOpenChange={setOpen}>
       {children}
       <DialogContent className="max-w-xs p-0 md:max-w-sm">
-        <DialogHeader className="pt-5">
+        <DialogHeader className="mx-auto pt-5">
           <DialogTitle>{label}</DialogTitle>
         </DialogHeader>
         <div className="flex-center p-4 pt-0">

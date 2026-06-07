@@ -1,28 +1,43 @@
 'use client';
 
 import { Carousel, CarouselContent, CarouselDots, CarouselItem } from '@/components/ui/carousel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { resolveMediaUrl } from '@/lib/utils';
+import defaultBannerImage from '@/public/assets/img/banner.webp';
 import { bannersQueryOptions } from '@/queries/banner';
 import type { Banner } from '@/types/model';
 import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import Autoplay from 'embla-carousel-autoplay';
-import Image from 'next/image';
+import Image, { type StaticImageData } from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
-const DEFAULT_IMAGE = 'assets/img/banner.webp';
-const DEFAULT_BANNERS = [
+type DisplayBanner = {
+  id: string;
+  image: string | StaticImageData | null;
+  link?: string | null;
+};
+
+const DEFAULT_BANNERS: DisplayBanner[] = [
   {
     id: 'default-banner',
-    image: DEFAULT_IMAGE
+    image: defaultBannerImage
   }
 ];
 
-const getBanners = (banners: Banner[] | undefined) => {
+const isBannerWithinSchedule = (banner: Banner, now = dayjs()) => {
+  const afterStart = !banner.startAt || !now.isBefore(dayjs(banner.startAt));
+  const beforeEnd = !banner.endAt || !now.isAfter(dayjs(banner.endAt));
+  return afterStart && beforeEnd;
+};
+
+const getBanners = (banners: Banner[] | undefined): DisplayBanner[] => {
   if (!banners || banners.length === 0) {
     return DEFAULT_BANNERS;
   }
 
   const filtered = banners
-    .filter((banner) => banner.isActive)
+    .filter((banner) => banner.isActive && isBannerWithinSchedule(banner))
     .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0));
 
   if (filtered.length === 0) {
@@ -32,18 +47,31 @@ const getBanners = (banners: Banner[] | undefined) => {
   return filtered;
 };
 
+const getBannerImageSrc = (image: DisplayBanner['image']) => {
+  if (!image || typeof image !== 'string') {
+    return image ?? defaultBannerImage;
+  }
+
+  return resolveMediaUrl(image) ?? defaultBannerImage;
+};
+
 export default function BannerSection() {
   const plugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
-  const { data } = useQuery(bannersQueryOptions());
+  const { data, isLoading } = useQuery(bannersQueryOptions());
   const banners = getBanners(data);
-
-  // 🔥 Tambahan untuk mendapatkan embla API
   const [emblaApi, setEmblaApi] = useState<any>(null);
 
-  // 🔥 Re-init ketika jumlah banner berubah
   useEffect(() => {
     if (emblaApi) emblaApi.reInit();
   }, [banners.length, emblaApi]);
+
+  if (isLoading) {
+    return (
+      <section className="mx-auto w-11/12 lg:max-w-7xl">
+        <Skeleton className="aspect-[calc(4*3+1)/5] w-full border border-black/10" />
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto w-11/12 lg:max-w-7xl">
@@ -57,7 +85,7 @@ export default function BannerSection() {
         >
           <CarouselContent className="ml-0">
             {banners.map((banner, index) => {
-              const image = banner.image || DEFAULT_IMAGE;
+              const image = getBannerImageSrc(banner.image);
 
               const content = (
                 <div className="relative aspect-[calc(4*3+1)/5] w-full overflow-hidden">
