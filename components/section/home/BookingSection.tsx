@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 
 import Image from 'next/image';
 import court1 from '@/public/court1.webp';
+import Link from 'next/link';
 
 export default function BookingSection() {
   return (
@@ -39,8 +40,13 @@ export default function BookingSection() {
                   <p className="mb-2 text-sm text-gray-400">
                     Exclusive access, premium benefits, and a better experience await you.
                   </p>
-                  <Button className="bg-primary h-11 w-full px-6 text-white hover:bg-[#cc452c]">
-                    Unlock Benefits
+                  <Button
+                    className="bg-primary h-11 w-full px-6 text-white hover:bg-[#cc452c]"
+                    asChild
+                  >
+                    <Link prefetch href="/membership">
+                      Unlock Benefits
+                    </Link>
                   </Button>
                 </div>
               </div>
