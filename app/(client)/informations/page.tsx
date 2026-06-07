@@ -15,7 +15,7 @@ export default function InformationsPage() {
       title: 'Book Court',
       description: 'Reserve your court at Quantum Social Club',
       icon: Calendar,
-      href: 'https://www.quantumsocialclub.id/booking',
+      href: 'https://www.centurypadel.id/booking',
       color: 'from-blue-500 to-cyan-500',
       external: false
     },

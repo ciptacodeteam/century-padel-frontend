@@ -2,7 +2,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://quantumsocialclub.id';
+  const baseUrl = 'https://centurypadel.id';
 
   return [
     {

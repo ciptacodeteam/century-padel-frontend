@@ -38,18 +38,18 @@ export const metadata: Metadata = {
   ],
 
   alternates: {
-    canonical: 'https://quantumsocialclub.id/'
+    canonical: 'https://centurypadel.id/'
   },
 
   openGraph: {
     title: 'Quantum Sport & Social Club - Booking Lapangan Online Mudah, Cepat & Terpercaya',
     description:
       'Pesan lapangan olahraga favoritmu secara online dengan mudah, cepat, dan aman hanya di Quantum Sport.',
-    url: 'https://quantumsocialclub.id/',
+    url: 'https://centurypadel.id/',
     siteName: 'Quantum Sport and Social Club',
     images: [
       {
-        url: 'https://quantumsocialclub.id/assets/img/og-image.webp',
+        url: 'https://centurypadel.id/assets/img/og-image.webp',
         width: 1200,
         height: 1200,
         alt: 'Quantum Sport - Booking Lapangan Online'
@@ -87,9 +87,9 @@ export default function RootLayout({
               name: 'Quantum Sport & Social Club',
               description:
                 'Fasilitas olahraga untuk booking lapangan secara online dengan mudah, cepat, dan aman.',
-              url: 'https://quantumsocialclub.id/',
-              image: 'https://quantumsocialclub.id/assets/img/og-image.webp',
-              logo: 'https://quantumsocialclub.id/assets/img/og-image.webp',
+              url: 'https://centurypadel.id/',
+              image: 'https://centurypadel.id/assets/img/og-image.webp',
+              logo: 'https://centurypadel.id/assets/img/og-image.webp',
               address: {
                 '@type': 'PostalAddress',
                 addressCountry: 'ID',
@@ -115,7 +115,7 @@ export default function RootLayout({
                 '@type': 'ReserveAction',
                 target: {
                   '@type': 'EntryPoint',
-                  urlTemplate: 'https://quantumsocialclub.id/booking'
+                  urlTemplate: 'https://centurypadel.id/booking'
                 },
                 result: {
                   '@type': 'Reservation',
