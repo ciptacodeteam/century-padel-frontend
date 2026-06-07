@@ -287,7 +287,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
           'flex h-[calc(100dvh-180px)] w-full flex-col',
           embedded
             ? 'lg:h-[calc(100dvh-250px)]'
-            : 'lg:relative lg:left-1/2 lg:h-[calc(100dvh-112px)] lg:w-dvw lg:max-w-none lg:-translate-x-1/2'
+            : 'lg:relative lg:left-1/2 lg:h-[calc(100dvh-5rem)] lg:w-dvw lg:max-w-none lg:-translate-x-1/2'
         )}
       >
         <div className="sticky top-24 z-30 border-b bg-white pb-3 lg:static lg:top-14 lg:pt-2 lg:pb-2">
@@ -330,145 +330,138 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
           </div>
         </div>
 
-        <div
-          className={cn(
-            'scrollbar-hide flex-1 overflow-auto pb-10 lg:pb-0',
-            bookingItems.length > 0 && 'lg:pb-24'
-          )}
-        >
+        <div className="scrollbar-hide flex-1 overflow-auto pb-10 lg:min-h-0 lg:pb-0">
           {isSlotsLoading && (
             <div className="text-muted-foreground p-4 text-center text-sm">Memuat slot...</div>
           )}
 
-          <div className="h-full overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-0 border border-gray-200 text-center">
-              <thead className="sticky top-0 z-20 bg-gray-50/90 shadow-sm backdrop-blur md:text-sm md:tracking-tight">
-                <tr>
-                  <th className="sticky left-0 z-30 w-20 border-r border-b bg-gray-50 px-2 py-2 text-left font-semibold" />
-                  {courts.map((court) => (
-                    <th
-                      key={court.id}
-                      className="border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold"
+          <table className="min-w-full border-separate border-spacing-0 border border-gray-200 text-center">
+            <thead className="sticky top-0 z-20 bg-gray-50/90 shadow-sm backdrop-blur md:text-sm md:tracking-tight">
+              <tr>
+                <th className="sticky left-0 z-30 w-20 border-r border-b bg-gray-50 px-2 py-2 text-left font-semibold" />
+                {courts.map((court) => (
+                  <th
+                    key={court.id}
+                    className="border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold"
+                  >
+                    <Button
+                      variant="ghost"
+                      className="flex items-center gap-1 text-gray-700"
+                      onClick={() => setSelectedCourt(court)}
                     >
-                      <Button
-                        variant="ghost"
-                        className="flex items-center gap-1 text-gray-700"
-                        onClick={() => setSelectedCourt(court)}
-                      >
-                        {court.name}
-                        <IconInfoCircle className="inline-block size-4" />
-                      </Button>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+                      {court.name}
+                      <IconInfoCircle className="inline-block size-4" />
+                    </Button>
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-              <tbody>
-                {availableTimeSlots.map((time) => (
-                  <tr key={time}>
-                    <td className="sticky left-0 z-10 w-20 border border-gray-200 bg-white px-4 py-2 text-left text-sm font-medium">
-                      {time}
-                    </td>
-                    {courts.map((court) => {
-                      const slot = slotMap.get(`${court.id}-${time}`);
-                      const hasSlot = !!slot;
-                      const isAvailable = !!slot?.isAvailable;
-                      const selected = selectedCells.some(
-                        (cell) => cell.courtId === court.id && cell.time === time
-                      );
-                      const normalPrice = slot?.price ?? 0;
-                      const discountPrice = slot?.discountPrice ?? 0;
-                      const effectivePrice = discountPrice > 0 ? discountPrice : normalPrice;
+            <tbody>
+              {availableTimeSlots.map((time) => (
+                <tr key={time}>
+                  <td className="sticky left-0 z-10 w-20 border border-gray-200 bg-white px-4 py-2 text-left text-sm font-medium">
+                    {time}
+                  </td>
+                  {courts.map((court) => {
+                    const slot = slotMap.get(`${court.id}-${time}`);
+                    const hasSlot = !!slot;
+                    const isAvailable = !!slot?.isAvailable;
+                    const selected = selectedCells.some(
+                      (cell) => cell.courtId === court.id && cell.time === time
+                    );
+                    const normalPrice = slot?.price ?? 0;
+                    const discountPrice = slot?.discountPrice ?? 0;
+                    const effectivePrice = discountPrice > 0 ? discountPrice : normalPrice;
 
-                      return (
-                        <td key={court.id} className="border border-gray-200 p-1">
-                          <button
-                            disabled={!hasSlot || !isAvailable}
-                            className={cn(
-                              'flex h-14 w-full flex-col items-start justify-between rounded px-2 py-1 text-base font-semibold transition-all',
-                              !hasSlot
-                                ? 'text-muted-foreground cursor-not-allowed bg-gray-100'
-                                : !isAvailable
-                                  ? 'cursor-not-allowed bg-gray-200 text-gray-400'
-                                  : selected
-                                    ? 'bg-primary text-white shadow-lg'
-                                    : 'bg-white hover:bg-orange-100'
-                            )}
-                            onClick={() => {
-                              if (!slot || !isAvailable) return;
+                    return (
+                      <td key={court.id} className="border border-gray-200 p-1">
+                        <button
+                          disabled={!hasSlot || !isAvailable}
+                          className={cn(
+                            'flex h-14 w-full flex-col items-start justify-between rounded px-2 py-1 text-base font-semibold transition-all',
+                            !hasSlot
+                              ? 'text-muted-foreground cursor-not-allowed bg-gray-100'
+                              : !isAvailable
+                                ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                                : selected
+                                  ? 'bg-primary text-white shadow-lg'
+                                  : 'bg-white hover:bg-orange-100'
+                          )}
+                          onClick={() => {
+                            if (!slot || !isAvailable) return;
 
-                              setSelectionsByDate((prev) => {
-                                const dateKey = selectedDate;
-                                const currentSelections = prev[dateKey] ?? [];
-                                const exists = currentSelections.some(
-                                  (cell) => cell.courtId === court.id && cell.time === time
-                                );
+                            setSelectionsByDate((prev) => {
+                              const dateKey = selectedDate;
+                              const currentSelections = prev[dateKey] ?? [];
+                              const exists = currentSelections.some(
+                                (cell) => cell.courtId === court.id && cell.time === time
+                              );
 
-                                const updatedSelections = exists
-                                  ? currentSelections.filter(
-                                      (cell) => !(cell.courtId === court.id && cell.time === time)
-                                    )
-                                  : [
-                                      ...currentSelections,
-                                      {
-                                        slotId: slot.id,
-                                        courtId: court.id,
-                                        courtName: court.name,
-                                        time,
-                                        price: effectivePrice,
-                                        normalPrice,
-                                        discountPrice,
-                                        dateKey
-                                      }
-                                    ];
+                              const updatedSelections = exists
+                                ? currentSelections.filter(
+                                    (cell) => !(cell.courtId === court.id && cell.time === time)
+                                  )
+                                : [
+                                    ...currentSelections,
+                                    {
+                                      slotId: slot.id,
+                                      courtId: court.id,
+                                      courtName: court.name,
+                                      time,
+                                      price: effectivePrice,
+                                      normalPrice,
+                                      discountPrice,
+                                      dateKey
+                                    }
+                                  ];
 
-                                const next = { ...prev };
-                                if (updatedSelections.length > 0) {
-                                  next[dateKey] = updatedSelections;
-                                } else {
-                                  delete next[dateKey];
-                                }
+                              const next = { ...prev };
+                              if (updatedSelections.length > 0) {
+                                next[dateKey] = updatedSelections;
+                              } else {
+                                delete next[dateKey];
+                              }
 
-                                return next;
-                              });
-                            }}
-                          >
-                            {hasSlot ? (
-                              <>
-                                {discountPrice > 0 && discountPrice < normalPrice ? (
-                                  <span className="flex flex-col items-start text-xs">
-                                    <span className="text-[10px] text-gray-400 line-through">
-                                      Rp{normalPrice.toLocaleString('id-ID')}
-                                    </span>
-                                    <span
-                                      className={cn(
-                                        'text-sm font-semibold',
-                                        selected ? 'text-white' : 'text-primary'
-                                      )}
-                                    >
-                                      Rp{effectivePrice.toLocaleString('id-ID')}
-                                    </span>
+                              return next;
+                            });
+                          }}
+                        >
+                          {hasSlot ? (
+                            <>
+                              {discountPrice > 0 && discountPrice < normalPrice ? (
+                                <span className="flex flex-col items-start text-xs">
+                                  <span className="text-[10px] text-gray-400 line-through">
+                                    Rp{normalPrice.toLocaleString('id-ID')}
                                   </span>
-                                ) : (
-                                  <span className="text-sm">
+                                  <span
+                                    className={cn(
+                                      'text-sm font-semibold',
+                                      selected ? 'text-white' : 'text-primary'
+                                    )}
+                                  >
                                     Rp{effectivePrice.toLocaleString('id-ID')}
                                   </span>
-                                )}
-                                {!isAvailable && <span className="text-xs">Booked</span>}
-                              </>
-                            ) : (
-                              <span className="text-xs">Booked</span>
-                            )}
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="pointer-events-none h-2" />
-          </div>
+                                </span>
+                              ) : (
+                                <span className="text-sm">
+                                  Rp{effectivePrice.toLocaleString('id-ID')}
+                                </span>
+                              )}
+                              {!isAvailable && <span className="text-xs">Booked</span>}
+                            </>
+                          ) : (
+                            <span className="text-xs">Booked</span>
+                          )}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="pointer-events-none h-2 lg:hidden" />
         </div>
       </main>
 
