@@ -32,16 +32,16 @@ export default function BookingSection() {
             </div>
             <div className="border border-gray-200 p-4">
               <div className="flex h-full flex-col justify-between">
-                <div>
-                  <Image src={court1} alt="banner1" />
+                <div className="relative h-full w-full">
+                  <Image src={court1} alt="banner1" fill className="object-cover" />
                 </div>
-                <div>
+                <div className="mt-4">
                   <h1 className="mb-2 text-lg font-semibold">Membership Program</h1>
                   <p className="mb-2 text-sm text-gray-400">
                     Exclusive access, premium benefits, and a better experience await you.
                   </p>
                   <Button
-                    className="bg-primary h-11 w-full px-6 text-white hover:bg-[#cc452c]"
+                    className="bg-primary mt-2 h-11 w-full px-6 text-white hover:bg-[#cc452c]"
                     asChild
                   >
                     <Link prefetch href="/membership">
