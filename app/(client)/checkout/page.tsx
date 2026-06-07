@@ -7,8 +7,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import SavedCardSelector from '@/components/forms/payment/SavedCardSelector';
 import CreditCardForm, { type CreditCardFormData } from '@/components/forms/payment/CreditCardForm';
+import { useBookingStoreHydration } from '@/hooks/useBookingStoreHydration';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
+import { hasSlotDiscount } from '@/lib/booking';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
@@ -40,37 +42,11 @@ const currencyFormatter = new Intl.NumberFormat('id-ID', {
 const formatCurrency = (value: number) => currencyFormatter.format(value).replace(/\s/g, '');
 const PAYMENT_METHOD_STORAGE_KEY = 'checkout-selected-payment';
 
-const normalizeSlotTime = (time: string) => time?.trim().replace(/ /g, '').replace(/\t/g, '') ?? '';
-
-const parseSlotTime = (time: string): dayjs.Dayjs | null => {
-  const sanitized = normalizeSlotTime(time).replace(/\./g, ':');
-  const candidates = ['HH:mm', 'H:mm'];
-  for (const format of candidates) {
-    const parsed = dayjs(sanitized, format, true);
-    if (parsed.isValid()) return parsed;
-  }
-  return null;
-};
-
-const getSlotDisplayRange = (timeSlot: string) => {
-  const parsed = parseSlotTime(timeSlot);
-  if (!parsed) {
-    return {
-      start: timeSlot,
-      end: timeSlot
-    };
-  }
-
-  const start = parsed.format('HH:mm');
-  const end = parsed.add(1, 'hour').format('HH:mm');
-
-  return { start, end };
-};
-
 export default function CheckoutPage() {
   const router = useRouter();
   // const pathname = usePathname();
   // const searchParams = useSearchParams();
+  const isBookingStoreHydrated = useBookingStoreHydration();
   const bookingItems = useBookingStore((state) => state.bookingItems);
   const coachTotal = useBookingStore((state) => state.coachTotal);
   const inventoryTotal = useBookingStore((state) => state.inventoryTotal);
@@ -78,6 +54,7 @@ export default function CheckoutPage() {
   const selectedBallboys = useBookingStore((state) => state.selectedBallboys);
   const selectedInventories = useBookingStore((state) => state.selectedInventories);
   // const removeCoach = useBookingStore((state) => state.removeCoach);
+  const removeBookingItem = useBookingStore((state) => state.removeBookingItem);
   const removeInventory = useBookingStore((state) => state.removeInventory);
 
   const addOnsTotal = coachTotal + inventoryTotal;
@@ -194,11 +171,14 @@ export default function CheckoutPage() {
   // }, [pathname, searchParams]);
 
   useEffect(() => {
+    if (!isBookingStoreHydrated) return;
+
     if (!isUserPending && !isAuthenticated && bookingItems.length > 0) {
       // setRedirectPath(currentPath);
       openAuthModal();
     }
   }, [
+    isBookingStoreHydrated,
     isUserPending,
     isAuthenticated,
     bookingItems.length,
@@ -206,6 +186,13 @@ export default function CheckoutPage() {
     setRedirectPath
     // currentPath
   ]);
+
+  useEffect(() => {
+    if (!isBookingStoreHydrated) return;
+    if (bookingItems.length === 0) {
+      router.push('/booking');
+    }
+  }, [isBookingStoreHydrated, bookingItems.length, router]);
 
   useEffect(() => {
     if (paymentMethods.length === 0) return;
@@ -318,6 +305,17 @@ export default function CheckoutPage() {
       (a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf()
     );
   }, [bookingItems]);
+
+  if (!isBookingStoreHydrated) {
+    return (
+      <div className="bg-background min-h-screen">
+        <MainHeader title="Detail Pembayaran" backHref="/booking" withCartBadge withLogo={false} />
+        <main className="flex min-h-[calc(100vh-96px)] flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-muted-foreground text-sm">Memuat pesanan...</p>
+        </main>
+      </div>
+    );
+  }
 
   if (bookingItems.length === 0) {
     return (
@@ -583,13 +581,13 @@ export default function CheckoutPage() {
               : 'Pilih Metode';
 
   const isCheckoutDisabled =
-    (((!selectedPaymentMethod ||
+    ((!selectedPaymentMethod ||
       checkoutMutation.isPending ||
       isCollectingCard ||
       (selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData) ||
       (selectedPaymentMethod?.channel === 'CARDS' && !!selectedCard && !selectedCardCvv)) &&
       isAuthenticated) ||
-      false);
+    false;
 
   return (
     <div className="min-h-screen pb-16 lg:bg-neutral-50 lg:pb-0">
@@ -603,108 +601,133 @@ export default function CheckoutPage() {
 
       <main className="mx-auto flex w-11/12 max-w-4xl flex-col gap-6 pt-24 pb-10 lg:relative lg:left-1/2 lg:min-h-screen lg:w-screen lg:max-w-none lg:-translate-x-1/2 lg:bg-neutral-50 lg:pt-28 lg:pb-12">
         <div className="mx-auto grid w-full gap-6 lg:w-11/12 lg:max-w-7xl lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-4">
-        <div className="space-y-6">
-          <div className="hidden border bg-white p-6 lg:block">
-            <p className="text-primary text-sm font-semibold">Checkout</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-normal">Detail Pembayaran</h1>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Periksa pesanan, pilih metode pembayaran, lalu lanjutkan pembayaran.
-            </p>
-          </div>
+          <div className="space-y-6">
+            <div className="hidden border bg-white p-6 lg:block">
+              <p className="text-primary text-sm font-semibold">Checkout</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-normal">Detail Pembayaran</h1>
+              <p className="text-muted-foreground mt-2 text-sm">
+                Periksa pesanan, pilih metode pembayaran, lalu lanjutkan pembayaran.
+              </p>
+            </div>
 
-          <section className="border-muted space-y-4 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-            {groupedCourts.map((group, index) => (
-              <div
-                key={`${group.courtName}-${group.date}`}
-                className={cn(
-                  'space-y-3',
-                  index < groupedCourts.length - 1 && 'border-muted/80 border-b border-dashed pb-4'
-                )}
-              >
-                <header className="space-y-1">
-                  <h2 className="text-primary text-base font-semibold">{group.courtName}</h2>
-                  <p className="text-muted-foreground text-sm">
-                    {dayjs(group.date).format('dddd, DD MMM YYYY')}
-                  </p>
-                </header>
+            <section className="border-muted space-y-4 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+              {groupedCourts.map((group, index) => (
+                <div
+                  key={`${group.courtName}-${group.date}`}
+                  className={cn(
+                    'space-y-3',
+                    index < groupedCourts.length - 1 &&
+                      'border-muted/80 border-b border-dashed pb-4'
+                  )}
+                >
+                  <header className="space-y-1">
+                    <h2 className="text-primary text-base font-semibold">{group.courtName}</h2>
+                    <p className="text-muted-foreground text-sm">
+                      {dayjs(group.date).format('dddd, DD MMM YYYY')}
+                    </p>
+                  </header>
 
-                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-                  {[...group.slots]
-                    .sort((a, b) => {
-                      const dateCompare = a.date.localeCompare(b.date);
-                      if (dateCompare !== 0) return dateCompare;
-                      return a.timeSlot.localeCompare(b.timeSlot);
-                    })
-                    .map((slot, slotIndex) => {
-                      // Check if this slot is free due to membership
-                      const sortedBookings = [...bookingItems].sort((a, b) => {
+                  <div
+                    className={cn(
+                      'space-y-2 lg:grid lg:grid-cols-1 lg:gap-3 lg:space-y-0',
+                      group.slots.length > 1 && 'lg:grid-cols-2'
+                    )}
+                  >
+                    {[...group.slots]
+                      .sort((a, b) => {
                         const dateCompare = a.date.localeCompare(b.date);
                         if (dateCompare !== 0) return dateCompare;
                         return a.timeSlot.localeCompare(b.timeSlot);
-                      });
-                      const bookingIndex = sortedBookings.findIndex(
-                        (b) =>
-                          b.courtId === slot.courtId &&
-                          b.timeSlot === slot.timeSlot &&
-                          b.date === slot.date
-                      );
-                      const isFree =
-                        membershipDiscount.canUseMembership &&
-                        bookingIndex >= 0 &&
-                        bookingIndex < membershipDiscount.slotsToDeduct;
+                      })
+                      .map((slot, slotIndex) => {
+                        // Check if this slot is free due to membership
+                        const sortedBookings = [...bookingItems].sort((a, b) => {
+                          const dateCompare = a.date.localeCompare(b.date);
+                          if (dateCompare !== 0) return dateCompare;
+                          return a.timeSlot.localeCompare(b.timeSlot);
+                        });
+                        const bookingIndex = sortedBookings.findIndex(
+                          (b) =>
+                            b.courtId === slot.courtId &&
+                            b.timeSlot === slot.timeSlot &&
+                            b.date === slot.date
+                        );
+                        const isFree =
+                          membershipDiscount.canUseMembership &&
+                          bookingIndex >= 0 &&
+                          bookingIndex < membershipDiscount.slotsToDeduct;
+                        const showDiscount = !isFree && hasSlotDiscount(slot);
+                        const normalPrice = slot.normalPrice ?? slot.price;
+                        const effectivePrice =
+                          slot.discountPrice && slot.discountPrice > 0
+                            ? slot.discountPrice
+                            : slot.price;
 
-                      return (
-                        <div
-                          key={`${slot.courtId}-${slot.timeSlot}-${slotIndex}`}
-                          className={cn(
-                            'border-muted/60 flex items-center justify-between rounded-md border px-4 py-3 lg:rounded-none',
-                            isFree ? 'border-green-200 bg-green-50' : 'bg-muted/50'
-                          )}
-                        >
-                          <div className="flex flex-col">
-                            {(() => {
-                              const range = getSlotDisplayRange(slot.timeSlot);
-                              return (
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">
-                                    {range.start} - {range.end}
-                                  </span>
-                                  {isFree && (
-                                    <span className="text-xs font-medium text-green-600">
-                                      (Gratis)
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </div>
-                          <span
+                        return (
+                          <div
+                            key={`${slot.courtId}-${slot.timeSlot}-${slotIndex}`}
                             className={cn(
-                              'text-sm font-semibold',
-                              isFree && 'text-green-600 line-through'
+                              'border-muted/60 flex items-center justify-between rounded-md border px-4 py-3 lg:rounded-none',
+                              isFree ? 'border-green-200 bg-green-50' : 'bg-muted/50'
                             )}
                           >
-                            {isFree ? (
-                              <>
-                                <span className="text-muted-foreground">
+                            <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">
+                                  {slot.timeSlot} - {slot.endTime}
+                                </span>
+                                {isFree && (
+                                  <span className="text-xs font-medium text-green-600">
+                                    (Gratis)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {isFree ? (
+                                <span className="text-sm font-semibold text-green-600">
+                                  <span className="text-muted-foreground line-through">
+                                    {formatCurrency(slot.price)}
+                                  </span>{' '}
+                                  <span className="ml-1">Gratis</span>
+                                </span>
+                              ) : showDiscount ? (
+                                <span className="flex flex-col items-end text-sm">
+                                  <span className="text-muted-foreground text-xs line-through">
+                                    {formatCurrency(normalPrice)}
+                                  </span>
+                                  <span className="text-primary font-semibold">
+                                    {formatCurrency(effectivePrice)}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="text-sm font-semibold">
                                   {formatCurrency(slot.price)}
-                                </span>{' '}
-                                <span className="ml-1">Gratis</span>
-                              </>
-                            ) : (
-                              formatCurrency(slot.price)
-                            )}
-                          </span>
-                        </div>
-                      );
-                    })}
+                                </span>
+                              )}
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="text-muted-foreground hover:text-destructive h-8 w-8"
+                                aria-label="Hapus slot"
+                                onClick={() =>
+                                  removeBookingItem(slot.courtId, slot.timeSlot, slot.date)
+                                }
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </section>
+              ))}
+            </section>
 
-        {/* Coach section - commented out as not in use */}
-        {/* {selectedCoaches.length > 0 && (
+            {/* Coach section - commented out as not in use */}
+            {/* {selectedCoaches.length > 0 && (
           <section className="border-muted space-y-3 rounded-lg border bg-white p-4">
             <header className="space-y-1">
               <h3 className="text-base font-semibold">Coach</h3>
@@ -741,271 +764,283 @@ export default function CheckoutPage() {
           </section>
         )} */}
 
-          {selectedInventories.length > 0 && (
-          <section className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-            <header className="space-y-1">
-              <h3 className="text-base font-semibold">Peralatan</h3>
-              <p className="text-muted-foreground text-sm">
-                {selectedInventories.length} jenis dipilih
-              </p>
-            </header>
-            <div className="space-y-2">
-              {selectedInventories.map((inventory, index) => (
-                <div
-                  key={`${inventory.inventoryId}-${inventory.timeSlot ?? 'default'}-${index}`}
-                  className="border-muted/70 flex items-center justify-between rounded-md border px-4 py-3"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{inventory.inventoryName}</span>
-                    <span className="text-muted-foreground text-xs">Qty: {inventory.quantity}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold">{formatCurrency(inventory.price)}</span>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="text-muted-foreground hover:text-destructive h-8 w-8"
-                      aria-label="Hapus peralatan"
-                      onClick={() =>
-                        removeInventory(inventory.inventoryId, inventory.timeSlot ?? 'default')
-                      }
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-          )}
-
-          <Button
-            variant="outline"
-            className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 flex items-center justify-center gap-2 rounded-2xl border border-dashed py-3 text-sm font-semibold transition-colors lg:rounded-none w-full lg:w-fit"
-            onClick={() => router.push('/add-ons')}
-          >
-            Tambah Add-Ons
-          </Button>
-        </div>
-
-        <aside className="grid gap-4 lg:sticky lg:top-28">
-          <Button
-            variant="outline"
-            className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 hidden items-center justify-center gap-2 rounded-none border border-dashed py-3 text-sm font-semibold transition-colors"
-            onClick={() => router.push('/add-ons')}
-          >
-            Tambah Add-Ons
-          </Button>
-
-          <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {selectedPaymentMethod ? (
-                  resolveMediaUrl(selectedPaymentMethod.logo) ? (
-                    <Image
-                      src={resolveMediaUrl(selectedPaymentMethod.logo)!}
-                      alt={selectedPaymentMethod.name}
-                      width={48}
-                      height={48}
-                      className="h-12 w-12 rounded-md object-contain"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-md text-sm font-semibold">
-                      {selectedPaymentMethod.name.slice(0, 2).toUpperCase()}
-                    </div>
-                  )
-                ) : null}
-                <div>
-                  <p className="text-sm font-medium">
-                    {selectedPaymentMethod ? selectedPaymentMethod.name : 'Pilih Metode Pembayaran'}
+            {selectedInventories.length > 0 && (
+              <section className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+                <header className="space-y-1">
+                  <h3 className="text-base font-semibold">Peralatan</h3>
+                  <p className="text-muted-foreground text-sm">
+                    {selectedInventories.length} jenis dipilih
                   </p>
-                  <p className="text-muted-foreground text-xs">
-                    {selectedPaymentMethod
-                      ? 'Konfirmasi Instan'
-                      : 'Klik untuk memilih metode pembayaran'}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="link"
-                className="text-primary px-0"
-                onClick={handlePaymentMethodClick}
-              >
-                Ganti Metode
-              </Button>
-            </div>
-          </div>
-
-          {/* Card Payment Selection - Show only if CARDS channel is selected */}
-          {selectedPaymentMethod?.channel === 'CARDS' && (
-            <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-              {!newCardData ? (
-                <SavedCardSelector
-                  onCardSelect={(card, cvv) => {
-                    setSelectedCard(card);
-                    setSelectedCardCvv(cvv);
-                  }}
-                  onAddNewCard={handleAddNewCard}
-                  isLoading={checkoutMutation.isPending}
-                />
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Kartu Baru</p>
-                      <p className="text-muted-foreground text-xs">{newCardData.cardholderName}</p>
-                      <p className="text-muted-foreground text-xs">
-                        •••• •••• •••• {newCardData.cardNumber.slice(-4)}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNewCardData(null)}
+                </header>
+                <div className="space-y-2">
+                  {selectedInventories.map((inventory, index) => (
+                    <div
+                      key={`${inventory.inventoryId}-${inventory.timeSlot ?? 'default'}-${index}`}
+                      className="border-muted/70 flex items-center justify-between rounded-md border px-4 py-3"
                     >
-                      Ganti Kartu
-                    </Button>
-                  </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{inventory.inventoryName}</span>
+                        <span className="text-muted-foreground text-xs">
+                          Qty: {inventory.quantity}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold">
+                          {formatCurrency(inventory.price)}
+                        </span>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="text-muted-foreground hover:text-destructive h-8 w-8"
+                          aria-label="Hapus peralatan"
+                          onClick={() =>
+                            removeInventory(inventory.inventoryId, inventory.timeSlot ?? 'default')
+                          }
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
-
-          <div className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Kode Promo</p>
-                <p className="text-muted-foreground text-xs">
-                  Masukkan kode promo untuk mendapatkan diskon
-                </p>
-              </div>
-              {appliedPromoCode && promoDiscountAmount > 0 && (
-                <span className="text-xs font-semibold text-green-600">Terpasang</span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                placeholder="Contoh: HEMAT10"
-                value={promoCode}
-                onChange={(event) => handlePromoInputChange(event.target.value)}
-                className="border-muted/70 focus:border-primary focus:ring-primary/20 h-11 flex-1 rounded-md border bg-white px-3 text-sm transition outline-none"
-              />
-              <Button
-                type="button"
-                className="h-11 px-5"
-                onClick={handleApplyPromo}
-                disabled={
-                  !selectedPaymentMethod || applyPromoMutation.isPending || !promoCode.trim()
-                }
-              >
-                {applyPromoMutation.isPending ? 'Memproses...' : 'Gunakan'}
-              </Button>
-            </div>
-            {promoError && <p className="text-xs text-red-600">{promoError}</p>}
-            {!promoError && appliedPromoCode && promoDiscountAmount > 0 && (
-              <p className="text-xs text-green-600">
-                Diskon {formatCurrency(promoDiscountAmount)} diterapkan
-              </p>
+              </section>
             )}
+
+            <Button
+              variant="outline"
+              className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed py-3 text-sm font-semibold transition-colors lg:w-fit lg:rounded-none"
+              onClick={() => router.push('/add-ons')}
+            >
+              Tambah Add-Ons
+            </Button>
           </div>
 
-          {/* Membership Information */}
-          {isAuthenticated && membershipDiscount.activeMembership && (
-            <div className="border-muted bg-primary/5 rounded-lg border p-4 lg:rounded-none">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-primary text-sm font-medium">Membership Aktif</span>
-                <span
-                  className={
-                    membershipDiscount.activeMembership.isExpired ||
-                    membershipDiscount.activeMembership.isSuspended
-                      ? 'text-xs text-red-600'
-                      : 'text-xs text-green-600'
-                  }
+          <aside className="grid gap-4 lg:sticky lg:top-28">
+            <Button
+              variant="outline"
+              className="border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 hidden items-center justify-center gap-2 rounded-none border border-dashed py-3 text-sm font-semibold transition-colors"
+              onClick={() => router.push('/add-ons')}
+            >
+              Tambah Add-Ons
+            </Button>
+
+            <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {selectedPaymentMethod ? (
+                    resolveMediaUrl(selectedPaymentMethod.logo) ? (
+                      <Image
+                        src={resolveMediaUrl(selectedPaymentMethod.logo)!}
+                        alt={selectedPaymentMethod.name}
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded-md object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-md text-sm font-semibold">
+                        {selectedPaymentMethod.name.slice(0, 2).toUpperCase()}
+                      </div>
+                    )
+                  ) : null}
+                  <div>
+                    <p className="text-sm font-medium">
+                      {selectedPaymentMethod
+                        ? selectedPaymentMethod.name
+                        : 'Pilih Metode Pembayaran'}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {selectedPaymentMethod
+                        ? 'Konfirmasi Instan'
+                        : 'Klik untuk memilih metode pembayaran'}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="link"
+                  className="text-primary px-0"
+                  onClick={handlePaymentMethodClick}
                 >
-                  {membershipDiscount.activeMembership.isExpired
-                    ? 'Expired'
-                    : membershipDiscount.activeMembership.isSuspended
-                      ? 'Suspended'
-                      : 'Active'}
-                </span>
+                  Ganti Metode
+                </Button>
               </div>
-              <div className="space-y-1 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Paket:</span>{' '}
-                  <span className="font-medium">
-                    {membershipDiscount.activeMembership.membership.name}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Sisa Sesi:</span>{' '}
-                  <span className="font-medium">{membershipDiscount.remainingSessions} sesi</span>
-                </div>
-                {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
-                  <div className="text-primary mt-1 font-medium">
-                    {membershipDiscount.slotsToDeduct} slot akan gratis menggunakan membership
+            </div>
+
+            {/* Card Payment Selection - Show only if CARDS channel is selected */}
+            {selectedPaymentMethod?.channel === 'CARDS' && (
+              <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+                {!newCardData ? (
+                  <SavedCardSelector
+                    onCardSelect={(card, cvv) => {
+                      setSelectedCard(card);
+                      setSelectedCardCvv(cvv);
+                    }}
+                    onAddNewCard={handleAddNewCard}
+                    isLoading={checkoutMutation.isPending}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Kartu Baru</p>
+                        <p className="text-muted-foreground text-xs">
+                          {newCardData.cardholderName}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          •••• •••• •••• {newCardData.cardNumber.slice(-4)}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNewCardData(null)}
+                      >
+                        Ganti Kartu
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          <div className="border-muted mb-5 rounded-lg border bg-white p-4 lg:mb-0 lg:rounded-none lg:p-6">
-            <h3 className="mb-3 text-base font-semibold">Ringkasan Pembayaran</h3>
-            <div className="space-y-2 text-sm">
+            <div className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="text-foreground font-medium">{formatCurrency(courtSubtotal)}</span>
+                <div>
+                  <p className="text-sm font-medium">Kode Promo</p>
+                  <p className="text-muted-foreground text-xs">
+                    Masukkan kode promo untuk mendapatkan diskon
+                  </p>
+                </div>
+                {appliedPromoCode && promoDiscountAmount > 0 && (
+                  <span className="text-xs font-semibold text-green-600">Terpasang</span>
+                )}
               </div>
-              {membershipDiscount.canUseMembership && membershipDiscount.slotsToDeduct > 0 && (
-                <div className="flex items-center justify-between text-green-600">
-                  <span>
-                    Membership Discount ({membershipDiscount.slotsToDeduct} slot
-                    {membershipDiscount.slotsToDeduct > 1 ? 's' : ''})
-                  </span>
-                  <span className="font-medium">
-                    - {formatCurrency(membershipDiscount.discountAmount)}
-                  </span>
-                </div>
-              )}
-              {addOnsTotal > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Add-ons Subtotal</span>
-                  <span className="text-foreground font-medium">{formatCurrency(addOnsTotal)}</span>
-                </div>
-              )}
-              {selectedPaymentMethod && paymentFeeBreakdown.totalFee > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Biaya Layanan</span>
-                  <span className="text-foreground font-medium">
-                    {formatCurrency(paymentFeeBreakdown.totalFee)}
-                  </span>
-                </div>
-              )}
-              {promoDiscountAmount > 0 && (
-                <div className="flex items-center justify-between text-green-600">
-                  <span>Promo {appliedPromoCode}</span>
-                  <span className="font-medium">- {formatCurrency(promoDiscountAmount)}</span>
-                </div>
-              )}
-              <div className="border-muted flex items-center justify-between border-t border-dashed pt-2 text-base font-semibold">
-                <span>Total Pembayaran</span>
-                <span className="text-primary">{formatCurrency(totalAfterPromo)}</span>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  placeholder="Contoh: HEMAT10"
+                  value={promoCode}
+                  onChange={(event) => handlePromoInputChange(event.target.value)}
+                  className="border-muted/70 focus:border-primary focus:ring-primary/20 h-11 flex-1 rounded-md border bg-white px-3 text-sm transition outline-none"
+                />
+                <Button
+                  type="button"
+                  className="h-11 px-5"
+                  onClick={handleApplyPromo}
+                  disabled={
+                    !selectedPaymentMethod || applyPromoMutation.isPending || !promoCode.trim()
+                  }
+                >
+                  {applyPromoMutation.isPending ? 'Memproses...' : 'Gunakan'}
+                </Button>
               </div>
+              {promoError && <p className="text-xs text-red-600">{promoError}</p>}
+              {!promoError && appliedPromoCode && promoDiscountAmount > 0 && (
+                <p className="text-xs text-green-600">
+                  Diskon {formatCurrency(promoDiscountAmount)} diterapkan
+                </p>
+              )}
             </div>
-            <Button
-              size="lg"
-              className="mt-5 hidden w-full lg:inline-flex"
-              onClick={handleCheckout}
-              disabled={isCheckoutDisabled}
-            >
-              {checkoutButtonLabel}
-            </Button>
-          </div>
-        </aside>
+
+            {/* Membership Information */}
+            {isAuthenticated && membershipDiscount.activeMembership && (
+              <div className="border-muted bg-primary/5 rounded-lg border p-4 lg:rounded-none">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-primary text-sm font-medium">Membership Aktif</span>
+                  <span
+                    className={
+                      membershipDiscount.activeMembership.isExpired ||
+                      membershipDiscount.activeMembership.isSuspended
+                        ? 'text-xs text-red-600'
+                        : 'text-xs text-green-600'
+                    }
+                  >
+                    {membershipDiscount.activeMembership.isExpired
+                      ? 'Expired'
+                      : membershipDiscount.activeMembership.isSuspended
+                        ? 'Suspended'
+                        : 'Active'}
+                  </span>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">Paket:</span>{' '}
+                    <span className="font-medium">
+                      {membershipDiscount.activeMembership.membership.name}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Sisa Sesi:</span>{' '}
+                    <span className="font-medium">{membershipDiscount.remainingSessions} sesi</span>
+                  </div>
+                  {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
+                    <div className="text-primary mt-1 font-medium">
+                      {membershipDiscount.slotsToDeduct} slot akan gratis menggunakan membership
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="border-muted mb-5 rounded-lg border bg-white p-4 lg:mb-0 lg:rounded-none lg:p-6">
+              <h3 className="mb-3 text-base font-semibold">Ringkasan Pembayaran</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-foreground font-medium">
+                    {formatCurrency(courtSubtotal)}
+                  </span>
+                </div>
+                {membershipDiscount.canUseMembership && membershipDiscount.slotsToDeduct > 0 && (
+                  <div className="flex items-center justify-between text-green-600">
+                    <span>
+                      Membership Discount ({membershipDiscount.slotsToDeduct} slot
+                      {membershipDiscount.slotsToDeduct > 1 ? 's' : ''})
+                    </span>
+                    <span className="font-medium">
+                      - {formatCurrency(membershipDiscount.discountAmount)}
+                    </span>
+                  </div>
+                )}
+                {addOnsTotal > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Add-ons Subtotal</span>
+                    <span className="text-foreground font-medium">
+                      {formatCurrency(addOnsTotal)}
+                    </span>
+                  </div>
+                )}
+                {selectedPaymentMethod && paymentFeeBreakdown.totalFee > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Biaya Layanan</span>
+                    <span className="text-foreground font-medium">
+                      {formatCurrency(paymentFeeBreakdown.totalFee)}
+                    </span>
+                  </div>
+                )}
+                {promoDiscountAmount > 0 && (
+                  <div className="flex items-center justify-between text-green-600">
+                    <span>Promo {appliedPromoCode}</span>
+                    <span className="font-medium">- {formatCurrency(promoDiscountAmount)}</span>
+                  </div>
+                )}
+                <div className="border-muted flex items-center justify-between border-t border-dashed pt-2 text-base font-semibold">
+                  <span>Total Pembayaran</span>
+                  <span className="text-primary">{formatCurrency(totalAfterPromo)}</span>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="mt-5 hidden w-full lg:inline-flex"
+                onClick={handleCheckout}
+                disabled={isCheckoutDisabled}
+              >
+                {checkoutButtonLabel}
+              </Button>
+            </div>
+          </aside>
         </div>
       </main>
 

@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/button';
 import { DatePickerModal, DatePickerModalTrigger } from '@/components/ui/date-picker-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import {
+  bookingItemsToSelectionsByDate,
+  mapSelectionsToBookingItems,
+  type BookingSelection
+} from '@/lib/booking';
 import { cn, getPlaceholderImageUrl } from '@/lib/utils';
 import { courtsSlotsQueryOptions } from '@/queries/court';
 import { useBookingStore } from '@/stores/useBookingStore';
@@ -40,26 +45,8 @@ const timeSlots = [
   '23:00'
 ];
 
-type SelectedCell = {
-  slotId: string;
-  courtId: string;
-  courtName: string;
-  time: string;
-  price: number;
-  normalPrice?: number;
-  discountPrice?: number;
-  dateKey: string;
-};
-
 type BookingPageContentProps = {
   embedded?: boolean;
-};
-
-const getEndTime = (timeSlot: string) => {
-  const [hours, minutes] = timeSlot.split(':').map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return timeSlot;
-
-  return `${String((hours + 1) % 24).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
 
 export default function BookingPageContent({ embedded = false }: BookingPageContentProps) {
@@ -76,7 +63,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   const [dateList, setDateList] = useState<
     { label: string; date: string; fullDate: string; active?: boolean }[]
   >([]);
-  const [selectionsByDate, setSelectionsByDate] = useState<Record<string, SelectedCell[]>>({});
+  const [selectionsByDate, setSelectionsByDate] = useState<Record<string, BookingSelection[]>>({});
   const [selectedCourt, setSelectedCourt] = useState<null | {
     id: string;
     name: string;
@@ -198,27 +185,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   useEffect(() => {
     if (didInitializeSelections.current) return;
 
-    const persistedSelections = bookingItems.reduce<Record<string, SelectedCell[]>>((acc, item) => {
-      const dateKey = item.date;
-      if (!dateKey) return acc;
-
-      if (!acc[dateKey]) {
-        acc[dateKey] = [];
-      }
-
-      acc[dateKey].push({
-        slotId: item.slotId,
-        courtId: item.courtId,
-        courtName: item.courtName,
-        time: item.timeSlot,
-        price: item.price,
-        normalPrice: item.normalPrice,
-        discountPrice: item.discountPrice,
-        dateKey
-      });
-
-      return acc;
-    }, {});
+    const persistedSelections = bookingItemsToSelectionsByDate(bookingItems);
 
     if (bookingItems[0]?.date) {
       setSelectedDate(bookingItems[0].date);
@@ -235,19 +202,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
       return;
     }
 
-    const items = allSelections.map((cell) => ({
-      slotId: cell.slotId,
-      courtId: cell.courtId,
-      courtName: cell.courtName,
-      timeSlot: cell.time,
-      price: cell.price,
-      normalPrice: cell.normalPrice,
-      discountPrice: cell.discountPrice,
-      date: cell.dateKey,
-      endTime: getEndTime(cell.time)
-    }));
-
-    setBookingItems(items);
+    setBookingItems(mapSelectionsToBookingItems(allSelections));
   }, [allSelections, setBookingItems]);
 
   const handleSelectDate = (date: Date | null) => {
@@ -261,12 +216,16 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   };
 
   const handleBooking = () => {
-    if (bookingItems.length === 0) {
+    if (allSelections.length === 0) {
       toast.error('Pilih minimal satu jadwal lapangan.');
       return;
     }
 
-    setBookingDate(dayjs(selectedDate).toDate());
+    const items = mapSelectionsToBookingItems(allSelections);
+    setBookingItems(items);
+
+    const firstDate = allSelections[0]?.dateKey ?? selectedDate;
+    setBookingDate(dayjs(firstDate).toDate());
 
     if (embedded) {
       setCartOpen(true);

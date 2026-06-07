@@ -104,7 +104,7 @@ const MainHeader = ({
                   </Link>
                 )}
                 {title && (
-                  <h1 className="text-primary text-lg font-semibold lg:text-xl">{title}</h1>
+                  <h1 className="text-primary text-lg font-semibold text-nowrap">{title}</h1>
                 )}
               </div>
             )}
