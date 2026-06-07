@@ -11,7 +11,7 @@ export default function TermsAndConditionsPage() {
   return (
     <>
       <MainHeader backHref="/" title="Terms & Conditions" withLogo={false} withBorder />
-      <div className="mx-auto mt-28 mb-16 max-w-3xl px-4 lg:mt-32 lg:px-0">
+      <div className="mx-auto mt-28 mb-16 px-4 lg:mt-32 lg:px-0">
         <div className="space-y-8">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold lg:text-3xl">Century Padel</h1>
