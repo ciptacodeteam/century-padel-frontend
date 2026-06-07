@@ -1,5 +1,6 @@
 'use client';
 
+import BookingCartBubble from '@/components/booking/BookingCartBubble';
 import MainHeader from '@/components/headers/MainHeader';
 import BottomNavigationWrapper from '@/components/ui/BottomNavigationWrapper';
 import { Button } from '@/components/ui/button';
@@ -329,7 +330,12 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
           </div>
         </div>
 
-        <div className="scrollbar-hide flex-1 overflow-auto pb-10 lg:pb-0">
+        <div
+          className={cn(
+            'scrollbar-hide flex-1 overflow-auto pb-10 lg:pb-0',
+            bookingItems.length > 0 && 'lg:pb-24'
+          )}
+        >
           {isSlotsLoading && (
             <div className="text-muted-foreground p-4 text-center text-sm">Memuat slot...</div>
           )}
@@ -490,6 +496,14 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
           )}
         </DialogContent>
       </Dialog>
+
+      {bookingItems.length > 0 && (
+        <BookingCartBubble
+          itemCount={bookingItems.length}
+          subtotal={courtTotal}
+          onProceed={handleBooking}
+        />
+      )}
 
       {!embedded && (
         <BottomNavigationWrapper className="pb-4">
