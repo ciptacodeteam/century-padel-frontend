@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api-proxy/:path*',
-        destination: 'https://api.quantumsocialclub.id/:path*'
+        destination: 'https://api.centurypadel.id/:path*'
       }
     ];
   },
@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'api.quantumsocialclub.id',
+        hostname: 'api.centurypadel.id',
         pathname: '/storage/**'
       },
       {
