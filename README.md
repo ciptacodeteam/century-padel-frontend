@@ -1,6 +1,6 @@
-# Quantum Sport — Frontend
+# Century Padel — Frontend
 
-A modern Next.js frontend for the Quantum Sport project. This repository contains only the frontend application and is designed to be run against an external API. The app uses TypeScript, Tailwind, React Query, and Next 15 with turbopack for a fast developer experience.
+A modern Next.js frontend for the Century Padel project. This repository contains only the frontend application and is designed to be run against an external API. The app uses TypeScript, Tailwind, React Query, and Next 15 with turbopack for a fast developer experience.
 
 ## Table of contents
 

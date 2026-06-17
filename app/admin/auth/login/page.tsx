@@ -33,7 +33,7 @@ export default async function LoginPage() {
             {data.data.hasAdmin ? <LoginForm /> : <RegisterForm />}
             <div className="bg-muted relative hidden md:block">
               <Image
-                src={getPlaceholderImageUrl({ width: 600, height: 800, text: 'Quantum Sport' })}
+                src={getPlaceholderImageUrl({ width: 600, height: 800, text: 'Century Padel' })}
                 alt="Image"
                 className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
                 fill
@@ -44,7 +44,7 @@ export default async function LoginPage() {
           </CardContent>
         </Card>
         <FieldDescription className="px-6 text-center">
-          &copy; {new Date().getFullYear()} Quantum Sport. All rights reserved.{' '}
+          &copy; {new Date().getFullYear()} Century Padel. All rights reserved.{' '}
           <Link
             href="https://ciptacode.id"
             className="hover:text-primary underline underline-offset-4"

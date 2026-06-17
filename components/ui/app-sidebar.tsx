@@ -205,7 +205,7 @@ const data: { navMain: AppSidebarItem[]; navSecondary: AppSidebarItem[] } = {
       title: 'Support Ciptacode',
       url: getWhatsappMessageUrl(
         SUPPORT_CIPTACODE_PHONE_NUMBER,
-        'Halo Tim Ciptacode, saya butuh bantuan pada Dashboard Admin (Quantum Sport). Mohon bantuannya.'
+        'Halo Tim Ciptacode, saya butuh bantuan pada Dashboard Admin (Century Padel). Mohon bantuannya.'
       ),
       icon: LifeBuoy
     }
@@ -334,7 +334,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Command className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Quantum Sport</span>
+                  <span className="truncate font-medium">Century Padel</span>
                   <span className="truncate text-xs">{subtitle}</span>
                 </div>
               </Link>

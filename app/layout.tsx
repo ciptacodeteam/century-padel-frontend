@@ -13,46 +13,42 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Quantum Sport & Social Club - Booking Lapangan Online Mudah, Cepat & Terpercaya',
+  title: 'Century Padel Medan | Booking Lapangan Century Padel Secara Online',
   description:
-    'Booking lapangan olahraga kini lebih praktis di Quantum Sport. Cek jadwal, pilih lapangan, dan pesan secara online dalam hitungan detik. Mudah, cepat, aman, dan tanpa ribet!',
-
+    'Century Padel Medan hadir dengan fasilitas padel modern dan sistem booking online yang mudah. Cek jadwal lapangan, pilih waktu bermain, dan lakukan reservasi dalam hitungan detik.',
   keywords: [
-    'pxdl',
-    'komunitas padel',
-    'quantum padel',
-    'lapngan quantum',
-    'Quantum social club',
+    'century padel',
+    'century padel medan',
     'padel medan',
-    'padel',
-    'booking lapangan padel',
-    'lapangan tennis',
     'lapangan padel medan',
-    'lapangan padel',
-    'booking lapangan online',
-    'sewa lapangan olahraga',
-    'booking badminton online',
-    'Quantum Sport',
-    'lapangan olahraga terdekat',
-    'booking lapangan cepat'
+    'booking padel medan',
+    'booking lapangan padel',
+    'sewa lapangan padel',
+    'padel indonesia',
+    'main padel medan',
+    'reservasi padel online',
+    'court padel medan',
+    'sports club medan',
+    'padel club medan',
+    'padel court medan'
   ],
 
   alternates: {
-    canonical: 'https://centurypadel.id/'
+    canonical: 'https://www.centurypadelid.com/'
   },
 
   openGraph: {
-    title: 'Quantum Sport & Social Club - Booking Lapangan Online Mudah, Cepat & Terpercaya',
+    title: 'Century Padel Medan | Booking Lapangan Century Padel Secara Online',
     description:
-      'Pesan lapangan olahraga favoritmu secara online dengan mudah, cepat, dan aman hanya di Quantum Sport.',
-    url: 'https://centurypadel.id/',
-    siteName: 'Quantum Sport and Social Club',
+      'Century Padel Medan hadir dengan fasilitas padel modern dan sistem booking online yang mudah.',
+    url: 'https://www.centurypadelid.com/',
+    siteName: 'Century Padel',
     images: [
       {
-        url: 'https://centurypadel.id/assets/img/og-image.webp',
+        url: 'https://www.centurypadelid.com/assets/img/og-image.png',
         width: 1200,
         height: 1200,
-        alt: 'Quantum Sport - Booking Lapangan Online'
+        alt: 'Century Padel - Booking Lapangan Online'
       }
     ],
     locale: 'id_ID',
@@ -78,18 +74,18 @@ export default function RootLayout({
 
         {/* ✅ JSON-LD Structured Data */}
         <Script
-          id="json-ld-quantum-sport"
+          id="json-ld-century-padel"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'SportsActivityLocation',
-              name: 'Quantum Sport & Social Club',
+              name: 'Century Padel',
               description:
-                'Fasilitas olahraga untuk booking lapangan secara online dengan mudah, cepat, dan aman.',
-              url: 'https://centurypadel.id/',
-              image: 'https://centurypadel.id/assets/img/og-image.webp',
-              logo: 'https://centurypadel.id/assets/img/og-image.webp',
+                'Century Padel Medan hadir dengan fasilitas padel modern dan sistem booking online yang mudah.',
+              url: 'https://www.centurypadelid.com/',
+              image: 'https://www.centurypadelid.com/assets/img/og-image.png',
+              logo: 'https://www.centurypadelid.com/assets/img/og-image.png',
               address: {
                 '@type': 'PostalAddress',
                 addressCountry: 'ID',
@@ -115,11 +111,11 @@ export default function RootLayout({
                 '@type': 'ReserveAction',
                 target: {
                   '@type': 'EntryPoint',
-                  urlTemplate: 'https://centurypadel.id/booking'
+                  urlTemplate: 'https://www.centurypadelid.com/booking'
                 },
                 result: {
                   '@type': 'Reservation',
-                  name: 'Booking Lapangan Olahraga'
+                  name: 'Booking Lapangan Padel Century Padel'
                 }
               }
             })

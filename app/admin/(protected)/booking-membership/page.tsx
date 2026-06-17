@@ -207,7 +207,7 @@ const BookingMembershipPage = () => {
                             <span className="truncate">{membership.name}</span>
                           </div>
                           <p className="text-muted-foreground line-clamp-2 text-sm">
-                            {membership.description || 'Membership unggulan Quantum Sport'}
+                            {membership.description || 'Membership unggulan Century Padel'}
                           </p>
                         </div>
                         {isSelected && (

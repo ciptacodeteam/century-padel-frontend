@@ -195,10 +195,10 @@ export default function TermsAndConditionsPage() {
                 <p>
                   <strong>Email:</strong>{' '}
                   <a
-                    href="mailto:quantumsportsandsocialclub@gmail.com"
+                    href="mailto:centurypadel@gmail.com"
                     className="text-primary hover:underline"
                   >
-                    quantumsportsandsocialclub@gmail.com
+                    centurypadel@gmail.com
                   </a>
                 </p>
                 <p>
@@ -216,8 +216,7 @@ export default function TermsAndConditionsPage() {
                   </a>
                 </p>
                 <p>
-                  <strong>Venue Address:</strong> JI. Cemara No.51, Pulo Brayan Bengkel Baru, Kec.
-                  Medan Tim., Kota Medan, Sumatera Utara 20237
+                  <strong>Venue Address:</strong> Jl. Mongonsidi No.51, Polonia, Kec. Medan Polonia, Kota Medan, Sumatera Utara 20152
                 </p>
               </div>
             </section>

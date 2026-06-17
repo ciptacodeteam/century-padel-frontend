@@ -2,7 +2,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://centurypadel.id';
+  const baseUrl = 'https://centurypadelid.com';
 
   return [
     {
@@ -24,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8
     },
     {
-      url: `${baseUrl}/informations`,
+      url: `${baseUrl}/tournaments`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.5

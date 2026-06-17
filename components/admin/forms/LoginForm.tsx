@@ -73,7 +73,7 @@ const LoginForm = () => {
         <FieldGroup>
           <header className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-2xl font-bold">Welcome back</h1>
-            <p className="text-muted-foreground text-balance">Login to Quantum Sport account</p>
+            <p className="text-muted-foreground text-balance">Login to Century Padel account</p>
           </header>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -104,7 +104,7 @@ const LoginForm = () => {
             <Link
               href={getWhatsappMessageUrl(
                 SUPPORT_CIPTACODE_PHONE_NUMBER,
-                'Halo Ciptacode, saya mengalami kesulitan saat login pada Admin Dashboard (Quantum Sport). Bisa tolong bantu saya? Terima kasih!'
+                'Halo Ciptacode, saya mengalami kesulitan saat login pada Admin Dashboard (Century Padel). Bisa tolong bantu saya? Terima kasih!'
               )}
               className="hidden underline lg:inline"
             >

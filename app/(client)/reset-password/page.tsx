@@ -18,7 +18,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-semibold">Reset your password</CardTitle>
           <CardDescription>
-            Choose a new password for your Quantum Sport account to finish resetting your access.
+            Choose a new password for your Century Padel account to finish resetting your access.
           </CardDescription>
         </CardHeader>
         <CardContent>

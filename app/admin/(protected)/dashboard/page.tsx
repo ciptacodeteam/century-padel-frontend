@@ -52,7 +52,7 @@ export default function DashboardPage() {
     <main>
       <header>
         <AppSectionHeader
-          title="Selamat datang di Quantum Sport Dashboard"
+          title="Selamat datang di Century Padel Dashboard"
           description="Pantau kinerja lapangan dan kelola operasional bisnis Anda dengan mudah."
         />
       </header>
