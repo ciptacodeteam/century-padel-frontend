@@ -8,6 +8,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/admin/']
     },
-    sitemap: 'https://centurypadel.id/sitemap.xml'
+    sitemap: 'https://centurypadelid.com/sitemap.xml'
   };
 }

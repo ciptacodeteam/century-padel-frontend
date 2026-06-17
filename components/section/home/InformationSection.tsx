@@ -5,7 +5,7 @@ export default function InfoSection() {
     return (
         <>
             <section>
-                <div className="mx-auto lg:max-w-7xl w-11/12">
+                <div className="mx-auto lg:max-w-7xl w-11/12 pb-24 lg:pb-0">
 
                     <div className="flex justify-between items-center">
                         <div className="flex items-center">
@@ -17,7 +17,7 @@ export default function InfoSection() {
                     <div className="lg:grid grid-cols-3 lg:my-12 my-8 lg:gap-4">
                         <div className="lg:col-span-2">
                             <div className="w-full bg-red-100">
-                                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3981.8160062424217!2d98.68787727532641!3d3.629455550011678!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3031330010e79fa9%3A0xcfb556e44103b48!2sQuantum%20Sports%20and%20Social%20Club!5e0!3m2!1sid!2sid!4v1780418366138!5m2!1sid!2sid" className="w-full" loading="lazy" height="380" referrerPolicy="no-referrer-when-downgrade"></iframe>
+                                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3982.071906991455!2d98.66272857514763!3d3.570932950414765!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x303131596859861d%3A0xb4ba229de265ef33!2sCentury%20Padel!5e0!3m2!1sid!2sid!4v1781684219243!5m2!1sid!2sid" height="380" loading="lazy" className="w-full"></iframe>
                             </div>
                         </div>
 
