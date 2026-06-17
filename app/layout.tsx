@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: 'Century Padel Medan | Booking Lapangan Century Padel Secara Online',
   description:
     'Century Padel Medan hadir dengan fasilitas padel modern dan sistem booking online yang mudah. Cek jadwal lapangan, pilih waktu bermain, dan lakukan reservasi dalam hitungan detik.',
+
+  verification: {
+    google: 'tN-4z93m_2EmHsvCDPWEXlLrfjinAPNNcBGpuYZH4LE'
+  },
+  
   keywords: [
     'century padel',
     'century padel medan',

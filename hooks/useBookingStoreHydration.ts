@@ -3,6 +3,8 @@
 import { useBookingStore } from '@/stores/useBookingStore';
 import { useEffect, useState } from 'react';
 
+const hasHydrated = () => useBookingStore.persist?.hasHydrated?.() ?? false;
+
 export function useBookingStoreHydration() {
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -19,7 +21,7 @@ export function useBookingStoreHydration() {
 
     setIsHydrated(persist.hasHydrated());
 
-    return unsub;
+    return unsub ?? undefined;
   }, []);
 
   return isHydrated;
