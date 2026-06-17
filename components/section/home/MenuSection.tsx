@@ -1,10 +1,10 @@
 import { CalendarDays, PackageCheck, Trophy, UsersRound } from 'lucide-react';
 import Image, { type StaticImageData } from 'next/image';
 import Link from 'next/link';
-import courtImage from '@/public/court1.webp';
-import openPlayImage from '@/public/assets/img/bg-court.webp';
-import playerImage from '@/public/assets/img/player.png';
-import bannerImage from '@/public/assets/img/banner.webp';
+import court from '@/public/assets/img/court.webp';
+import club from '@/public/assets/img/club.webp';
+import membership from '@/public/assets/img/membership.webp';
+import tournament from '@/public/assets/img/tournament.webp';
 
 type HomeMenuItem = {
   title: string;
@@ -19,28 +19,28 @@ const menuList: HomeMenuItem[] = [
     title: 'Booking',
     subtitle: 'Quick & Easy',
     href: '/booking',
-    image: courtImage,
+    image: court,
     icon: <CalendarDays className="size-5" strokeWidth={2.5} />
   },
   {
     title: 'Club',
     subtitle: 'Find Playmates',
     href: '/clubs',
-    image: openPlayImage,
+    image: club,
     icon: <UsersRound className="size-5" strokeWidth={2.5} />
   },
   {
     title: 'Value Pack',
     subtitle: 'Save More',
     href: '/membership',
-    image: playerImage,
+    image: membership,
     icon: <PackageCheck className="size-5" strokeWidth={2.5} />
   },
   {
     title: 'Tournament',
     subtitle: 'Join Events',
     href: '/tournaments',
-    image: bannerImage,
+    image: tournament,
     icon: <Trophy className="size-5" strokeWidth={2.5} />
   }
 ];
