@@ -59,7 +59,26 @@ const DesktopFooter = () => {
             Contact
           </h3>
           <div className="text-muted-foreground space-y-3 text-sm leading-6">
-            <p>Century Padel</p>
+            <p>
+              <span>Email:</span>{' '}
+              <a
+                href="mailto:centurypadel@gmail.com"
+                className="text-primary transition-colors hover:text-primary/80"
+              >
+                centurypadel@gmail.com
+              </a>
+            </p>
+            <p>
+              <span>WhatsApp:</span>{' '}
+              <a
+                href="https://wa.me/6281234567890"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary transition-colors hover:text-primary/80"
+              >
+                +62 812-3456-7890
+              </a>
+            </p>
           </div>
         </section>
       </div>
