@@ -113,13 +113,13 @@ export default function CheckoutPage() {
   const checkoutMutation = useMutation(
     checkoutMutationOptions({
       onSuccess: (data) => {
-        // For card payments, don't redirect to invoice yet
-        // Redirect will happen after 3DS authentication completes
-        if (selectedPaymentMethod?.channel === 'CARDS') {
-          return; // Skip invoice redirect for card payments
+        // New card payments must complete 3DS authentication before redirecting.
+        // Saved cards can proceed directly to the invoice after checkout succeeds.
+        if (selectedPaymentMethod?.channel === 'CARDS' && newCardData) {
+          return;
         }
 
-        // Clear booking store after successful checkout (non-card payments only)
+        // Clear booking store after successful checkout
         persistPaymentMethodId(null);
         useBookingStore.getState().clearAll();
 
