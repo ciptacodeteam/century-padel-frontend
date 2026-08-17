@@ -11,6 +11,7 @@ import utc from 'dayjs/plugin/utc';
 import { Toaster } from 'sonner';
 import { ConfirmDialogProvider } from '@/components/ui/confirm-dialog';
 import AuthModal from '@/components/modals/AuthModal';
+import { isComingSoonEnabled } from '@/lib/coming-soon';
 import { usePathname } from 'next/navigation';
 
 dayjs.extend(utc);
@@ -28,7 +29,7 @@ const AppProvider = ({ children }: Readonly<PropsWithChildren>) => {
         <DialogProvider>
           <ConfirmDialogProvider>
             {children}
-            {!isAdminRoute && (
+            {!isAdminRoute && !isComingSoonEnabled() && (
               <Suspense>
                 <AuthModal />
               </Suspense>

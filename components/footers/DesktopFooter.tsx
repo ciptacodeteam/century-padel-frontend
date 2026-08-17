@@ -1,6 +1,7 @@
 'use client';
 
 import logo from '@/assets/img/logo.webp';
+import { isComingSoonEnabled } from '@/lib/coming-soon';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -17,7 +18,7 @@ const footerLinks = [
 const DesktopFooter = () => {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || isComingSoonEnabled()) {
     return null;
   }
 

@@ -20,7 +20,8 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_BASE_URL: z.url().default('http://localhost:3000'),
     NEXT_PUBLIC_API_URL: z.string().default('http://localhost:8000'),
-    NEXT_PUBLIC_XENDIT_PUBLIC_KEY: z.string().optional()
+    NEXT_PUBLIC_XENDIT_PUBLIC_KEY: z.string().optional(),
+    NEXT_PUBLIC_COMING_SOON: z.enum(['true', 'false']).optional()
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
   },
 
@@ -34,6 +35,7 @@ export const env = createEnv({
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_XENDIT_PUBLIC_KEY: process.env.NEXT_PUBLIC_XENDIT_PUBLIC_KEY,
+    NEXT_PUBLIC_COMING_SOON: process.env.NEXT_PUBLIC_COMING_SOON,
 
     SUPPORT_EMAIL: process.env.SUPPORT_EMAIL
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
