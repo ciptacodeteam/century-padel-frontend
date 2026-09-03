@@ -364,6 +364,7 @@ export default function InvoiceDetailPage() {
             canPay={canPay}
             onChooseMethod={() => router.push(`/payment/${invoice.id}`)}
             onExpired={handleExpired}
+            onPaid={() => refetch()}
           />
 
           {/* Success Message */}

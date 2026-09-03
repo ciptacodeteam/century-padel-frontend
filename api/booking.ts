@@ -41,6 +41,11 @@ export async function expireInvoiceApi(invoiceId: string) {
   return data;
 }
 
+export async function mockPayInvoiceApi(invoiceId: string) {
+  const { data } = await api.post(`/invoices/${invoiceId}/mock-pay`);
+  return data;
+}
+
 export interface CancelBookingPayload {
   reason: string;
 }

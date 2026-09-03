@@ -1,7 +1,9 @@
 'use client';
 
+import { mockPayInvoiceApi } from '@/api/booking';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { env } from '@/env';
 import { resolveMediaUrl } from '@/lib/utils';
 import { CheckCircle, Copy, CreditCard } from 'lucide-react';
 import Image from 'next/image';
@@ -13,27 +15,34 @@ export default function PaymentActionCard({
   invoice,
   canPay,
   onChooseMethod,
-  onExpired
+  onExpired,
+  onPaid
 }: {
   invoice: any;
   canPay: boolean;
   onChooseMethod: () => void;
   onExpired?: () => void;
+  onPaid?: () => void;
 }) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isMockPaying, setIsMockPaying] = useState(false);
   if (!canPay) return null;
 
   const paymentMeta = invoice?.paymentMeta;
   const payment = invoice?.payment as any;
   const paymentMethod = payment?.method;
-  const channelCode = paymentMethod?.channel || paymentMeta?.channel_code;
+  const channelCode = paymentMeta?.channel_code || paymentMethod?.channel;
+  const isMockMode = env.NEXT_PUBLIC_PAYMENT_GATEWAY_MODE === 'mock';
 
   const isQRIS = channelCode === 'QRIS';
   const qrString = paymentMeta?.actions?.find(
     (action: any) => action.descriptor === 'QR_STRING'
   )?.value;
 
-  const isVA = channelCode?.includes('VIRTUAL_ACCOUNT') || channelCode?.includes('_VA');
+  const isVA =
+    channelCode === 'VA' ||
+    channelCode?.includes('VIRTUAL_ACCOUNT') ||
+    channelCode?.includes('_VA');
   const vaAction = paymentMeta?.actions?.find(
     (action: any) => action.descriptor === 'VIRTUAL_ACCOUNT_NUMBER'
   );
@@ -54,6 +63,19 @@ export default function PaymentActionCard({
     setCopiedField(field);
     toast.success('Berhasil disalin!');
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleMockPay = async () => {
+    try {
+      setIsMockPaying(true);
+      await mockPayInvoiceApi(invoice.number || invoice.id);
+      toast.success('Mock payment marked as paid');
+      onPaid?.();
+    } catch (error: any) {
+      toast.error(error?.msg || 'Failed to simulate payment');
+    } finally {
+      setIsMockPaying(false);
+    }
   };
 
   return (
@@ -178,6 +200,21 @@ export default function PaymentActionCard({
             <Button size="lg" className="w-full md:w-auto" onClick={onChooseMethod}>
               <CreditCard className="mr-2 h-5 w-5" /> Pilih Metode Pembayaran
             </Button>
+          )}
+
+          {isMockMode && invoice.status === 'PENDING' && (
+            <div className="mt-5 border-t pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full md:w-auto"
+                onClick={handleMockPay}
+                disabled={isMockPaying}
+              >
+                {isMockPaying ? 'Processing...' : 'Simulate Paid'}
+              </Button>
+            </div>
           )}
         </div>
       </CardContent>
