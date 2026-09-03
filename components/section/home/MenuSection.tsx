@@ -1,3 +1,4 @@
+import { featureFlags } from '@/lib/feature-flags';
 import { CalendarDays, PackageCheck, Trophy, UsersRound } from 'lucide-react';
 import Image, { type StaticImageData } from 'next/image';
 import Link from 'next/link';
@@ -22,13 +23,17 @@ const menuList: HomeMenuItem[] = [
     image: court,
     icon: <CalendarDays className="size-5" strokeWidth={2.5} />
   },
-  {
-    title: 'Club',
-    subtitle: 'Find Playmates',
-    href: '/clubs',
-    image: club,
-    icon: <UsersRound className="size-5" strokeWidth={2.5} />
-  },
+  ...(featureFlags.clubs
+    ? [
+        {
+          title: 'Club',
+          subtitle: 'Find Playmates',
+          href: '/clubs',
+          image: club,
+          icon: <UsersRound className="size-5" strokeWidth={2.5} />
+        }
+      ]
+    : []),
   {
     title: 'Value Pack',
     subtitle: 'Save More',
@@ -36,13 +41,17 @@ const menuList: HomeMenuItem[] = [
     image: membership,
     icon: <PackageCheck className="size-5" strokeWidth={2.5} />
   },
-  {
-    title: 'Tournament',
-    subtitle: 'Join Events',
-    href: '/tournaments',
-    image: tournament,
-    icon: <Trophy className="size-5" strokeWidth={2.5} />
-  }
+  ...(featureFlags.tournaments
+    ? [
+        {
+          title: 'Tournament',
+          subtitle: 'Join Events',
+          href: '/tournaments',
+          image: tournament,
+          icon: <Trophy className="size-5" strokeWidth={2.5} />
+        }
+      ]
+    : [])
 ];
 
 const MenuSection = () => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { featureFlags } from '@/lib/feature-flags';
 import { IconBallTennis, IconUser } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,7 +13,16 @@ import useAuthModalStore from '@/stores/useAuthModalStore';
 
 const navigationItems = [
   { title: 'Beranda', icon: <HomeIcon size={28} />, path: '/' },
-  { title: 'My Club', icon: <IconBallTennis size={28} />, path: '/my-club', requiresAuth: true },
+  ...(featureFlags.clubs
+    ? [
+        {
+          title: 'My Club',
+          icon: <IconBallTennis size={28} />,
+          path: '/my-club',
+          requiresAuth: true
+        }
+      ]
+    : []),
   { title: 'Invoice', icon: <CalendarCheckIcon size={28} />, path: '/invoice', requiresAuth: true },
   { title: 'Profil', icon: <IconUser size={28} />, path: '/profile', requiresAuth: true }
 ];

@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import z from 'zod';
 
 const formSchema = z.object({
-  otp: z.string().min(1, 'OTP is required').max(6, 'OTP is too long'),
+  otp: z.string().length(6, 'OTP must be 6 digits'),
   phone: z.string().min(1, 'Phone number is required').max(15, 'Phone number is too long'),
   requestId: z.string().min(1, 'Request ID is required')
 });
@@ -34,6 +34,7 @@ type Props = {
 };
 
 const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
+  const maxLength = 6;
   const requestId = usePhoneStore((state) => state.requestId);
   const setRequestId = usePhoneStore((state) => state.setRequestId);
   const phone = usePhoneStore((state) => state.phone);
@@ -124,7 +125,7 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
 
   const onSubmit: SubmitHandler<FormSchema> = useCallback(
     (data) => {
-      if (data.otp.length < 4) {
+      if (data.otp.length < maxLength) {
         toast.error('Please enter a valid OTP');
         return;
       }
@@ -156,7 +157,7 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
         });
       }
     },
-    [mutateRegister, registerData, mutate, type]
+    [maxLength, mutateRegister, registerData, mutate, type]
   );
 
   const handleResendOtp = () => {
@@ -167,8 +168,6 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
 
     resendOtp({ phone: formatPhone(phone) });
   };
-
-  const maxLength = 4;
 
   // const handleOtpChange = useCallback(
   //   (value, info: { name?: string }) => {
@@ -219,6 +218,8 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
                       <InputOTPSlot index={1} className="size-14 md:text-xl" />
                       <InputOTPSlot index={2} className="size-14 md:text-xl" />
                       <InputOTPSlot index={3} className="size-14 md:text-xl" />
+                      <InputOTPSlot index={4} className="size-14 md:text-xl" />
+                      <InputOTPSlot index={5} className="size-14 md:text-xl" />
                     </InputOTPGroup>
                   </InputOTP>
                 )}
@@ -227,7 +228,7 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
               <div className="mt-2">
                 <ResendOtpButton
                   onSendOtp={handleResendOtp}
-                  seconds={process.env.NODE_ENV === 'development' ? 5 : 60}
+                  seconds={60}
                   persistKey="otp:login"
                   autoStart
                 />

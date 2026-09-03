@@ -3,13 +3,90 @@
 import { mockPayInvoiceApi } from '@/api/booking';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 import { env } from '@/env';
+import CreditCardForm, { type CreditCardFormData } from '@/components/forms/payment/CreditCardForm';
+import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { resolveMediaUrl } from '@/lib/utils';
 import { CheckCircle, Copy, CreditCard } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import PaymentCountdown from './PaymentCountdown';
+
+type PaymentAction = {
+  descriptor?: string;
+  type?: string;
+  value?: string;
+  url?: string;
+  display_name?: string;
+  expiry?: string;
+};
+
+function ResumeCardPayment({ invoice, sessionId }: { invoice: any; sessionId: string }) {
+  const [open, setOpen] = useState(false);
+  const { collectCard, isLoading, isScriptReady, error } = useXenditCardCollection();
+
+  const handleSubmit = async (data: CreditCardFormData) => {
+    if (!isScriptReady) {
+      toast.error(error || 'Sistem pembayaran kartu masih dimuat. Silakan coba lagi.');
+      return;
+    }
+
+    try {
+      const names = data.cardholderName.trim().split(/\s+/);
+      const result = await collectCard({
+        paymentSessionId: sessionId,
+        cardNumber: data.cardNumber.replace(/\s+/g, ''),
+        expiryMonth: data.expiryMonth,
+        expiryYear: data.expiryYear,
+        cvv: data.cvv,
+        cardholderFirstName: names[0] || 'Cardholder',
+        cardholderLastName: names.slice(1).join(' ') || 'User',
+        cardholderEmail: invoice?.user?.email || undefined,
+        cardholderPhoneNumber: invoice?.user?.phone || undefined
+      });
+
+      if (!result.actionUrl) {
+        throw new Error('Tautan verifikasi kartu tidak tersedia');
+      }
+      window.location.assign(result.actionUrl);
+    } catch (cardError: any) {
+      toast.error(cardError?.message || 'Pembayaran kartu gagal diproses. Silakan coba lagi.');
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="lg" className="w-full md:w-auto">
+          <CreditCard className="mr-2 h-5 w-5" /> Lanjutkan Pembayaran Kartu
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Lanjutkan Pembayaran Kartu</DialogTitle>
+          <DialogDescription>
+            Masukkan kembali data kartu untuk melanjutkan invoice {invoice.number}.
+          </DialogDescription>
+        </DialogHeader>
+        <CreditCardForm
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          showSaveOption={false}
+          submitButtonText="Bayar Sekarang"
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function PaymentActionCard({
   invoice,
@@ -31,32 +108,51 @@ export default function PaymentActionCard({
   const paymentMeta = invoice?.paymentMeta;
   const payment = invoice?.payment as any;
   const paymentMethod = payment?.method;
-  const channelCode = paymentMeta?.channel_code || paymentMethod?.channel;
+  const channelCode = String(
+    paymentMeta?.channel_code || paymentMethod?.channel || ''
+  ).toUpperCase();
+  const actions: PaymentAction[] = Array.isArray(paymentMeta?.actions) ? paymentMeta.actions : [];
   const isMockMode = env.NEXT_PUBLIC_PAYMENT_GATEWAY_MODE === 'mock';
 
-  const isQRIS = channelCode === 'QRIS';
-  const qrString = paymentMeta?.actions?.find(
-    (action: any) => action.descriptor === 'QR_STRING'
-  )?.value;
+  const isQRIS = channelCode === 'QRIS' || channelCode === 'QR';
+  const qrString =
+    actions.find((action) => ['QR_STRING', 'QR_CODE'].includes(action.descriptor || ''))?.value ||
+    invoice?.paymentInstructions?.qrString ||
+    invoice?.paymentInstructions?.qrImage;
 
   const isVA =
     channelCode === 'VA' ||
     channelCode?.includes('VIRTUAL_ACCOUNT') ||
     channelCode?.includes('_VA');
-  const vaAction = paymentMeta?.actions?.find(
-    (action: any) => action.descriptor === 'VIRTUAL_ACCOUNT_NUMBER'
+  const vaAction = actions.find(
+    (action) =>
+      action.descriptor === 'VIRTUAL_ACCOUNT_NUMBER' || action.descriptor === 'ACCOUNT_NUMBER'
   );
-  const vaNumber = vaAction?.value || paymentMeta?.channel_properties?.account_number;
+  const vaNumber =
+    vaAction?.value ||
+    paymentMeta?.channel_properties?.account_number ||
+    invoice?.paymentInstructions?.accountNumber;
   const vaDisplayName = vaAction?.display_name || paymentMethod?.name;
   const vaExpiry = vaAction?.expiry || paymentMeta?.channel_properties?.expires_at;
 
   const paymentExpiry = vaExpiry ? vaExpiry : invoice ? invoice.dueDate : null;
 
-  const isEWallet = ['OVO', 'DANA', 'LINKAJA', 'SHOPEEPAY'].includes(channelCode);
+  const isCards = channelCode === 'CARDS';
+  const paymentSessionId = paymentMeta?.payment_session_id;
+  const redirectAction = actions.find((action) => {
+    const type = String(action.type || '').toUpperCase();
+    const descriptor = String(action.descriptor || '').toUpperCase();
+    return (
+      type === 'REDIRECT' ||
+      type === 'REDIRECT_CUSTOMER' ||
+      ['DEEPLINK_CHECKOUT', 'WEB_URL', 'MOBILE_URL'].includes(descriptor)
+    );
+  });
   const paymentUrl =
-    paymentMeta?.actions?.find(
-      (action: any) => action.descriptor === 'DEEPLINK_CHECKOUT' || action.type === 'REDIRECT'
-    )?.url || invoice?.paymentUrl;
+    redirectAction?.url ||
+    redirectAction?.value ||
+    invoice?.paymentUrl ||
+    invoice?.paymentInstructions?.url;
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -121,16 +217,6 @@ export default function PaymentActionCard({
                 </div>
               </div>
 
-              {paymentExpiry && (
-                <div className="mb-5 flex justify-center">
-                  <PaymentCountdown
-                    dueDate={paymentExpiry}
-                    status={invoice.status}
-                    invoiceId={invoice.id}
-                    onExpired={onExpired}
-                  />
-                </div>
-              )}
               <p className="text-xs text-gray-600">
                 Scan QR code di atas menggunakan aplikasi pembayaran QRIS Anda
               </p>
@@ -155,16 +241,6 @@ export default function PaymentActionCard({
                   Bank: <span className="font-semibold">{vaDisplayName}</span>
                 </div>
               </div>
-              {paymentExpiry && (
-                <div className="mb-5 flex justify-center">
-                  <PaymentCountdown
-                    dueDate={paymentExpiry}
-                    status={invoice.status}
-                    invoiceId={invoice.id}
-                    onExpired={onExpired}
-                  />
-                </div>
-              )}
               <div className="space-y-2 text-left text-sm text-gray-700">
                 <p className="font-semibold">Cara Pembayaran:</p>
                 <ol className="ml-2 list-inside list-decimal space-y-1">
@@ -181,12 +257,12 @@ export default function PaymentActionCard({
             </div>
           )}
 
-          {(isEWallet || paymentUrl) && !isQRIS && !isVA && (
+          {paymentUrl && !isQRIS && !isVA && !isCards && (
             <div className="space-y-4">
               <Button
                 size="lg"
                 className="w-full md:w-auto"
-                onClick={() => window.open(paymentUrl, '_blank')}
+                onClick={() => window.location.assign(paymentUrl)}
               >
                 <CreditCard className="mr-2 h-5 w-5" /> Bayar dengan {paymentMethod?.name}
               </Button>
@@ -196,10 +272,25 @@ export default function PaymentActionCard({
             </div>
           )}
 
-          {!isQRIS && !isVA && !paymentUrl && (
+          {isCards && paymentSessionId && (
+            <ResumeCardPayment invoice={invoice} sessionId={paymentSessionId} />
+          )}
+
+          {!isQRIS && !isVA && !paymentUrl && !(isCards && paymentSessionId) && (
             <Button size="lg" className="w-full md:w-auto" onClick={onChooseMethod}>
-              <CreditCard className="mr-2 h-5 w-5" /> Pilih Metode Pembayaran
+              <CreditCard className="mr-2 h-5 w-5" /> Muat Ulang Instruksi Pembayaran
             </Button>
+          )}
+
+          {paymentExpiry && (
+            <div className="mt-5 flex justify-center">
+              <PaymentCountdown
+                dueDate={paymentExpiry}
+                status={invoice.status}
+                invoiceId={invoice.id}
+                onExpired={onExpired}
+              />
+            </div>
           )}
 
           {isMockMode && invoice.status === 'PENDING' && (

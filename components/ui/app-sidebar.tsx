@@ -6,6 +6,7 @@ import * as React from 'react';
 import { NavMain } from '@/components/ui/nav-main';
 import { NavSecondary } from '@/components/ui/nav-secondary';
 import { NavUser } from '@/components/ui/nav-user';
+import { featureFlags } from '@/lib/feature-flags';
 import {
   Sidebar,
   SidebarContent,
@@ -143,26 +144,38 @@ const data: { navMain: AppSidebarItem[]; navSecondary: AppSidebarItem[] } = {
     //   icon: IconSchool,
     //   items: []
     // },
-    {
-      title: 'Kelola Turnamen',
-      url: '/admin/kelola-turnamen',
-      icon: IconLaurelWreath1,
-      items: []
-    },
-    {
-      title: 'Kelola Club',
-      url: '/admin/kelola-club',
-      icon: IconUsersGroup,
-      items: []
-    },
+    ...(featureFlags.tournaments
+      ? [
+          {
+            title: 'Kelola Turnamen',
+            url: '/admin/kelola-turnamen',
+            icon: IconLaurelWreath1,
+            items: []
+          }
+        ]
+      : []),
+    ...(featureFlags.clubs
+      ? [
+          {
+            title: 'Kelola Club',
+            url: '/admin/kelola-club',
+            icon: IconUsersGroup,
+            items: []
+          }
+        ]
+      : []),
     {
       title: 'Marketing',
       icon: IconAd2,
       items: [
-        {
-          title: 'Push Notification',
-          url: '/admin/kelola-notifikasi'
-        },
+        ...(featureFlags.adminPushNotifications
+          ? [
+              {
+                title: 'Push Notification',
+                url: '/admin/kelola-notifikasi'
+              }
+            ]
+          : []),
         {
           title: 'Kelola Banner',
           url: '/admin/kelola-banner'

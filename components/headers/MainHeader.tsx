@@ -1,6 +1,7 @@
 'use client';
 
 import logo from '@/assets/img/logo.webp';
+import { featureFlags } from '@/lib/feature-flags';
 import { cn } from '@/lib/utils';
 import { profileQueryOptions } from '@/queries/profile';
 import { notificationsQueryOptions } from '@/queries/notification';
@@ -77,8 +78,8 @@ const MainHeader = ({
   const navItems: NavItem[] = [
     { title: 'Home', path: '/' },
     { title: 'Booking', path: '/booking' },
-    { title: 'Club', path: '/clubs' },
-    { title: 'Tournaments', path: '/tournaments' },
+    ...(featureFlags.clubs ? [{ title: 'Club', path: '/clubs' }] : []),
+    ...(featureFlags.tournaments ? [{ title: 'Tournaments', path: '/tournaments' }] : []),
     { title: 'Membership', path: '/membership' }
   ];
 
@@ -207,9 +208,11 @@ const MainHeader = ({
                       <DropdownMenuItem asChild>
                         <Link href="/profile">Profil</Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/my-club">My Club</Link>
-                      </DropdownMenuItem>
+                      {featureFlags.clubs && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/my-club">My Club</Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link href="/invoice">Riwayat Booking</Link>
                       </DropdownMenuItem>

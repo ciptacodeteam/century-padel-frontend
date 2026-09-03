@@ -239,7 +239,7 @@ export default function PhoneChangeModal({ open, phone, onOpenChange, onSuccess 
                     <div className="mt-2">
                       <ResendOtpButton
                         onSendOtp={handleResendOtp}
-                        seconds={process.env.NODE_ENV === 'development' ? 5 : 60}
+                        seconds={60}
                         persistKey="otp:change-phone"
                         autoStart
                       />
