@@ -11,6 +11,7 @@ import { useBookingStoreHydration } from '@/hooks/useBookingStoreHydration';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
+import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
@@ -475,7 +476,15 @@ export default function CheckoutPage() {
     try {
       const ok = await confirm({
         title: 'Konfirmasi Pemesanan',
-        description: 'Apakah pesanan anda sudah sesuai?',
+        description:
+          courtSlots.length > 0 ? (
+            <>
+              <span className="block">Apakah pesanan Anda sudah sesuai?</span>
+              <span className="mt-2 block font-medium">{CUSTOMER_RESCHEDULE_POLICY_TEXT}</span>
+            </>
+          ) : (
+            'Apakah pesanan Anda sudah sesuai?'
+          ),
         confirmText: 'Bayar Sekarang',
         cancelText: 'Cek Lagi',
         dismissible: true

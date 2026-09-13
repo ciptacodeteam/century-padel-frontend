@@ -31,6 +31,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useConfirmMutation } from '@/hooks/useConfirmDialog';
 import { BOOKING_STATUS_BADGE_VARIANT, BOOKING_STATUS_MAP, BookingStatus } from '@/lib/constants';
+import { canCustomerReschedule } from '@/lib/reschedule-policy';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
@@ -131,21 +132,6 @@ const isBefore = (date1: Date | string, date2: Date | string): boolean => {
   const d1 = date1 instanceof Date ? date1 : new Date(date1);
   const d2 = date2 instanceof Date ? date2 : new Date(date2);
   return d1.getTime() < d2.getTime();
-};
-
-const differenceInDays = (date1: Date | string, date2: Date | string = new Date()): number => {
-  const d1 = date1 instanceof Date ? new Date(date1.getTime()) : new Date(date1);
-  const d2 = date2 instanceof Date ? new Date(date2.getTime()) : new Date(date2);
-
-  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
-    return 0;
-  }
-
-  d1.setHours(0, 0, 0, 0);
-  d2.setHours(0, 0, 0, 0);
-
-  const diff = d1.getTime() - d2.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
 };
 
 // Helper function to convert numeric status to BookingStatus enum
@@ -414,9 +400,8 @@ const BookingTable = () => {
                         <p className="mb-2 text-sm font-medium">Detail Slot</p>
                         <div className="space-y-2">
                           {booking.details.map((detail) => {
-                            // const slotStart = detail.slot?.startAt;
-                            // const daysUntil = slotStart ? differenceInDays(slotStart) : -1;
-                            // const canReschedule = !!slotStart && daysUntil >= 3;
+                            const slotStart = detail.slot?.startAt;
+                            const canReschedule = !!slotStart && canCustomerReschedule(slotStart);
 
                             return (
                               <div key={detail.id} className="bg-muted/50 rounded-lg border p-3">
@@ -432,12 +417,6 @@ const BookingTable = () => {
                                         {formatSlotTime(detail.slot.endAt)}
                                       </p>
                                     )}
-                                    {/* {!canReschedule && slotStart && (
-                                      <p className="mt-1 text-[11px] text-amber-600">
-                                        Reschedule hanya tersedia hingga H-3 (
-                                        {Math.max(daysUntil, 0)} hari tersisa)
-                                      </p>
-                                    )} */}
                                   </div>
                                   <div className="flex items-center gap-3">
                                     <p className="text-base font-medium">
@@ -446,8 +425,7 @@ const BookingTable = () => {
                                     {detail.slot && status !== BookingStatus.CANCELLED && (
                                       <RescheduleCourtDialog
                                         detail={detail as BookingDetailWithSlot}
-                                        // canReschedule={canReschedule}
-                                        canReschedule
+                                        canReschedule={canReschedule}
                                         onSuccess={() =>
                                           queryClient.invalidateQueries({
                                             queryKey: ['admin', 'bookings']
