@@ -20,13 +20,14 @@ import {
   adminUpdateSlotAvailabilityMutationOptions
 } from '@/mutations/admin/court';
 import type { Slot } from '@/types/model';
-import { IconPencil, IconPlus, IconPower } from '@tabler/icons-react';
+import { IconEdit, IconPencil, IconPlus, IconPower } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import CreateCourtCostForm from './CreateCourtCostForm';
+import BulkEditCourtCostForm from './BulkEditCourtCostForm';
 
 type Props = {
   courtId: string;
@@ -221,6 +222,11 @@ const CourtCostingTable = ({ courtId }: Props) => {
     }));
   }, [data]);
 
+  const allSlots = useMemo(
+    () => normalizedData.flatMap((entry) => entry.slots || []),
+    [normalizedData]
+  );
+
   return (
     <DataTable
       loading={isPending}
@@ -336,20 +342,44 @@ const CourtCostingTable = ({ courtId }: Props) => {
         </div>
       )}
       addButton={
-        <ManagedDialog id="create-court-costing">
-          <DialogTrigger asChild>
-            <Button>
-              <IconPlus />
-              Tambah
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="lg:min-w-xl">
-            <DialogHeader className="mb-4">
-              <DialogTitle>Buat Cost Lapangan</DialogTitle>
-            </DialogHeader>
-            <CreateCourtCostForm courtId={courtId} />
-          </DialogContent>
-        </ManagedDialog>
+        <div className="flex gap-2">
+          <ManagedDialog id="bulk-edit-court-costing">
+            <DialogTrigger asChild>
+              <Button variant="outline" disabled={allSlots.length === 0}>
+                <IconEdit />
+                Bulk Edit
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Bulk Edit Costing</DialogTitle>
+                <DialogDescription>
+                  Ubah harga beberapa slot berdasarkan rentang tanggal, hari, dan jam.
+                </DialogDescription>
+              </DialogHeader>
+              <BulkEditCourtCostForm
+                courtId={courtId}
+                slots={allSlots}
+                dialogId="bulk-edit-court-costing"
+              />
+            </DialogContent>
+          </ManagedDialog>
+
+          <ManagedDialog id="create-court-costing">
+            <DialogTrigger asChild>
+              <Button>
+                <IconPlus />
+                Tambah
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="lg:min-w-xl">
+              <DialogHeader className="mb-4">
+                <DialogTitle>Buat Cost Lapangan</DialogTitle>
+              </DialogHeader>
+              <CreateCourtCostForm courtId={courtId} />
+            </DialogContent>
+          </ManagedDialog>
+        </div>
       }
     />
   );

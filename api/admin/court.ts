@@ -88,3 +88,11 @@ export async function updateSlotPriceApi(
   const { data } = await adminApi.put(`/courts/slots/${slotId}/pricing`, payload);
   return data;
 }
+
+export async function bulkUpdateSlotPriceApi(
+  courtId: string,
+  payload: { slotIds: string[]; price: number; discountPrice: number }
+) {
+  const { data } = await adminApi.put(`/courts/${courtId}/slots/pricing/bulk`, payload);
+  return data;
+}

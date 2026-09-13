@@ -735,10 +735,7 @@ export default function BookingSummary({
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{inventory.inventoryName}</p>
-                      <p className="text-muted-foreground">
-                        {dayjs(inventory.date).format('DD MMM')} • {inventory.timeSlot} • Qty:{' '}
-                        {inventory.quantity}
-                      </p>
+                      <p className="text-muted-foreground">Qty: {inventory.quantity}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="text-primary font-semibold">
@@ -748,7 +745,7 @@ export default function BookingSummary({
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 text-red-500 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => onInventoryRemove(inventory.inventoryId, inventory.timeSlot)}
+                        onClick={() => onInventoryRemove(inventory.inventoryId)}
                       >
                         <IconX className="h-3 w-3" />
                       </Button>
