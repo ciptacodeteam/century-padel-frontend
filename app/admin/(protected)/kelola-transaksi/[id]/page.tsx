@@ -257,8 +257,8 @@ export default function InvoiceDetailPage() {
                     <p className="font-medium">{invoice.membership.duration} hari</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground text-xs">Sesi</p>
-                    <p className="font-medium">{invoice.membership.sessions}</p>
+                    <p className="text-muted-foreground text-xs">Jam</p>
+                    <p className="font-medium">{invoice.membership.sessions} jam</p>
                   </div>
                 </div>
               </CardContent>

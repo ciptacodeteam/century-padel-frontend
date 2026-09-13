@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminCustomerMembershipQueryOptions } from '@/queries/admin/customer';
 import { myMembershipQueryOptions } from '@/queries/membership';
 import type { BookingItem } from '@/stores/useBookingStore';
+import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
 export interface ActiveMembership {
@@ -23,6 +24,7 @@ export interface MembershipDiscountResult {
   activeMembership: ActiveMembership | null;
   canUseMembership: boolean;
   remainingSessions: number;
+  hoursToDeduct: number;
   slotsToDeduct: number;
   discountAmount: number;
   originalTotal: number;
@@ -61,14 +63,27 @@ export function useMembershipDiscount(
   return useMemo(() => {
     const activeMembership = activeMembershipData?.activeMembership ?? null;
     const remainingSessions = activeMembership?.remainingSessions ?? 0;
-    const canUseMembership =
+    const hasActiveMembership =
       activeMembership &&
       !activeMembership.isExpired &&
       !activeMembership.isSuspended &&
       remainingSessions > 0;
 
-    // Calculate how many slots can be free (1 session = 1 slot)
-    const slotsToDeduct = Math.min(bookingItems.length, remainingSessions);
+    const hoursToDeduct = bookingItems.reduce((total, booking) => {
+      const [rangeStart, rangeEnd] = booking.timeSlot.split(' - ');
+      const start = rangeStart?.trim();
+      const end = (booking.endTime || rangeEnd)?.trim();
+      if (!start || !end) return total + 1;
+
+      const startAt = dayjs(`2000-01-01 ${start}`);
+      let endAt = dayjs(`2000-01-01 ${end}`);
+      if (!startAt.isValid() || !endAt.isValid()) return total + 1;
+      if (!endAt.isAfter(startAt)) endAt = endAt.add(1, 'day');
+
+      return total + Math.max(1, Math.ceil(endAt.diff(startAt, 'minute') / 60));
+    }, 0);
+    const canUseMembership = !!hasActiveMembership && remainingSessions >= hoursToDeduct;
+    const slotsToDeduct = canUseMembership ? bookingItems.length : 0;
 
     // Calculate original total
     const originalTotal = bookingItems.reduce((sum, booking) => {
@@ -102,6 +117,7 @@ export function useMembershipDiscount(
       activeMembership,
       canUseMembership: !!canUseMembership,
       remainingSessions,
+      hoursToDeduct: canUseMembership ? hoursToDeduct : 0,
       slotsToDeduct,
       discountAmount,
       originalTotal,

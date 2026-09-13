@@ -197,7 +197,7 @@ const BookingTable = () => {
 
   const { confirmAndMutate: cancelBooking } = useConfirmMutation(
     {
-      mutationFn: (id: string) => cancelBookingApi(id, 'Dibatalkan oleh admin')
+      mutationFn: (id: string) => cancelBookingApi(id, 'Dibatalkan oleh staf')
     },
     {
       title: 'Batalkan Pemesanan',

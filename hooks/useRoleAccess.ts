@@ -37,7 +37,7 @@ export function useRoleAccess(config: RoleAccessConfig) {
         } else if (userRole === ROLE.CASHIER) {
           router.replace('/admin/booking-lapangan');
         } else if (userRole === ROLE.ADMIN_VIEWER) {
-          router.replace('/admin/booking-lapangan');
+          router.replace('/admin/dashboard');
         } else {
           router.replace('/admin/booking-lapangan');
         }

@@ -9,9 +9,18 @@ import AppSectionHeader from '@/components/ui/app-section-header';
 import DateRangeInput from '@/components/ui/date-range-input';
 import { businessInsightsQueryOptions } from '@/queries/admin/analytics';
 import BusinessInsightsSection from '@/components/admin/analytics/BusinessInsightsSection';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { ROLE } from '@/lib/constants';
 // import ExportButtons from '@/components/admin/analytics/ExportButtons';
 
 export default function BusinessInsightsPage() {
+  const {
+    hasAccess,
+    isLoading: isAccessLoading,
+    userRole
+  } = useRoleAccess({
+    allowedRoles: [ROLE.ADMIN, ROLE.ADMIN_VIEWER]
+  });
   const [date, setDate] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
@@ -20,9 +29,12 @@ export default function BusinessInsightsPage() {
   const startDate = date?.from ? format(date.from, "yyyy-MM-dd'T'00:00:00'Z'") : undefined;
   const endDate = date?.to ? format(date.to, "yyyy-MM-dd'T'23:59:59'Z'") : undefined;
 
-  const { data: businessData, isLoading } = useQuery(
-    businessInsightsQueryOptions(startDate, endDate)
-  );
+  const { data: businessData, isLoading } = useQuery({
+    ...businessInsightsQueryOptions(startDate, endDate),
+    enabled: hasAccess
+  });
+
+  if (isAccessLoading || !hasAccess) return null;
 
   return (
     <main className="space-y-6">
@@ -33,7 +45,11 @@ export default function BusinessInsightsPage() {
         <DateRangeInput value={date} onValueChange={(r) => setDate(r ?? undefined)} />
       </AppSectionHeader>
 
-      <BusinessInsightsSection data={businessData} isLoading={isLoading} />
+      <BusinessInsightsSection
+        data={businessData}
+        isLoading={isLoading}
+        hideRevenue={userRole === ROLE.ADMIN_VIEWER}
+      />
 
       {/* Export Buttons Section */}
       {/* <ExportButtons startDate={startDate} endDate={endDate} /> */}

@@ -231,7 +231,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: me, isLoading } = useQuery(adminProfileQueryOptions);
   const isCoach = me?.role?.toUpperCase?.() === ROLE.COACH;
   const isCashier = me?.role?.toUpperCase?.() === ROLE.CASHIER;
-  const isAdminViewer = me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
+  const isManager = me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
   const isAdmin = me?.role?.toUpperCase?.() === ROLE.ADMIN;
 
   const navMainItems = React.useMemo<AppSidebarItem[]>(() => {
@@ -290,51 +290,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {
               title: 'Coach',
               url: '/admin/kelola-pemesanan/coach'
-            }
-          ]
-        },
-        {
-          title: 'Kustomer',
-          icon: IconUsers,
-          items: [
+            },
             {
-              title: 'Kelola Kustomer',
-              url: '/admin/kelola-kustomer'
+              title: 'Membership',
+              url: '/admin/kelola-pemesanan/membership'
             }
           ]
         }
       ];
     }
 
-    if (isAdminViewer) {
-      // ADMIN_VIEWER can view everything except Dashboard, Master Data, Kelola Karyawan, and Marketing
-      return data.navMain.filter(
-        (item) =>
-          item.title !== 'Dashboard' &&
-          item.title !== 'Master Data' &&
-          item.title !== 'Kelola Karyawan' &&
-          item.title !== 'Marketing'
+    if (isManager) {
+      return data.navMain.map((item) =>
+        item.title === 'Analytics'
+          ? {
+              ...item,
+              items: item.items?.filter(
+                (subItem) =>
+                  subItem.url !== '/admin/analytics/income-by-source' &&
+                  subItem.url !== '/admin/analytics/payment-methods'
+              )
+            }
+          : item
       );
     }
 
     return data.navMain;
-  }, [isCoach, isCashier, isAdminViewer, isLoading, me]);
+  }, [isCoach, isCashier, isManager, isLoading, me]);
 
   // Get appropriate dashboard link based on role
   const dashboardLink = React.useMemo(() => {
     if (isLoading || !me) return '/admin/dashboard';
     if (isCoach) return '/admin/kelola-karyawan';
     if (isCashier) return '/admin/booking-lapangan';
-    if (isAdminViewer) return '/admin/booking-lapangan';
+    if (isManager) return '/admin/dashboard';
     return '/admin/dashboard';
-  }, [isCoach, isCashier, isAdminViewer, isLoading, me]);
+  }, [isCoach, isCashier, isManager, isLoading, me]);
 
   // Get appropriate subtitle based on role
   const subtitle = React.useMemo(() => {
     if (isLoading || !me) return 'Dashboard Admin';
     if (isAdmin) return 'Dashboard Admin';
+    if (isManager) return 'Manager Panel';
     return 'Admin Panel';
-  }, [isAdmin, isLoading, me]);
+  }, [isAdmin, isManager, isLoading, me]);
 
   return (
     <Sidebar variant="inset" {...props}>

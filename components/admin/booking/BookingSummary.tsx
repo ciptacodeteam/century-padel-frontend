@@ -84,6 +84,7 @@ export interface BookingSummaryProps {
   /** Membership discount details (optional - will be calculated if not provided) */
   membershipDiscountDetails?: {
     canUseMembership: boolean;
+    hoursToDeduct: number;
     slotsToDeduct: number;
     discountAmount: number;
     originalTotal?: number;
@@ -563,14 +564,14 @@ export default function BookingSummary({
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Sisa Sesi:</span>{' '}
+                  <span className="text-muted-foreground">Sisa Jam:</span>{' '}
                   <span className="font-medium">
-                    {membershipDiscount.activeMembership.remainingSessions} sesi
+                    {membershipDiscount.activeMembership.remainingSessions} jam
                   </span>
                 </div>
                 {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
                   <div className="text-primary mt-1 font-medium">
-                    {membershipDiscount.slotsToDeduct} slot akan gratis menggunakan membership
+                    {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
                   </div>
                 )}
               </div>

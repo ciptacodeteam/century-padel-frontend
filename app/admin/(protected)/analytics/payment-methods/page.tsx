@@ -8,8 +8,14 @@ import DateRangeInput from '@/components/ui/date-range-input';
 import { paymentMethodsAnalyticsQueryOptions } from '@/queries/admin/analytics';
 import PaymentMethodsSection from '@/components/admin/analytics/PaymentMethodsSection';
 import type { DateRange } from 'react-day-picker';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { ROLE } from '@/lib/constants';
 
 export default function PaymentMethodsPage() {
+  const { hasAccess, isLoading: isAccessLoading } = useRoleAccess({
+    allowedRoles: [ROLE.ADMIN],
+    redirectTo: '/admin/analytics/business-insights'
+  });
   const [range, setRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
@@ -18,9 +24,12 @@ export default function PaymentMethodsPage() {
   const startDate = range?.from ? format(range.from, "yyyy-MM-dd'T'00:00:00'Z'") : undefined;
   const endDate = range?.to ? format(range.to, "yyyy-MM-dd'T'23:59:59'Z'") : undefined;
 
-  const { data: paymentData, isLoading } = useQuery(
-    paymentMethodsAnalyticsQueryOptions(startDate, endDate)
-  );
+  const { data: paymentData, isLoading } = useQuery({
+    ...paymentMethodsAnalyticsQueryOptions(startDate, endDate),
+    enabled: hasAccess
+  });
+
+  if (isAccessLoading || !hasAccess) return null;
 
   return (
     <main className="space-y-6">

@@ -99,7 +99,7 @@ const MembershipTransactionTable = () => {
             <div>
               <p className="font-medium">{membership.name}</p>
               <p className="text-muted-foreground text-xs">
-                {membership.sessions} sessions · {membership.duration} days
+                {membership.sessions} jam · {membership.duration} hari
               </p>
             </div>
           );
@@ -148,8 +148,8 @@ const MembershipTransactionTable = () => {
           const row = info.row.original;
           return (
             <div className="text-sm">
-              <p>{info.getValue()} sessions</p>
-              <p className="text-muted-foreground text-xs">{row.remainingDuration} days</p>
+              <p>{info.getValue()} jam</p>
+              <p className="text-muted-foreground text-xs">{row.remainingDuration} hari</p>
             </div>
           );
         },
@@ -343,8 +343,8 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
           </div>
           <div className="grid gap-3 md:grid-cols-3">
             <div>
-              <p className="text-muted-foreground text-sm">Sessions</p>
-              <p className="font-medium">{membership?.sessions || 0} sessions</p>
+              <p className="text-muted-foreground text-sm">Jam Paket</p>
+              <p className="font-medium">{membership?.sessions || 0} jam</p>
             </div>
             <div>
               <p className="text-muted-foreground text-sm">Duration</p>
@@ -389,8 +389,8 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Remaining Sessions</p>
-            <p className="font-medium">{transaction.remainingSessions}</p>
+            <p className="text-muted-foreground text-sm">Sisa Jam</p>
+            <p className="font-medium">{transaction.remainingSessions} jam</p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Remaining Duration</p>

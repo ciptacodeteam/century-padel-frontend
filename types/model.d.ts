@@ -833,7 +833,7 @@ export type BusinessInsightsResponse = {
     confirmed: number;
     confirmationRate: string;
   };
-  revenue: {
+  revenue?: {
     total: number;
     transactions: number;
     avgPerTransaction: string;

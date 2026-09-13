@@ -972,12 +972,12 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Sisa Sesi:</span>{' '}
-                    <span className="font-medium">{membershipDiscount.remainingSessions} sesi</span>
+                    <span className="text-muted-foreground">Sisa Jam:</span>{' '}
+                    <span className="font-medium">{membershipDiscount.remainingSessions} jam</span>
                   </div>
                   {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
                     <div className="text-primary mt-1 font-medium">
-                      {membershipDiscount.slotsToDeduct} slot akan gratis menggunakan membership
+                      {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
                     </div>
                   )}
                 </div>
@@ -995,10 +995,7 @@ export default function CheckoutPage() {
                 </div>
                 {membershipDiscount.canUseMembership && membershipDiscount.slotsToDeduct > 0 && (
                   <div className="flex items-center justify-between text-green-600">
-                    <span>
-                      Membership Discount ({membershipDiscount.slotsToDeduct} slot
-                      {membershipDiscount.slotsToDeduct > 1 ? 's' : ''})
-                    </span>
+                    <span>Diskon Membership ({membershipDiscount.hoursToDeduct} jam)</span>
                     <span className="font-medium">
                       - {formatCurrency(membershipDiscount.discountAmount)}
                     </span>

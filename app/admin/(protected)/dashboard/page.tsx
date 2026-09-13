@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const { data: me } = useQuery(adminProfileQueryOptions);
   const { data: stats, isLoading, isError } = useQuery(dashboardStatsQueryOptions());
 
-  // Role-based access control - only ADMIN (super admin) can view dashboard
+  // Admin and Manager can view the dashboard.
   useEffect(() => {
     if (!me) return;
 
@@ -29,18 +29,18 @@ export default function DashboardPage() {
       router.replace('/admin/kelola-karyawan');
     } else if (userRole === ROLE.CASHIER) {
       router.replace('/admin/booking-lapangan');
-    } else if (userRole === ROLE.ADMIN_VIEWER) {
-      router.replace('/admin/booking-lapangan');
     } else if (userRole === ROLE.BALLBOY) {
       router.replace('/admin/kelola-karyawan');
-    } else if (userRole !== ROLE.ADMIN) {
+    } else if (userRole !== ROLE.ADMIN && userRole !== ROLE.ADMIN_VIEWER) {
       // Any other role that's not ADMIN should be redirected
       router.replace('/admin/booking-lapangan');
     }
   }, [me, router]);
 
-  // Only ADMIN role can view dashboard - show loading for others during redirect
-  if (!me || me.role?.toUpperCase?.() !== ROLE.ADMIN) {
+  const canViewDashboard =
+    me?.role?.toUpperCase?.() === ROLE.ADMIN || me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
+
+  if (!canViewDashboard) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-muted-foreground">Redirecting...</div>
