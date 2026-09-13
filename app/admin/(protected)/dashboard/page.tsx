@@ -16,29 +16,33 @@ import { useEffect } from 'react';
 export default function DashboardPage() {
   const router = useRouter();
   const { data: me } = useQuery(adminProfileQueryOptions);
-  const { data: stats, isLoading, isError } = useQuery(dashboardStatsQueryOptions());
+  const userRole = me?.role?.toUpperCase?.();
+  const canViewDashboard = userRole === ROLE.ADMIN;
+  const {
+    data: stats,
+    isLoading,
+    isError
+  } = useQuery({
+    ...dashboardStatsQueryOptions(),
+    enabled: canViewDashboard
+  });
 
-  // Admin and Manager can view the dashboard.
+  // Only Super Admin can view the dashboard.
   useEffect(() => {
     if (!me) return;
-
-    const userRole = me.role?.toUpperCase?.();
 
     // Redirect based on role
     if (userRole === ROLE.COACH) {
       router.replace('/admin/kelola-karyawan');
-    } else if (userRole === ROLE.CASHIER) {
+    } else if (userRole === ROLE.CASHIER || userRole === ROLE.ADMIN_VIEWER) {
       router.replace('/admin/booking-lapangan');
     } else if (userRole === ROLE.BALLBOY) {
       router.replace('/admin/kelola-karyawan');
-    } else if (userRole !== ROLE.ADMIN && userRole !== ROLE.ADMIN_VIEWER) {
+    } else if (userRole !== ROLE.ADMIN) {
       // Any other role that's not ADMIN should be redirected
       router.replace('/admin/booking-lapangan');
     }
-  }, [me, router]);
-
-  const canViewDashboard =
-    me?.role?.toUpperCase?.() === ROLE.ADMIN || me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
+  }, [me, router, userRole]);
 
   if (!canViewDashboard) {
     return (

@@ -301,18 +301,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     if (isManager) {
-      return data.navMain.map((item) =>
-        item.title === 'Analytics'
-          ? {
-              ...item,
-              items: item.items?.filter(
-                (subItem) =>
-                  subItem.url !== '/admin/analytics/income-by-source' &&
-                  subItem.url !== '/admin/analytics/payment-methods'
-              )
-            }
-          : item
-      );
+      return data.navMain
+        .filter((item) => item.url !== '/admin/dashboard')
+        .map((item) =>
+          item.title === 'Analytics'
+            ? {
+                ...item,
+                items: item.items?.filter(
+                  (subItem) =>
+                    subItem.url !== '/admin/analytics/income-by-source' &&
+                    subItem.url !== '/admin/analytics/payment-methods'
+                )
+              }
+            : item
+        );
     }
 
     return data.navMain;
@@ -323,7 +325,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     if (isLoading || !me) return '/admin/dashboard';
     if (isCoach) return '/admin/kelola-karyawan';
     if (isCashier) return '/admin/booking-lapangan';
-    if (isManager) return '/admin/dashboard';
+    if (isManager) return '/admin/booking-lapangan';
     return '/admin/dashboard';
   }, [isCoach, isCashier, isManager, isLoading, me]);
 
