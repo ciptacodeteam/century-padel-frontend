@@ -11,6 +11,7 @@ import { useBookingStoreHydration } from '@/hooks/useBookingStoreHydration';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
+import { calculatePaymentFee } from '@/lib/payment-fee';
 import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
@@ -124,6 +125,12 @@ export default function CheckoutPage() {
         persistPaymentMethodId(null);
         useBookingStore.getState().clearAll();
 
+        const paymentUrl = data?.data?.paymentUrl;
+        if (paymentUrl) {
+          window.location.assign(paymentUrl);
+          return;
+        }
+
         // Redirect to invoice page using the invoice number from response
         const invoiceNumber = data?.data?.invoiceNumber;
         if (invoiceNumber) {
@@ -222,32 +229,28 @@ export default function CheckoutPage() {
     persistPaymentMethodId(selectedPaymentMethod?.id ?? null);
   }, [selectedPaymentMethod, persistPaymentMethodId]);
 
+  const subtotalAfterPromo = Math.max(0, grandTotal - promoDiscountAmount);
+
   const paymentFeeBreakdown = (() => {
     if (!selectedPaymentMethod) {
       return {
         fixedFee: 0,
         percentageRate: 0,
         percentageFee: 0,
+        vat: 0,
         totalFee: 0
       };
     }
 
-    const percentageRate = Number(selectedPaymentMethod.percentage ?? 0);
-    const fixedFee = Number.isFinite(selectedPaymentMethod.fees)
-      ? Number(selectedPaymentMethod.fees)
-      : 0;
-    const percentageFee = Math.round((grandTotal * percentageRate) / 100);
-
-    return {
-      fixedFee,
-      percentageRate,
-      percentageFee,
-      totalFee: Math.round(fixedFee + percentageFee)
-    };
+    return calculatePaymentFee(
+      subtotalAfterPromo,
+      selectedPaymentMethod.fees,
+      selectedPaymentMethod.percentage
+    );
   })();
 
-  const totalWithPaymentFee = grandTotal + paymentFeeBreakdown.totalFee;
-  const totalAfterPromo = Math.max(0, totalWithPaymentFee - promoDiscountAmount);
+  const totalWithPaymentFee = subtotalAfterPromo + paymentFeeBreakdown.totalFee;
+  const totalAfterPromo = totalWithPaymentFee;
 
   const buildCheckoutSelections = useCallback(() => {
     const courtSlots = bookingItems
@@ -1090,9 +1093,11 @@ export default function CheckoutPage() {
               </div>
             ) : (
               paymentMethods.map((method) => {
-                const percentage = Number(method.percentage ?? 0);
-                const baseFee = Number.isFinite(method.fees) ? method.fees : 0;
-                const feesValue = Math.round(baseFee + (grandTotal * percentage) / 100);
+                const feesValue = calculatePaymentFee(
+                  subtotalAfterPromo,
+                  method.fees,
+                  method.percentage
+                ).totalFee;
                 const isSelected = selectedPaymentMethod?.id === method.id;
 
                 return (

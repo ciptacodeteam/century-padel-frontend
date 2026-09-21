@@ -5,6 +5,7 @@ import BottomNavigationWrapper from '@/components/ui/BottomNavigationWrapper';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { calculatePaymentFee } from '@/lib/payment-fee';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { membershipCheckoutMutationOptions } from '@/mutations/membership';
 import { membershipQueryOptions } from '@/queries/membership';
@@ -108,6 +109,12 @@ export default function MembershipCheckoutPage() {
         sessionStorage.removeItem('membershipCheckoutId');
         persistPaymentMethodId(null);
 
+        const paymentUrl = data?.data?.paymentUrl;
+        if (paymentUrl) {
+          window.location.assign(paymentUrl);
+          return;
+        }
+
         // Redirect to invoice page using the invoice number from response
         const invoiceNumber = data?.data?.invoiceNumber;
         if (invoiceNumber) {
@@ -123,22 +130,16 @@ export default function MembershipCheckoutPage() {
         fixedFee: 0,
         percentageRate: 0,
         percentageFee: 0,
+        vat: 0,
         totalFee: 0
       };
     }
 
-    const percentageRate = Number(selectedPaymentMethod.percentage ?? 0);
-    const fixedFee = Number.isFinite(selectedPaymentMethod.fees)
-      ? Number(selectedPaymentMethod.fees)
-      : 0;
-    const percentageFee = Math.round((membership.price * percentageRate) / 100);
-
-    return {
-      fixedFee,
-      percentageRate,
-      percentageFee,
-      totalFee: Math.round(fixedFee + percentageFee)
-    };
+    return calculatePaymentFee(
+      membership.price,
+      selectedPaymentMethod.fees,
+      selectedPaymentMethod.percentage
+    );
   })();
 
   const totalWithPaymentFee = (membership?.price || 0) + paymentFeeBreakdown.totalFee;
@@ -306,11 +307,11 @@ export default function MembershipCheckoutPage() {
                 </div>
               ) : (
                 paymentMethods.map((method) => {
-                  const percentage = Number(method.percentage ?? 0);
-                  const baseFee = Number.isFinite(method.fees) ? method.fees : 0;
-                  const feesValue = Math.round(
-                    baseFee + ((membership?.price || 0) * percentage) / 100
-                  );
+                  const feesValue = calculatePaymentFee(
+                    membership?.price || 0,
+                    method.fees,
+                    method.percentage
+                  ).totalFee;
                   const isSelected = selectedPaymentMethod?.id === method.id;
 
                   return (
