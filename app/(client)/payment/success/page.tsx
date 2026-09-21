@@ -2,55 +2,65 @@
 
 import MainHeader from '@/components/headers/MainHeader';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { getInvoiceApi } from '@/api/booking';
+import { CheckCircle, Clock3, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
 function PaymentSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bookingId = searchParams.get('booking_id');
+  const invoiceNumber = searchParams.get('invoice_id');
 
-  const [isChecking, setIsChecking] = useState(true);
-  const [checkCount, setCheckCount] = useState(0);
-  const maxChecks = 10; // Max 20 seconds (10 checks * 2 seconds)
+  const [verificationStatus, setVerificationStatus] = useState<'checking' | 'paid' | 'pending'>(
+    'checking'
+  );
 
-  // Poll booking status to confirm payment
+  // Poll the invoice until the Xendit webhook confirms payment.
   useEffect(() => {
-    if (!bookingId) {
-      setIsChecking(false);
+    if (!invoiceNumber) {
+      setVerificationStatus('pending');
       return;
     }
 
-    const checkInterval = setInterval(() => {
-      void (async () => {
-        try {
-          const response = await fetch(`/api/bookings/${bookingId}`);
-          const booking = await response.json();
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-          if (booking.status === 'CONFIRMED' || booking.paymentStatus === 'PAID') {
-            clearInterval(checkInterval);
-            setIsChecking(false);
-          } else if (checkCount >= maxChecks) {
-            // Stop checking after max attempts
-            clearInterval(checkInterval);
-            setIsChecking(false);
-          } else {
-            setCheckCount((prev) => prev + 1);
-          }
-        } catch (error) {
-          console.error('Error checking payment status:', error);
+    const checkPayment = async (attempt: number) => {
+      try {
+        const response = await getInvoiceApi(invoiceNumber);
+        const status = response?.data?.status;
+
+        if (cancelled) return;
+        if (status === 'PAID') {
+          setVerificationStatus('paid');
+          return;
         }
-      })();
-    }, 2000); // Check every 2 seconds
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
 
-    return () => clearInterval(checkInterval);
-  }, [bookingId, checkCount, maxChecks]);
+      if (cancelled) return;
+      if (attempt >= 9) {
+        setVerificationStatus('pending');
+        return;
+      }
+
+      timer = setTimeout(() => void checkPayment(attempt + 1), 2000);
+    };
+
+    void checkPayment(0);
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [invoiceNumber]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 pb-16">
       <MainHeader
-        title="Payment Success"
+        title="Status Pembayaran"
         backHref="/booking"
         withCartBadge={false}
         withLogo={false}
@@ -59,7 +69,7 @@ function PaymentSuccessContent() {
 
       <main className="mx-auto flex w-11/12 max-w-2xl flex-col items-center gap-6 pt-32">
         <div className="w-full space-y-6 rounded-2xl bg-white p-8 shadow-lg">
-          {isChecking ? (
+          {verificationStatus === 'checking' ? (
             <>
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="text-primary h-16 w-16 animate-spin" />
@@ -71,7 +81,7 @@ function PaymentSuccessContent() {
                 </p>
               </div>
             </>
-          ) : (
+          ) : verificationStatus === 'paid' ? (
             <>
               <div className="flex flex-col items-center gap-4">
                 <div className="rounded-full bg-green-100 p-4">
@@ -85,10 +95,10 @@ function PaymentSuccessContent() {
                 </p>
               </div>
 
-              {bookingId && (
+              {invoiceNumber && (
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                   <p className="text-sm text-gray-600">
-                    <span className="font-semibold">Booking ID:</span> {bookingId}
+                    <span className="font-semibold">Invoice:</span> {invoiceNumber}
                   </p>
                   <p className="mt-2 text-xs text-gray-500">
                     A confirmation email has been sent to your registered email address.
@@ -97,8 +107,8 @@ function PaymentSuccessContent() {
               )}
 
               <div className="flex flex-col gap-3 pt-4">
-                <Button size="lg" className="w-full" onClick={() => router.push('/bookings')}>
-                  View My Bookings
+                <Button size="lg" className="w-full" onClick={() => router.push('/invoice')}>
+                  Lihat Transaksi Saya
                 </Button>
                 <Button
                   size="lg"
@@ -110,16 +120,40 @@ function PaymentSuccessContent() {
                 </Button>
               </div>
             </>
+          ) : (
+            <div className="flex flex-col items-center gap-4">
+              <div className="rounded-full bg-amber-100 p-4">
+                <Clock3 className="h-16 w-16 text-amber-600" />
+              </div>
+              <h1 className="text-center text-2xl font-bold text-gray-800">
+                Pembayaran Belum Terkonfirmasi
+              </h1>
+              <p className="text-center text-gray-600">
+                Kami belum menerima konfirmasi pembayaran. Status transaksi tidak akan diubah
+                menjadi berhasil sebelum pembayaran dikonfirmasi oleh Xendit.
+              </p>
+              {invoiceNumber && (
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => router.push(`/invoice/${invoiceNumber}`)}
+                >
+                  Kembali ke Detail Transaksi
+                </Button>
+              )}
+            </div>
           )}
         </div>
 
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-center text-sm text-blue-700">
-            <strong>✓ Secure Payment Completed</strong>
-            <br />
-            Your payment was processed securely through Xendit with 3D Secure authentication.
-          </p>
-        </div>
+        {verificationStatus === 'paid' && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-center text-sm text-blue-700">
+              <strong>✓ Pembayaran Telah Dikonfirmasi</strong>
+              <br />
+              Pembayaran Anda diproses dengan aman melalui Xendit.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

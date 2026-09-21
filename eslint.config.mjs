@@ -47,7 +47,9 @@ export default defineConfig([
       'react-hooks/purity': 'off',
       'react-hooks/exhaustive-deps': 'off',
       'react-hooks/rules-of-hooks': 'off',
-      'react-hooks/incompatible-library': 'off'
+      'react-hooks/incompatible-library': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
       '@typescript-eslint/no-misused-promises': 'off'
     }
   },

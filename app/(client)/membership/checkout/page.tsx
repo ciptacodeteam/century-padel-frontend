@@ -115,7 +115,8 @@ export default function MembershipCheckoutPage() {
           return;
         }
 
-        // Redirect to invoice page using the invoice number from response
+        // QRIS and VA are present-to-customer flows, so show their instructions
+        // immediately on the transaction detail page.
         const invoiceNumber = data?.data?.invoiceNumber;
         if (invoiceNumber) {
           router.push(`/invoice/${invoiceNumber}`);

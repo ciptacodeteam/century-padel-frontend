@@ -131,7 +131,8 @@ export default function CheckoutPage() {
           return;
         }
 
-        // Redirect to invoice page using the invoice number from response
+        // QRIS and VA are present-to-customer flows, so show their instructions
+        // immediately on the transaction detail page.
         const invoiceNumber = data?.data?.invoiceNumber;
         if (invoiceNumber) {
           router.push(`/invoice/${invoiceNumber}`);
@@ -570,9 +571,6 @@ export default function CheckoutPage() {
               checkoutMutation.reset();
             }
           })();
-        } else if (selectedPaymentMethod.channel !== 'CARDS') {
-          // Non-card payment success - proceed normally
-          toast.success('Checkout berhasil!');
         }
       }
     });

@@ -112,11 +112,20 @@ export default function PaymentActionCard({
     paymentMeta?.channel_code || paymentMethod?.channel || ''
   ).toUpperCase();
   const actions: PaymentAction[] = Array.isArray(paymentMeta?.actions) ? paymentMeta.actions : [];
-  const isMockMode = env.NEXT_PUBLIC_PAYMENT_GATEWAY_MODE === 'mock';
+  const paymentRequestId = String(
+    paymentMeta?.payment_request_id || payment?.externalRef || ''
+  );
+  const isMockPayment =
+    paymentMeta?.mock === true ||
+    paymentRequestId.startsWith('mock_') ||
+    actions.some((action) => String(action.value || '').startsWith('MOCK-QRIS-'));
+  const isMockMode = env.NEXT_PUBLIC_PAYMENT_GATEWAY_MODE === 'mock' || isMockPayment;
 
   const isQRIS = channelCode === 'QRIS' || channelCode === 'QR';
   const qrString =
-    actions.find((action) => ['QR_STRING', 'QR_CODE'].includes(action.descriptor || ''))?.value ||
+    actions.find((action) =>
+      ['QR_STRING', 'QR_CODE'].includes(String(action.descriptor || '').toUpperCase())
+    )?.value ||
     invoice?.paymentInstructions?.qrString ||
     invoice?.paymentInstructions?.qrImage;
 
@@ -200,7 +209,7 @@ export default function PaymentActionCard({
             {currencyFormatter.format(invoice.total).replace(/\s/g, '')}
           </h4>
 
-          {isQRIS && qrString && (
+          {isQRIS && qrString && !isMockPayment && (
             <div className="space-y-4">
               <div className="flex justify-center">
                 <div className="rounded-lg bg-white p-4 shadow-md">
@@ -219,6 +228,17 @@ export default function PaymentActionCard({
 
               <p className="text-xs text-gray-600">
                 Scan QR code di atas menggunakan aplikasi pembayaran QRIS Anda
+              </p>
+            </div>
+          )}
+
+          {isQRIS && isMockPayment && (
+            <div className="mx-auto max-w-lg rounded-lg border border-amber-300 bg-amber-50 p-4 text-left text-sm text-amber-900">
+              <p className="font-semibold">QRIS masih dalam mode simulasi</p>
+              <p className="mt-1">
+                QR pembayaran asli tidak tersedia. Atur backend ke
+                <code className="mx-1 rounded bg-amber-100 px-1">PAYMENT_GATEWAY_MODE=xendit</code>
+                dan gunakan Xendit API key yang aktif.
               </p>
             </div>
           )}
