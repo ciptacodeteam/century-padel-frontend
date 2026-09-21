@@ -28,7 +28,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 dayjs.locale('id');
@@ -46,6 +46,7 @@ const PAYMENT_METHOD_STORAGE_KEY = 'checkout-selected-payment';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const isCompletingCheckout = useRef(false);
   // const pathname = usePathname();
   // const searchParams = useSearchParams();
   const isBookingStoreHydrated = useBookingStoreHydration();
@@ -121,11 +122,18 @@ export default function CheckoutPage() {
           return; // Skip invoice redirect for card payments
         }
 
+        const checkoutResult = data?.data ?? data;
+        const paymentUrl = checkoutResult?.paymentUrl;
+        const invoiceNumber = checkoutResult?.invoiceNumber;
+
+        // Prevent the empty-cart guard from racing the payment redirect after
+        // clearAll() synchronously empties the persisted booking store.
+        isCompletingCheckout.current = true;
+
         // Clear booking store after successful checkout (non-card payments only)
         persistPaymentMethodId(null);
         useBookingStore.getState().clearAll();
 
-        const paymentUrl = data?.data?.paymentUrl;
         if (paymentUrl) {
           window.location.assign(paymentUrl);
           return;
@@ -133,9 +141,8 @@ export default function CheckoutPage() {
 
         // QRIS and VA are present-to-customer flows, so show their instructions
         // immediately on the transaction detail page.
-        const invoiceNumber = data?.data?.invoiceNumber;
         if (invoiceNumber) {
-          router.push(`/invoice/${invoiceNumber}`);
+          router.replace(`/invoice/${invoiceNumber}`);
         } else {
           // Fallback to old payment page if invoice number not available
           const enhancedData = {
@@ -165,7 +172,7 @@ export default function CheckoutPage() {
             }
           };
           sessionStorage.setItem('checkoutData', JSON.stringify(enhancedData));
-          router.push('/checkout/payment');
+          router.replace('/checkout/payment');
         }
       }
     })
@@ -198,8 +205,8 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!isBookingStoreHydrated) return;
-    if (bookingItems.length === 0) {
-      router.push('/booking');
+    if (bookingItems.length === 0 && !isCompletingCheckout.current) {
+      router.replace('/booking');
     }
   }, [isBookingStoreHydrated, bookingItems.length, router]);
 

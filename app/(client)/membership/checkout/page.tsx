@@ -109,7 +109,8 @@ export default function MembershipCheckoutPage() {
         sessionStorage.removeItem('membershipCheckoutId');
         persistPaymentMethodId(null);
 
-        const paymentUrl = data?.data?.paymentUrl;
+        const checkoutResult = data?.data ?? data;
+        const paymentUrl = checkoutResult?.paymentUrl;
         if (paymentUrl) {
           window.location.assign(paymentUrl);
           return;
@@ -117,9 +118,9 @@ export default function MembershipCheckoutPage() {
 
         // QRIS and VA are present-to-customer flows, so show their instructions
         // immediately on the transaction detail page.
-        const invoiceNumber = data?.data?.invoiceNumber;
+        const invoiceNumber = checkoutResult?.invoiceNumber;
         if (invoiceNumber) {
-          router.push(`/invoice/${invoiceNumber}`);
+          router.replace(`/invoice/${invoiceNumber}`);
         }
       }
     })
