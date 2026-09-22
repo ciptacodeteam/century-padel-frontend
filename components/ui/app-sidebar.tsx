@@ -6,6 +6,7 @@ import * as React from 'react';
 import { NavMain } from '@/components/ui/nav-main';
 import { NavSecondary } from '@/components/ui/nav-secondary';
 import { NavUser } from '@/components/ui/nav-user';
+import { featureFlags } from '@/lib/feature-flags';
 import {
   Sidebar,
   SidebarContent,
@@ -143,26 +144,38 @@ const data: { navMain: AppSidebarItem[]; navSecondary: AppSidebarItem[] } = {
     //   icon: IconSchool,
     //   items: []
     // },
-    {
-      title: 'Kelola Turnamen',
-      url: '/admin/kelola-turnamen',
-      icon: IconLaurelWreath1,
-      items: []
-    },
-    {
-      title: 'Kelola Club',
-      url: '/admin/kelola-club',
-      icon: IconUsersGroup,
-      items: []
-    },
+    ...(featureFlags.tournaments
+      ? [
+          {
+            title: 'Kelola Turnamen',
+            url: '/admin/kelola-turnamen',
+            icon: IconLaurelWreath1,
+            items: []
+          }
+        ]
+      : []),
+    ...(featureFlags.clubs
+      ? [
+          {
+            title: 'Kelola Club',
+            url: '/admin/kelola-club',
+            icon: IconUsersGroup,
+            items: []
+          }
+        ]
+      : []),
     {
       title: 'Marketing',
       icon: IconAd2,
       items: [
-        {
-          title: 'Push Notification',
-          url: '/admin/kelola-notifikasi'
-        },
+        ...(featureFlags.adminPushNotifications
+          ? [
+              {
+                title: 'Push Notification',
+                url: '/admin/kelola-notifikasi'
+              }
+            ]
+          : []),
         {
           title: 'Kelola Banner',
           url: '/admin/kelola-banner'
@@ -218,7 +231,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: me, isLoading } = useQuery(adminProfileQueryOptions);
   const isCoach = me?.role?.toUpperCase?.() === ROLE.COACH;
   const isCashier = me?.role?.toUpperCase?.() === ROLE.CASHIER;
-  const isAdminViewer = me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
+  const isManager = me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
   const isAdmin = me?.role?.toUpperCase?.() === ROLE.ADMIN;
 
   const navMainItems = React.useMemo<AppSidebarItem[]>(() => {
@@ -277,51 +290,52 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {
               title: 'Coach',
               url: '/admin/kelola-pemesanan/coach'
-            }
-          ]
-        },
-        {
-          title: 'Kustomer',
-          icon: IconUsers,
-          items: [
+            },
             {
-              title: 'Kelola Kustomer',
-              url: '/admin/kelola-kustomer'
+              title: 'Membership',
+              url: '/admin/kelola-pemesanan/membership'
             }
           ]
         }
       ];
     }
 
-    if (isAdminViewer) {
-      // ADMIN_VIEWER can view everything except Dashboard, Master Data, Kelola Karyawan, and Marketing
-      return data.navMain.filter(
-        (item) =>
-          item.title !== 'Dashboard' &&
-          item.title !== 'Master Data' &&
-          item.title !== 'Kelola Karyawan' &&
-          item.title !== 'Marketing'
-      );
+    if (isManager) {
+      return data.navMain
+        .filter((item) => item.url !== '/admin/dashboard')
+        .map((item) =>
+          item.title === 'Analytics'
+            ? {
+                ...item,
+                items: item.items?.filter(
+                  (subItem) =>
+                    subItem.url !== '/admin/analytics/income-by-source' &&
+                    subItem.url !== '/admin/analytics/payment-methods'
+                )
+              }
+            : item
+        );
     }
 
     return data.navMain;
-  }, [isCoach, isCashier, isAdminViewer, isLoading, me]);
+  }, [isCoach, isCashier, isManager, isLoading, me]);
 
   // Get appropriate dashboard link based on role
   const dashboardLink = React.useMemo(() => {
     if (isLoading || !me) return '/admin/dashboard';
     if (isCoach) return '/admin/kelola-karyawan';
     if (isCashier) return '/admin/booking-lapangan';
-    if (isAdminViewer) return '/admin/booking-lapangan';
+    if (isManager) return '/admin/booking-lapangan';
     return '/admin/dashboard';
-  }, [isCoach, isCashier, isAdminViewer, isLoading, me]);
+  }, [isCoach, isCashier, isManager, isLoading, me]);
 
   // Get appropriate subtitle based on role
   const subtitle = React.useMemo(() => {
     if (isLoading || !me) return 'Dashboard Admin';
     if (isAdmin) return 'Dashboard Admin';
+    if (isManager) return 'Manager Panel';
     return 'Admin Panel';
-  }, [isAdmin, isLoading, me]);
+  }, [isAdmin, isManager, isLoading, me]);
 
   return (
     <Sidebar variant="inset" {...props}>

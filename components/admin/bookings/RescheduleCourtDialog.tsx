@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { rescheduleBookedCourtApi } from '@/api/admin/bookedCourt';
 import { formatSlotTime } from '@/lib/time-utils';
+import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
 import { cn } from '@/lib/utils';
 import { adminCourtsWithSlotsQueryOptions } from '@/queries/admin/court';
 import type { BookingDetail, Court, Slot } from '@/types/model';
@@ -157,7 +158,7 @@ export function RescheduleCourtDialog({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{dialogTrigger}</TooltipTrigger>
-        <TooltipContent>Reschedule hanya tersedia maksimal H-3 sebelum jadwal</TooltipContent>
+        <TooltipContent>{CUSTOMER_RESCHEDULE_POLICY_TEXT}</TooltipContent>
       </Tooltip>
     );
   }

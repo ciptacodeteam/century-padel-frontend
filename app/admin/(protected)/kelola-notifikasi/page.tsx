@@ -13,7 +13,7 @@ import { ROLE } from '@/lib/constants';
 
 export default function PushNotificationsPage() {
   const { hasAccess, isLoading } = useRoleAccess({
-    allowedRoles: [ROLE.ADMIN]
+    allowedRoles: [ROLE.ADMIN, ROLE.ADMIN_VIEWER]
   });
 
   if (isLoading || !hasAccess) {

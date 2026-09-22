@@ -7,6 +7,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
+import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
+import { isHourlyBookingTimeVisible, isSlotBeforeBookingCutoff } from '@/lib/booking-slot-cutoff';
 import { formatSlotTime } from '@/lib/time-utils';
 import { cn, getPlaceholderImageUrl } from '@/lib/utils';
 import { adminCourtCostingQueryOptions } from '@/queries/admin/court';
@@ -86,6 +88,7 @@ type SelectedBooking = {
 };
 
 export default function BookingLapangan() {
+  const bookingClock = useBookingCutoffClock();
   const router = useRouter();
   const queryClient = useQueryClient();
   const {
@@ -295,9 +298,18 @@ export default function BookingLapangan() {
       }
     });
 
-    // Convert to array and sort
-    return Array.from(timeSet).sort((a, b) => a.localeCompare(b));
-  }, [slots, selectedDateString, selectedCourt, standardTimeSlots]);
+    return Array.from(timeSet)
+      .filter((time) => isHourlyBookingTimeVisible(selectedDateString, time, bookingClock))
+      .sort((a, b) => a.localeCompare(b));
+  }, [bookingClock, slots, selectedDateString, selectedCourt, standardTimeSlots]);
+
+  useEffect(() => {
+    const allowedTimes = new Set(availableTimeSlots);
+    setSelectedTimeSlots((previous) => {
+      const remaining = previous.filter((time) => allowedTimes.has(time));
+      return remaining.length === previous.length ? previous : remaining;
+    });
+  }, [availableTimeSlots]);
 
   // Sync with store when component mounts
   useEffect(() => {
@@ -569,7 +581,7 @@ export default function BookingLapangan() {
       return true;
     }
 
-    const now = dayjs();
+    const now = dayjs(bookingClock);
 
     const evaluatedCandidates = candidateSlots.map((slot) => {
       const slotStartTime = formatSlotTime(slot.startAt);
@@ -593,26 +605,31 @@ export default function BookingLapangan() {
         (slotStartDateTime.isBefore(now) || slotStartDateTime.isSame(now)) &&
         slotEndDateTime.isAfter(now);
       const isEnded = slotEndDateTime.isBefore(now) || slotEndDateTime.isSame(now);
+      const isPastCutoff = !isSlotBeforeBookingCutoff(slotEndDateTime, bookingClock);
 
       return {
         isAvailable: slot.isAvailable !== false,
         isOngoing,
-        isEnded
+        isEnded,
+        isPastCutoff
       };
     });
 
-    // Ongoing slots should always be selectable for admin.
-    if (evaluatedCandidates.some((candidate) => candidate.isOngoing)) {
+    // Ongoing slots remain selectable until five minutes before they end.
+    if (evaluatedCandidates.some((candidate) => candidate.isOngoing && !candidate.isPastCutoff)) {
       return false;
     }
 
-    // If every candidate has ended, mark booked.
-    if (evaluatedCandidates.every((candidate) => candidate.isEnded)) {
+    if (evaluatedCandidates.every((candidate) => candidate.isEnded || candidate.isPastCutoff)) {
       return true;
     }
 
     // For upcoming slots, any available candidate means selectable.
-    if (evaluatedCandidates.some((candidate) => !candidate.isEnded && candidate.isAvailable)) {
+    if (
+      evaluatedCandidates.some(
+        (candidate) => !candidate.isPastCutoff && !candidate.isEnded && candidate.isAvailable
+      )
+    ) {
       return false;
     }
 

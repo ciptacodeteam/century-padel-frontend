@@ -15,7 +15,9 @@ export default function TermsAndConditionsPage() {
         <div className="space-y-8">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold lg:text-3xl">Century Padel</h1>
-            <p className="text-muted-foreground text-xs lg:text-sm">Last updated: June 3, 2026</p>
+            <p className="text-muted-foreground text-xs lg:text-sm">
+              Last updated: September 13, 2026
+            </p>
           </div>
 
           <div className="prose prose-slate mt-2 max-w-none space-y-6 text-sm lg:text-base">
@@ -129,7 +131,10 @@ export default function TermsAndConditionsPage() {
               <h2 className="text-xl font-semibold lg:text-2xl">7. Reschedule Policy</h2>
               <ul className="list-disc space-y-2 pl-6">
                 <li>No refunds are available; bookings may only be rescheduled</li>
-                <li>Reschedule requests must be made no later than D-3, or 3 days before play</li>
+                <li>
+                  Reschedule requests must be submitted no later than H-2 (at least 48 hours before
+                  the scheduled playing time)
+                </li>
                 <li>Rescheduling is only allowed once per booking</li>
               </ul>
             </section>

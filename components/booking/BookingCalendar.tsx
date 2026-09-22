@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { DatePickerModal, DatePickerModalTrigger } from '@/components/ui/date-picker-modal';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
+import { isHourlyBookingTimeVisible, isSlotBeforeBookingCutoff } from '@/lib/booking-slot-cutoff';
 import type { Court, Slot } from '@/types/model';
 import { IconCalendarFilled, IconInfoCircle } from '@tabler/icons-react';
 import dayjs from 'dayjs';
@@ -39,6 +41,7 @@ const BookingCalendar = ({
   isAdmin = false,
   userId
 }: BookingCalendarProps) => {
+  const bookingClock = useBookingCutoffClock();
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
   const [dateList, setDateList] = useState<
     { label: string; date: string; fullDate: string; active?: boolean }[]
@@ -72,6 +75,11 @@ const BookingCalendar = ({
     }
     return times;
   }, []);
+
+  const visibleTimeSlots = useMemo(
+    () => timeSlots.filter((time) => isHourlyBookingTimeVisible(selectedDate, time, bookingClock)),
+    [bookingClock, selectedDate, timeSlots]
+  );
 
   // Get slots for selected date
   const selectedDateSlots = useMemo(() => {
@@ -182,8 +190,21 @@ const BookingCalendar = ({
   const isSlotAvailable = (courtId: string, time: string) => {
     const slot = getSlot(courtId, time);
     // A slot is available if it exists, isAvailable is true, and has a price
-    return slot ? slot.isAvailable === true && slot.price > 0 : false;
+    return slot
+      ? slot.isAvailable === true &&
+          slot.price > 0 &&
+          isSlotBeforeBookingCutoff(slot.endAt, bookingClock)
+      : false;
   };
+
+  useEffect(() => {
+    const remaining = selectedSlots.filter((selection) => {
+      const slot = slotsByCourtAndTime[selection.courtId]?.[selection.time];
+      return slot && isSlotBeforeBookingCutoff(slot.endAt, bookingClock);
+    });
+
+    if (remaining.length !== selectedSlots.length) onSlotSelect(remaining);
+  }, [bookingClock, onSlotSelect, selectedSlots, slotsByCourtAndTime]);
 
   const isSlotSelected = (courtId: string, time: string) => {
     return selectedSlots.some((s) => s.courtId === courtId && s.time === time);
@@ -272,7 +293,7 @@ const BookingCalendar = ({
             </thead>
 
             <tbody>
-              {timeSlots.map((time) => (
+              {visibleTimeSlots.map((time) => (
                 <tr key={time}>
                   {/* Fixed left time column */}
                   <td className="sticky left-0 z-[1] w-20 border border-gray-200 bg-white px-4 py-2 text-left text-sm font-medium">

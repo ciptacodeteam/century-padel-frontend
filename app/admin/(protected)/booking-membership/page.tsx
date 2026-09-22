@@ -200,7 +200,7 @@ const BookingMembershipPage = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 space-y-1">
                           <p className="text-primary text-[11px] font-semibold tracking-wide uppercase">
-                            {membership.sessions} sesi
+                            {membership.sessions} jam
                           </p>
                           <div className="flex items-center gap-2 text-lg leading-tight font-semibold">
                             <IconCrown className="h-4 w-4 text-yellow-500" />

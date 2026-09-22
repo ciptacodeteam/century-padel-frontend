@@ -11,6 +11,8 @@ import { useBookingStoreHydration } from '@/hooks/useBookingStoreHydration';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
+import { calculatePaymentFee } from '@/lib/payment-fee';
+import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
@@ -26,7 +28,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 dayjs.locale('id');
@@ -44,6 +46,7 @@ const PAYMENT_METHOD_STORAGE_KEY = 'checkout-selected-payment';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const isCompletingCheckout = useRef(false);
   // const pathname = usePathname();
   // const searchParams = useSearchParams();
   const isBookingStoreHydrated = useBookingStoreHydration();
@@ -119,14 +122,27 @@ export default function CheckoutPage() {
           return;
         }
 
-        // Clear booking store after successful checkout
+        const checkoutResult = data?.data ?? data;
+        const paymentUrl = checkoutResult?.paymentUrl;
+        const invoiceNumber = checkoutResult?.invoiceNumber;
+
+        // Prevent the empty-cart guard from racing the payment redirect after
+        // clearAll() synchronously empties the persisted booking store.
+        isCompletingCheckout.current = true;
+
+        // Clear booking store after successful checkout (non-card payments only)
         persistPaymentMethodId(null);
         useBookingStore.getState().clearAll();
 
-        // Redirect to invoice page using the invoice number from response
-        const invoiceNumber = data?.data?.invoiceNumber;
+        if (paymentUrl) {
+          window.location.assign(paymentUrl);
+          return;
+        }
+
+        // QRIS and VA are present-to-customer flows, so show their instructions
+        // immediately on the transaction detail page.
         if (invoiceNumber) {
-          router.push(`/invoice/${invoiceNumber}`);
+          router.replace(`/invoice/${invoiceNumber}`);
         } else {
           // Fallback to old payment page if invoice number not available
           const enhancedData = {
@@ -156,7 +172,7 @@ export default function CheckoutPage() {
             }
           };
           sessionStorage.setItem('checkoutData', JSON.stringify(enhancedData));
-          router.push('/checkout/payment');
+          router.replace('/checkout/payment');
         }
       }
     })
@@ -189,8 +205,8 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!isBookingStoreHydrated) return;
-    if (bookingItems.length === 0) {
-      router.push('/booking');
+    if (bookingItems.length === 0 && !isCompletingCheckout.current) {
+      router.replace('/booking');
     }
   }, [isBookingStoreHydrated, bookingItems.length, router]);
 
@@ -221,32 +237,28 @@ export default function CheckoutPage() {
     persistPaymentMethodId(selectedPaymentMethod?.id ?? null);
   }, [selectedPaymentMethod, persistPaymentMethodId]);
 
+  const subtotalAfterPromo = Math.max(0, grandTotal - promoDiscountAmount);
+
   const paymentFeeBreakdown = (() => {
     if (!selectedPaymentMethod) {
       return {
         fixedFee: 0,
         percentageRate: 0,
         percentageFee: 0,
+        vat: 0,
         totalFee: 0
       };
     }
 
-    const percentageRate = Number(selectedPaymentMethod.percentage ?? 0);
-    const fixedFee = Number.isFinite(selectedPaymentMethod.fees)
-      ? Number(selectedPaymentMethod.fees)
-      : 0;
-    const percentageFee = Math.round((grandTotal * percentageRate) / 100);
-
-    return {
-      fixedFee,
-      percentageRate,
-      percentageFee,
-      totalFee: Math.round(fixedFee + percentageFee)
-    };
+    return calculatePaymentFee(
+      subtotalAfterPromo,
+      selectedPaymentMethod.fees,
+      selectedPaymentMethod.percentage
+    );
   })();
 
-  const totalWithPaymentFee = grandTotal + paymentFeeBreakdown.totalFee;
-  const totalAfterPromo = Math.max(0, totalWithPaymentFee - promoDiscountAmount);
+  const totalWithPaymentFee = subtotalAfterPromo + paymentFeeBreakdown.totalFee;
+  const totalAfterPromo = totalWithPaymentFee;
 
   const buildCheckoutSelections = useCallback(() => {
     const courtSlots = bookingItems
@@ -475,7 +487,15 @@ export default function CheckoutPage() {
     try {
       const ok = await confirm({
         title: 'Konfirmasi Pemesanan',
-        description: 'Apakah pesanan anda sudah sesuai?',
+        description:
+          courtSlots.length > 0 ? (
+            <>
+              <span className="block">Apakah pesanan Anda sudah sesuai?</span>
+              <span className="mt-2 block font-medium">{CUSTOMER_RESCHEDULE_POLICY_TEXT}</span>
+            </>
+          ) : (
+            'Apakah pesanan Anda sudah sesuai?'
+          ),
         confirmText: 'Bayar Sekarang',
         cancelText: 'Cek Lagi',
         dismissible: true
@@ -558,9 +578,6 @@ export default function CheckoutPage() {
               checkoutMutation.reset();
             }
           })();
-        } else if (selectedPaymentMethod.channel !== 'CARDS') {
-          // Non-card payment success - proceed normally
-          toast.success('Checkout berhasil!');
         }
       }
     });
@@ -972,12 +989,12 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Sisa Sesi:</span>{' '}
-                    <span className="font-medium">{membershipDiscount.remainingSessions} sesi</span>
+                    <span className="text-muted-foreground">Sisa Jam:</span>{' '}
+                    <span className="font-medium">{membershipDiscount.remainingSessions} jam</span>
                   </div>
                   {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
                     <div className="text-primary mt-1 font-medium">
-                      {membershipDiscount.slotsToDeduct} slot akan gratis menggunakan membership
+                      {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
                     </div>
                   )}
                 </div>
@@ -995,10 +1012,7 @@ export default function CheckoutPage() {
                 </div>
                 {membershipDiscount.canUseMembership && membershipDiscount.slotsToDeduct > 0 && (
                   <div className="flex items-center justify-between text-green-600">
-                    <span>
-                      Membership Discount ({membershipDiscount.slotsToDeduct} slot
-                      {membershipDiscount.slotsToDeduct > 1 ? 's' : ''})
-                    </span>
+                    <span>Diskon Membership ({membershipDiscount.hoursToDeduct} jam)</span>
                     <span className="font-medium">
                       - {formatCurrency(membershipDiscount.discountAmount)}
                     </span>
@@ -1084,9 +1098,11 @@ export default function CheckoutPage() {
               </div>
             ) : (
               paymentMethods.map((method) => {
-                const percentage = Number(method.percentage ?? 0);
-                const baseFee = Number.isFinite(method.fees) ? method.fees : 0;
-                const feesValue = Math.round(baseFee + (grandTotal * percentage) / 100);
+                const feesValue = calculatePaymentFee(
+                  subtotalAfterPromo,
+                  method.fees,
+                  method.percentage
+                ).totalFee;
                 const isSelected = selectedPaymentMethod?.id === method.id;
 
                 return (

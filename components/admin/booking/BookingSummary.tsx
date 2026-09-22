@@ -84,6 +84,7 @@ export interface BookingSummaryProps {
   /** Membership discount details (optional - will be calculated if not provided) */
   membershipDiscountDetails?: {
     canUseMembership: boolean;
+    hoursToDeduct: number;
     slotsToDeduct: number;
     discountAmount: number;
     originalTotal?: number;
@@ -563,14 +564,14 @@ export default function BookingSummary({
                   </span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Sisa Sesi:</span>{' '}
+                  <span className="text-muted-foreground">Sisa Jam:</span>{' '}
                   <span className="font-medium">
-                    {membershipDiscount.activeMembership.remainingSessions} sesi
+                    {membershipDiscount.activeMembership.remainingSessions} jam
                   </span>
                 </div>
                 {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
                   <div className="text-primary mt-1 font-medium">
-                    {membershipDiscount.slotsToDeduct} slot akan gratis menggunakan membership
+                    {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
                   </div>
                 )}
               </div>
@@ -735,10 +736,7 @@ export default function BookingSummary({
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium">{inventory.inventoryName}</p>
-                      <p className="text-muted-foreground">
-                        {dayjs(inventory.date).format('DD MMM')} • {inventory.timeSlot} • Qty:{' '}
-                        {inventory.quantity}
-                      </p>
+                      <p className="text-muted-foreground">Qty: {inventory.quantity}</p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span className="text-primary font-semibold">
@@ -748,7 +746,7 @@ export default function BookingSummary({
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 text-red-500 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => onInventoryRemove(inventory.inventoryId, inventory.timeSlot)}
+                        onClick={() => onInventoryRemove(inventory.inventoryId)}
                       >
                         <IconX className="h-3 w-3" />
                       </Button>

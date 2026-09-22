@@ -287,7 +287,7 @@ export default function InvoiceHistoryPage() {
                             <div className="mb-1 flex items-center justify-between">
                               <span className="font-semibold">{membership.name}</span>
                               <Badge className="border-amber-200 bg-amber-50 text-amber-700">
-                                {membership.sessions} sesi
+                                {membership.sessions} jam
                               </Badge>
                             </div>
                             <div className="mb-2 text-xs text-gray-600">
@@ -303,7 +303,7 @@ export default function InvoiceHistoryPage() {
                               </div>
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
-                                <span>Sisa sesi: {membershipUser?.remainingSessions || 0}</span>
+                                <span>Sisa jam: {membershipUser?.remainingSessions || 0}</span>
                               </div>
                             </div>
                             {typeof membership.sessions === 'number' &&

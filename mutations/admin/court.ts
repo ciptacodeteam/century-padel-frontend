@@ -1,4 +1,5 @@
 import {
+  bulkUpdateSlotPriceApi,
   createCourtApi,
   createCourtCostApi,
   updateCourtApi,
@@ -114,3 +115,42 @@ export const adminUpdateSlotPriceMutationOptions = ({
       onError?.(error);
     }
   });
+
+export const adminBulkUpdateSlotPriceMutationOptions = ({
+  onSuccess,
+  onError
+}: MutationFuncProps = {}) =>
+  mutationOptions({
+    mutationFn: ({
+      courtId,
+      slotIds,
+      price,
+      discountPrice
+    }: {
+      courtId: string;
+      slotIds: string[];
+      price: number;
+      discountPrice: number;
+    }) => bulkUpdateSlotPriceApi(courtId, { slotIds, price, discountPrice }),
+    onSuccess: (data) => {
+      const updatedCount = data?.data?.updatedCount ?? slotCountFromResponse(data);
+      const skippedCount = data?.data?.skippedCount ?? 0;
+      toast.success(
+        `${updatedCount} harga slot berhasil diperbarui${
+          skippedCount > 0 ? `, ${skippedCount} slot terbooking dilewati` : ''
+        }.`
+      );
+      onSuccess?.(data);
+    },
+    onError: (error) => {
+      console.error('Error:', error);
+      toast.error(error.msg || 'Gagal memperbarui harga slot secara bulk. Silakan coba lagi.');
+      onError?.(error);
+    }
+  });
+
+function slotCountFromResponse(data: unknown): number {
+  if (!data || typeof data !== 'object') return 0;
+  const value = (data as { updatedCount?: unknown }).updatedCount;
+  return typeof value === 'number' ? value : 0;
+}

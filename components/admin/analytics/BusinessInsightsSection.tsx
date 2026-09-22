@@ -23,6 +23,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 interface BusinessInsightsSectionProps {
   data: BusinessInsightsResponse | undefined;
   isLoading: boolean;
+  hideRevenue?: boolean;
 }
 
 const chartConfig = {
@@ -36,7 +37,11 @@ const chartConfig = {
   }
 } satisfies ChartConfig;
 
-export default function BusinessInsightsSection({ data, isLoading }: BusinessInsightsSectionProps) {
+export default function BusinessInsightsSection({
+  data,
+  isLoading,
+  hideRevenue = false
+}: BusinessInsightsSectionProps) {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -127,20 +132,24 @@ export default function BusinessInsightsSection({ data, isLoading }: BusinessIns
         }
       ]
     },
-    {
-      title: 'Revenue Overview',
-      icon: IconCash,
-      color: 'text-teal-500',
-      bgColor: 'bg-teal-500/10',
-      stats: [
-        { label: 'Total Revenue', value: formatCurrency(revenue.total || 0) },
-        { label: 'Transactions', value: revenue.transactions || 0 },
-        {
-          label: 'Avg/Transaction',
-          value: formatCurrency(Number(revenue.avgPerTransaction) || 0)
-        }
-      ]
-    }
+    ...(!hideRevenue && revenue
+      ? [
+          {
+            title: 'Revenue Overview',
+            icon: IconCash,
+            color: 'text-teal-500',
+            bgColor: 'bg-teal-500/10',
+            stats: [
+              { label: 'Total Revenue', value: formatCurrency(revenue.total || 0) },
+              { label: 'Transactions', value: revenue.transactions || 0 },
+              {
+                label: 'Avg/Transaction',
+                value: formatCurrency(Number(revenue.avgPerTransaction) || 0)
+              }
+            ]
+          }
+        ]
+      : [])
   ];
 
   return (

@@ -76,14 +76,14 @@ export default function MembershipDetailsCard({
 
         {/* Key Info Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* Total Sessions */}
+          {/* Total Hours */}
           <div className="rounded-lg border border-amber-200 bg-white p-4">
             <div className="mb-1 flex items-center gap-2 text-sm text-gray-600">
               <TrendingUp className="h-4 w-4" />
-              Total Sesi
+              Total Jam
             </div>
             <div className="text-2xl font-bold text-amber-900">
-              {totalSessions} <span className="text-base font-normal">sesi</span>
+              {totalSessions} <span className="text-base font-normal">jam</span>
             </div>
           </div>
 
@@ -127,15 +127,15 @@ export default function MembershipDetailsCard({
           )}
         </div>
 
-        {/* Session Usage Progress */}
+        {/* Hour Usage Progress */}
         <div className="rounded-lg border border-amber-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <TrendingUp className="h-4 w-4" />
-              Progress Pemakaian Sesi
+              Progress Pemakaian Jam
             </div>
             <span className="text-sm font-semibold text-amber-900">
-              {sessionsUsed}/{totalSessions} sesi
+              {sessionsUsed}/{totalSessions} jam
             </span>
           </div>
 
@@ -148,7 +148,7 @@ export default function MembershipDetailsCard({
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Sisa sesi: {remainingSessions}</span>
+            <span className="text-gray-600">Sisa jam: {remainingSessions}</span>
             <span className="font-medium text-amber-700">
               {isNaN(progressPercentage) ? 0 : progressPercentage.toFixed(0)}%
             </span>

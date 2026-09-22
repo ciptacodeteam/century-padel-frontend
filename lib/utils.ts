@@ -151,38 +151,27 @@ export function isAdminToken(token: string | null): boolean {
 }
 
 /**
- * Permission utility functions for ADMIN_VIEWER role
- * ADMIN_VIEWER can only view, not create, edit, or delete
+ * ADMIN_VIEWER is the persisted value for the Manager role.
+ * Managers have normal management permissions; page-level rules protect
+ * restricted financial analytics separately.
  */
 export function hasCreatePermission(userRole: string | null | undefined): boolean {
   if (!userRole) return false;
   const role = String(userRole).toUpperCase();
-  // ADMIN_VIEWER, COACH, BALLBOY, and CASHIER cannot create
-  return (
-    role !== ROLE.ADMIN_VIEWER &&
-    role !== ROLE.COACH &&
-    role !== ROLE.BALLBOY &&
-    role !== ROLE.CASHIER
-  );
+  // Coach, ballboy, and cashier cannot create
+  return role !== ROLE.COACH && role !== ROLE.BALLBOY && role !== ROLE.CASHIER;
 }
 
 export function hasEditPermission(userRole: string | null | undefined): boolean {
   if (!userRole) return false;
-  const role = String(userRole).toUpperCase();
-  // ADMIN_VIEWER cannot edit
-  return role !== ROLE.ADMIN_VIEWER;
+  return true;
 }
 
 export function hasDeletePermission(userRole: string | null | undefined): boolean {
   if (!userRole) return false;
   const role = String(userRole).toUpperCase();
-  // ADMIN_VIEWER, COACH, BALLBOY, and CASHIER cannot delete
-  return (
-    role !== ROLE.ADMIN_VIEWER &&
-    role !== ROLE.COACH &&
-    role !== ROLE.BALLBOY &&
-    role !== ROLE.CASHIER
-  );
+  // Coach, ballboy, and cashier cannot delete
+  return role !== ROLE.COACH && role !== ROLE.BALLBOY && role !== ROLE.CASHIER;
 }
 
 export function hasViewPermission(userRole: string | null | undefined): boolean {
@@ -193,9 +182,7 @@ export function hasViewPermission(userRole: string | null | undefined): boolean 
 
 export function canAccessDashboard(userRole: string | null | undefined): boolean {
   if (!userRole) return false;
-  const role = String(userRole).toUpperCase();
-  // ADMIN_VIEWER cannot access dashboard
-  return role !== ROLE.ADMIN_VIEWER;
+  return true;
 }
 
 export function sleep(ms: number) {

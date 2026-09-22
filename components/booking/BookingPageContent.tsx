@@ -12,6 +12,8 @@ import {
   mapSelectionsToBookingItems,
   type BookingSelection
 } from '@/lib/booking';
+import { isHourlyBookingTimeVisible } from '@/lib/booking-slot-cutoff';
+import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
 import { cn, getPlaceholderImageUrl } from '@/lib/utils';
 import { courtsSlotsQueryOptions } from '@/queries/court';
 import { useBookingStore } from '@/stores/useBookingStore';
@@ -50,6 +52,7 @@ type BookingPageContentProps = {
 };
 
 export default function BookingPageContent({ embedded = false }: BookingPageContentProps) {
+  const bookingClock = useBookingCutoffClock();
   const router = useRouter();
   const {
     bookingItems,
@@ -112,15 +115,27 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   const slots = useMemo(() => slotsData ?? [], [slotsData]);
 
   const availableTimeSlots = useMemo(() => {
-    const isToday = dayjs(selectedFullDate).isSame(dayjs(), 'day');
+    const isToday = dayjs(selectedFullDate).isSame(bookingClock, 'day');
     if (!isToday) return timeSlots;
 
-    const currentHour = dayjs().hour();
-    return timeSlots.filter((time) => {
-      const slotHour = parseInt(time.split(':')[0], 10);
-      return slotHour > currentHour;
+    return timeSlots.filter((time) =>
+      isHourlyBookingTimeVisible(selectedFullDate, time, bookingClock)
+    );
+  }, [bookingClock, selectedFullDate]);
+
+  useEffect(() => {
+    const allowedTimes = new Set(availableTimeSlots);
+    setSelectionsByDate((previous) => {
+      const selections = previous[selectedFullDate];
+      if (!selections?.some((selection) => !allowedTimes.has(selection.time))) return previous;
+
+      const remaining = selections.filter((selection) => allowedTimes.has(selection.time));
+      const next = { ...previous };
+      if (remaining.length > 0) next[selectedFullDate] = remaining;
+      else delete next[selectedFullDate];
+      return next;
     });
-  }, [selectedFullDate]);
+  }, [availableTimeSlots, selectedFullDate]);
 
   const courts = useMemo(() => {
     const map = new Map<string, { id: string; name: string; image?: string | null }>();

@@ -124,6 +124,96 @@ interface BookingCell {
   status: BookingStatus;
 }
 
+interface CoachOnlyCell {
+  booking: Booking;
+  coachBooking: BookingCoach;
+  customerName: string;
+  customerPhone: string;
+  status: BookingStatus;
+}
+
+const getBookingCoaches = (booking: Booking): BookingCoach[] => {
+  const coaches = booking.coaches || [];
+  if (coaches.length > 0 && 'slot' in coaches[0]) {
+    return coaches as BookingCoach[];
+  }
+  return booking.bookingCoaches || [];
+};
+
+function CoachOnlyScheduleCard({ cell, startTime }: { cell: CoachOnlyCell; startTime: string }) {
+  const coach = cell.coachBooking.slot?.staff;
+  const slot = cell.coachBooking.slot;
+
+  return (
+    <ManagedDialog id={`schedule-coach-${cell.coachBooking.id}-${startTime}`}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="w-full rounded-md border border-blue-200 bg-blue-50 px-2 py-2 text-left transition-colors hover:bg-blue-100"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate text-xs font-semibold">{cell.customerName}</span>
+            <Badge
+              variant={BOOKING_STATUS_BADGE_VARIANT[cell.status]}
+              className="h-4 shrink-0 px-1 py-0 text-[10px]"
+            >
+              {BOOKING_STATUS_MAP[cell.status]}
+            </Badge>
+          </div>
+          <p className="mt-1 truncate text-[10px] font-medium text-blue-700">
+            Coach: {coach?.name || 'Belum diketahui'}
+          </p>
+          {cell.customerPhone !== '-' && (
+            <p className="text-muted-foreground mt-0.5 text-[10px]">
+              {formatPhone(cell.customerPhone)}
+            </p>
+          )}
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Detail Pemesanan Coach</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-muted-foreground">Pelanggan</p>
+            <p className="font-medium">{cell.customerName}</p>
+            {cell.customerPhone !== '-' && <p>{formatPhone(cell.customerPhone)}</p>}
+          </div>
+          <div>
+            <p className="text-muted-foreground">Coach</p>
+            <p className="font-medium">{coach?.name || 'Belum diketahui'}</p>
+            {cell.coachBooking.bookingCoachType?.name && (
+              <p>{cell.coachBooking.bookingCoachType.name}</p>
+            )}
+          </div>
+          {slot && (
+            <div>
+              <p className="text-muted-foreground">Jadwal</p>
+              <p className="font-medium">
+                {formatDate(slot.startAt, 'DD MMM YYYY')} · {formatSlotTime(slot.startAt)} -{' '}
+                {formatSlotTime(slot.endAt)}
+              </p>
+            </div>
+          )}
+          {cell.coachBooking.description && (
+            <div>
+              <p className="text-muted-foreground">Keterangan</p>
+              <p>{cell.coachBooking.description}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-muted-foreground">Harga</p>
+            <p className="font-medium">
+              Rp {new Intl.NumberFormat('id-ID').format(cell.coachBooking.price)}
+            </p>
+          </div>
+        </div>
+      </DialogContent>
+    </ManagedDialog>
+  );
+}
+
 export default function SchedulePage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -175,16 +265,21 @@ export default function SchedulePage() {
   );
   const allBookings = bookingsData || [];
 
-  // Filter bookings that have slots on the selected date
+  // Include both court bookings and coach-only bookings on the selected date.
   const bookings = useMemo(() => {
     return allBookings.filter((booking) => {
-      if (!booking.details || booking.details.length === 0) return false;
-
-      return booking.details.some((detail) => {
+      const hasCourtSlot = booking.details?.some((detail) => {
         if (!detail.slot) return false;
         const slotDate = getDateStringFromISO(detail.slot.startAt);
         return slotDate === selectedDateString;
       });
+
+      const hasCoachSlot = getBookingCoaches(booking).some((coachBooking) => {
+        if (!coachBooking.slot) return false;
+        return getDateStringFromISO(coachBooking.slot.startAt) === selectedDateString;
+      });
+
+      return Boolean(hasCourtSlot || hasCoachSlot);
     });
   }, [allBookings, selectedDateString]);
 
@@ -224,6 +319,18 @@ export default function SchedulePage() {
               map.set(startTime, endTime);
             }
           }
+        }
+      });
+
+      getBookingCoaches(booking).forEach((coachBooking) => {
+        if (!coachBooking.slot) return;
+        const slotDate = getDateStringFromISO(coachBooking.slot.startAt);
+        if (slotDate !== selectedDateString) return;
+
+        const startTime = formatSlotTime(coachBooking.slot.startAt);
+        const endTime = formatSlotTime(coachBooking.slot.endAt);
+        if (!map.has(startTime) || (endTime && endTime > (map.get(startTime) || ''))) {
+          map.set(startTime, endTime);
         }
       });
     });
@@ -324,6 +431,45 @@ export default function SchedulePage() {
     return map;
   }, [bookings, selectedDateString, timeSlotRanges]);
 
+  // Coach-only bookings have no courtId. Place them in their own column while
+  // keeping them horizontally aligned with court bookings at the same hour.
+  const coachOnlyBookingsMap = useMemo(() => {
+    const map = new Map<string, CoachOnlyCell[]>();
+
+    bookings.forEach((booking) => {
+      if (booking.details && booking.details.length > 0) return;
+
+      getBookingCoaches(booking).forEach((coachBooking) => {
+        if (!coachBooking.slot) return;
+        const slotStart = parseDatetime(coachBooking.slot.startAt);
+        const slotEnd = parseDatetime(coachBooking.slot.endAt);
+        if (getDateStringFromISO(coachBooking.slot.startAt) !== selectedDateString) return;
+
+        timeSlotRanges.forEach(({ startTime }) => {
+          const rowStart = parseDatetime(`${selectedDateString} ${startTime}:00`);
+          const isWithinRange =
+            (rowStart.isSame(slotStart) || rowStart.isAfter(slotStart)) &&
+            rowStart.isBefore(slotEnd);
+
+          if (!isWithinRange) return;
+          const cells = map.get(startTime) || [];
+          cells.push({
+            booking,
+            coachBooking,
+            customerName: booking.user?.name || 'Walk-in Customer',
+            customerPhone: booking.user?.phone || '-',
+            status: getBookingStatus(booking.status as number | BookingStatus)
+          });
+          map.set(startTime, cells);
+        });
+      });
+    });
+
+    return map;
+  }, [bookings, selectedDateString, timeSlotRanges]);
+
+  const hasCoachOnlyBookings = coachOnlyBookingsMap.size > 0;
+
   const isLoading = isCourtsLoading || isBookingsLoading || isSlotsLoading;
 
   return (
@@ -394,7 +540,7 @@ export default function SchedulePage() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
-                    {courts.length === 0 ? (
+                    {courts.length === 0 && !hasCoachOnlyBookings ? (
                       <div className="py-4 text-center">
                         <p className="text-muted-foreground mb-4 text-sm">
                           Tidak ada lapangan tersedia.
@@ -434,6 +580,11 @@ export default function SchedulePage() {
                                 {court.name}
                               </th>
                             ))}
+                            {hasCoachOnlyBookings && (
+                              <th className="border-border min-w-[220px] border bg-blue-50 px-4 py-2 text-center text-sm font-semibold">
+                                Coach Terpisah
+                              </th>
+                            )}
                           </tr>
                         </thead>
                         <tbody>
@@ -993,6 +1144,24 @@ export default function SchedulePage() {
                                   </td>
                                 );
                               })}
+                              {hasCoachOnlyBookings && (
+                                <td className="border-border bg-background border px-2 py-2 align-top">
+                                  <div className="space-y-2">
+                                    {(coachOnlyBookingsMap.get(startTime) || []).map((cell) => (
+                                      <CoachOnlyScheduleCard
+                                        key={`${cell.coachBooking.id}-${startTime}`}
+                                        cell={cell}
+                                        startTime={startTime}
+                                      />
+                                    ))}
+                                    {!coachOnlyBookingsMap.has(startTime) && (
+                                      <div className="text-muted-foreground py-2 text-center text-sm">
+                                        -
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              )}
                             </tr>
                           ))}
                         </tbody>

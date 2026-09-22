@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { formatSlotTime, formatSlotTimeRange } from '@/lib/time-utils';
@@ -25,8 +24,7 @@ import {
   IconMinus,
   IconPlus,
   IconShoppingCart,
-  IconUser,
-  IconX
+  IconUser
 } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -424,33 +422,25 @@ export default function BookingAddOns() {
   const handleInventoryQuantityChange = (
     inventoryId: string,
     inventoryName: string,
-    timeSlot: string,
-    date: string,
     quantity: number,
-    pricePerHour: number
+    unitPrice: number
   ) => {
-    // const key = `${inventoryId}-${timeSlot}-${date}`;
-    // setInventoryQuantities((prev) => ({ ...prev, [key]: quantity }));
-
     if (quantity > 0) {
       addInventory({
         inventoryId,
         inventoryName,
-        timeSlot,
-        price: pricePerHour * quantity,
-        quantity,
-        date: date
+        timeSlot: 'default',
+        price: unitPrice * quantity,
+        quantity
       });
     } else {
-      removeInventory(inventoryId, timeSlot);
+      removeInventory(inventoryId);
     }
   };
 
   // Get current quantity for inventory item
-  const getCurrentQuantity = (inventoryId: string, timeSlot: string, date: string): number => {
-    const selected = selectedInventories.find(
-      (i) => i.inventoryId === inventoryId && i.timeSlot === timeSlot && i.date === date
-    );
+  const getCurrentQuantity = (inventoryId: string): number => {
+    const selected = selectedInventories.find((i) => i.inventoryId === inventoryId);
     return selected ? selected.quantity : 0;
   };
 
@@ -629,7 +619,9 @@ export default function BookingAddOns() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <IconCalendar className="text-primary h-5 w-5" />
-                  Select Date & Time for Add-Ons
+                  {activeTab === 'coaches'
+                    ? 'Select Date & Time for Add-Ons'
+                    : 'Select Date for Equipment'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -646,21 +638,23 @@ export default function BookingAddOns() {
                       min={dayjs().format('YYYY-MM-DD')}
                     />
                   </div>
-                  <div>
-                    <label className="mb-2 block text-sm font-medium">Time Slot</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {availableTimeSlots.map((slot) => (
-                        <Button
-                          key={slot}
-                          variant={selectedAddOnTimeSlot === slot ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setSelectedAddOnTimeSlot(slot)}
-                        >
-                          {slot.split(' - ')[0]}
-                        </Button>
-                      ))}
+                  {activeTab === 'coaches' && (
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">Time Slot</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {availableTimeSlots.map((slot) => (
+                          <Button
+                            key={slot}
+                            variant={selectedAddOnTimeSlot === slot ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setSelectedAddOnTimeSlot(slot)}
+                          >
+                            {slot.split(' - ')[0]}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -898,16 +892,7 @@ export default function BookingAddOns() {
           {activeTab === 'inventory' && (
             <div className="space-y-6">
               <div className="rounded-lg border bg-slate-50 py-3 text-center">
-                <p className="text-muted-foreground mb-2 text-sm">
-                  Select equipment for your booked dates and times
-                </p>
-                <div className="text-muted-foreground mb-2 text-xs">
-                  {Object.entries(bookingsByDate).map(([date, info]) => (
-                    <div key={date} className="mx-2 inline-block">
-                      <strong>{info.shortDate}:</strong> {info.timeSlots.join(', ')}
-                    </div>
-                  ))}
-                </div>
+                <p className="text-muted-foreground mb-2 text-sm">Select equipment and quantity</p>
                 <div className="flex justify-center gap-4 text-xs">
                   <div className="flex items-center gap-1">
                     <div className="h-3 w-3 rounded-full bg-green-500"></div>
@@ -926,61 +911,8 @@ export default function BookingAddOns() {
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {inventoryItems.map((item) => {
-                  // Get all available times for this item across all booked dates, or use selected add-on date/time
-                  const availableSlots =
-                    bookingItems.length > 0
-                      ? Object.entries(bookingsByDate).reduce(
-                          (acc, [date, dateInfo]) => {
-                            const availableForDate = dateInfo.timeSlots.map((timeSlot) => {
-                              const availability = isInventoryAvailable(
-                                item.id
-                                //timeSlot, date
-                              );
-                              return {
-                                timeSlot,
-                                availability
-                              };
-                            });
-
-                            acc.push({
-                              date,
-                              shortDate: dateInfo.shortDate,
-                              slots: availableForDate
-                            });
-
-                            return acc;
-                          },
-                          [] as Array<{
-                            date: string;
-                            shortDate: string;
-                            slots: Array<{
-                              timeSlot: string;
-                              availability: { available: boolean; quantity: number };
-                            }>;
-                          }>
-                        )
-                      : selectedAddOnTimeSlot
-                        ? [
-                            {
-                              date: selectedAddOnDate,
-                              shortDate: dayjs(selectedAddOnDate).format('ddd, DD MMM'),
-                              slots: [
-                                {
-                                  timeSlot: selectedAddOnTimeSlot,
-                                  availability: isInventoryAvailable(
-                                    item.id
-                                    // selectedAddOnTimeSlot,
-                                    // selectedAddOnDate
-                                  )
-                                }
-                              ]
-                            }
-                          ]
-                        : [];
-
-                  // const hasAnyAvailability = availableSlots.some(({ slots }) =>
-                  //   slots.some(({ availability }) => availability.available)
-                  // );
+                  const availability = isInventoryAvailable(item.id);
+                  const currentQuantity = getCurrentQuantity(item.id);
 
                   return (
                     <Card key={item.id} className="overflow-hidden">
@@ -995,139 +927,90 @@ export default function BookingAddOns() {
 
                           <div className="flex items-center justify-between">
                             <span className="text-primary font-bold">
-                              Rp {item.price.toLocaleString('id-ID')}/hr
+                              Rp {item.price.toLocaleString('id-ID')}
                             </span>
                           </div>
 
-                          <Separator />
+                          <div className="flex items-center justify-between border-t pt-3">
+                            {availability.available ? (
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  availability.quantity > 10
+                                    ? 'border-green-200 bg-green-50 text-green-700'
+                                    : availability.quantity > 5
+                                      ? 'border-yellow-200 bg-yellow-50 text-yellow-700'
+                                      : 'border-orange-200 bg-orange-50 text-orange-700'
+                                )}
+                              >
+                                {availability.quantity} available
+                                {availability.quantity <= 5 && ' (Limited)'}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="secondary"
+                                className="border-red-200 bg-red-50 text-red-700"
+                              >
+                                Unavailable
+                              </Badge>
+                            )}
 
-                          <div className="space-y-4">
-                            <p className="text-sm font-medium">Available Times:</p>
-
-                            {/* Show only available times */}
-                            {availableSlots.map(({ date, shortDate, slots }) => (
-                              <div key={date} className="space-y-2">
-                                <div className="text-muted-foreground border-b pb-1 text-xs font-medium">
-                                  {shortDate}
-                                </div>
-
-                                <div className="ml-2 space-y-2">
-                                  {slots.map(({ timeSlot, availability }) => {
-                                    const currentQuantity = getCurrentQuantity(
+                            {availability.available && (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  disabled={currentQuantity <= 0}
+                                  onClick={() =>
+                                    handleInventoryQuantityChange(
                                       item.id,
-                                      timeSlot,
-                                      date
-                                    );
+                                      item.name,
+                                      Math.max(0, currentQuantity - 1),
+                                      item.price
+                                    )
+                                  }
+                                >
+                                  <IconMinus className="h-3 w-3" />
+                                </Button>
 
-                                    return (
-                                      <div key={`${date}-${timeSlot}`} className="space-y-2">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-sm font-medium">{timeSlot}</span>
-                                          {availability.available ? (
-                                            <Badge
-                                              variant="outline"
-                                              className={cn(
-                                                availability.quantity > 10
-                                                  ? 'border-green-200 bg-green-50 text-green-700'
-                                                  : availability.quantity > 5
-                                                    ? 'border-yellow-200 bg-yellow-50 text-yellow-700'
-                                                    : 'border-orange-200 bg-orange-50 text-orange-700'
-                                              )}
-                                            >
-                                              {availability.quantity} available
-                                              {availability.quantity <= 5 && ' (Limited)'}
-                                            </Badge>
-                                          ) : (
-                                            <Badge
-                                              variant="secondary"
-                                              className="border-red-200 bg-red-50 text-red-700"
-                                            >
-                                              <IconX className="mr-1 h-3 w-3" />
-                                              Unavailable
-                                            </Badge>
-                                          )}
-                                        </div>
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max={availability.quantity}
+                                  value={currentQuantity}
+                                  onChange={(e) =>
+                                    handleInventoryQuantityChange(
+                                      item.id,
+                                      item.name,
+                                      Math.min(
+                                        availability.quantity,
+                                        Math.max(0, parseInt(e.target.value) || 0)
+                                      ),
+                                      item.price
+                                    )
+                                  }
+                                  className="h-8 w-16 text-center"
+                                />
 
-                                        {availability.available && (
-                                          <div className="flex items-center gap-2">
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="h-8 w-8 p-0"
-                                              disabled={currentQuantity <= 0}
-                                              onClick={() =>
-                                                handleInventoryQuantityChange(
-                                                  item.id,
-                                                  item.name,
-                                                  timeSlot,
-                                                  date,
-                                                  Math.max(0, currentQuantity - 1),
-                                                  item.price
-                                                )
-                                              }
-                                            >
-                                              <IconMinus className="h-3 w-3" />
-                                            </Button>
-
-                                            <Input
-                                              type="number"
-                                              min="0"
-                                              max={availability.quantity}
-                                              value={currentQuantity}
-                                              onChange={(e) =>
-                                                handleInventoryQuantityChange(
-                                                  item.id,
-                                                  item.name,
-                                                  timeSlot,
-                                                  date,
-                                                  Math.min(
-                                                    availability.quantity,
-                                                    Math.max(0, parseInt(e.target.value) || 0)
-                                                  ),
-                                                  item.price
-                                                )
-                                              }
-                                              className="h-8 w-16 text-center"
-                                            />
-
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="h-8 w-8 p-0"
-                                              disabled={currentQuantity >= availability.quantity}
-                                              onClick={() =>
-                                                handleInventoryQuantityChange(
-                                                  item.id,
-                                                  item.name,
-                                                  timeSlot,
-                                                  date,
-                                                  Math.min(
-                                                    availability.quantity,
-                                                    currentQuantity + 1
-                                                  ),
-                                                  item.price
-                                                )
-                                              }
-                                            >
-                                              <IconPlus className="h-3 w-3" />
-                                            </Button>
-
-                                            {currentQuantity > 0 && (
-                                              <span className="text-primary ml-2 text-xs font-medium">
-                                                Rp{' '}
-                                                {(item.price * currentQuantity).toLocaleString(
-                                                  'id-ID'
-                                                )}
-                                              </span>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  disabled={currentQuantity >= availability.quantity}
+                                  onClick={() =>
+                                    handleInventoryQuantityChange(
+                                      item.id,
+                                      item.name,
+                                      Math.min(availability.quantity, currentQuantity + 1),
+                                      item.price
+                                    )
+                                  }
+                                >
+                                  <IconPlus className="h-3 w-3" />
+                                </Button>
                               </div>
-                            ))}
+                            )}
                           </div>
                         </div>
                       </CardContent>

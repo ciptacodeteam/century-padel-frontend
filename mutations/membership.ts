@@ -7,7 +7,6 @@ export const membershipCheckoutMutationOptions = ({ onSuccess, onError }: Mutati
   mutationOptions({
     mutationFn: doMembershipCheckoutApi,
     onSuccess: (data) => {
-      toast.success('Checkout membership berhasil!');
       onSuccess?.(data);
     },
     onError: (error) => {

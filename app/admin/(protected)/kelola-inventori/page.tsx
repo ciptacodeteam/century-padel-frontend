@@ -13,7 +13,7 @@ import { ROLE } from '@/lib/constants';
 
 const ManageInventoryPage = () => {
   const { hasAccess, isLoading } = useRoleAccess({
-    allowedRoles: [ROLE.ADMIN]
+    allowedRoles: [ROLE.ADMIN, ROLE.ADMIN_VIEWER]
   });
 
   if (isLoading || !hasAccess) {

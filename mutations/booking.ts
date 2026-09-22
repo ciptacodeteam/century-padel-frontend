@@ -21,7 +21,6 @@ export const checkoutMutationOptions = ({ onSuccess, onError }: MutationFuncProp
   mutationOptions({
     mutationFn: checkoutApi,
     onSuccess: (data) => {
-      toast.success('Checkout berhasil!');
       onSuccess?.(data);
     },
     onError: (error) => {

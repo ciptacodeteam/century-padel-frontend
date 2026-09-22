@@ -202,7 +202,7 @@ export default function EmailChangeModal({ open, email, onOpenChange, onSuccess 
                     <div className="mt-2">
                       <ResendOtpButton
                         onSendOtp={handleResendCode}
-                        seconds={process.env.NODE_ENV === 'development' ? 5 : 60}
+                        seconds={60}
                         persistKey="otp:change-email"
                         autoStart
                       />

@@ -1,6 +1,8 @@
 'use client';
 
 import logo from '@/assets/img/logo.webp';
+import { featureFlags } from '@/lib/feature-flags';
+import { isComingSoonEnabled } from '@/lib/coming-soon';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -8,8 +10,8 @@ import { usePathname } from 'next/navigation';
 const footerLinks = [
   { title: 'Home', path: '/' },
   { title: 'Booking', path: '/booking' },
-  { title: 'Club', path: '/clubs' },
-  { title: 'Tournaments', path: '/tournaments' },
+  ...(featureFlags.clubs ? [{ title: 'Club', path: '/clubs' }] : []),
+  ...(featureFlags.tournaments ? [{ title: 'Tournaments', path: '/tournaments' }] : []),
   { title: 'Membership', path: '/membership' },
   { title: 'Invoice', path: '/invoice' }
 ];
@@ -17,7 +19,7 @@ const footerLinks = [
 const DesktopFooter = () => {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || isComingSoonEnabled()) {
     return null;
   }
 
@@ -34,9 +36,11 @@ const DesktopFooter = () => {
             <Image src={logo} alt="Century Padel" fill className="object-contain object-left" />
           </Link>
           <p className="text-muted-foreground mt-4 max-w-sm text-sm leading-6">
-            Book courts, join tournaments, and manage your padel activities in one place.
+            Book courts and manage your padel activities in one place.
           </p>
-          <p className='text-muted-foreground mt-4 max-w-sm text-sm leading-6'>Jalan Mongonsidi No.51, Medan Polonia - 20152, Indonesia.</p>
+          <p className="text-muted-foreground mt-4 max-w-sm text-sm leading-6">
+            Jalan Mongonsidi No.51, Medan Polonia - 20152, Indonesia.
+          </p>
         </section>
 
         <section>
@@ -59,7 +63,26 @@ const DesktopFooter = () => {
             Contact
           </h3>
           <div className="text-muted-foreground space-y-3 text-sm leading-6">
-            <p>Century Padel</p>
+            <p>
+              <span>Email:</span>{' '}
+              <a
+                href="mailto:centurypadel@gmail.com"
+                className="text-primary hover:text-primary/80 transition-colors"
+              >
+                centurypadel@gmail.com
+              </a>
+            </p>
+            <p>
+              <span>WhatsApp:</span>{' '}
+              <a
+                href="https://wa.me/6281234567890"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:text-primary/80 transition-colors"
+              >
+                +62 812-3456-7890
+              </a>
+            </p>
           </div>
         </section>
       </div>

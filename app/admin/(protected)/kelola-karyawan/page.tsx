@@ -21,7 +21,7 @@ const ManageStaffPage = () => {
 
   // Allow ADMIN, COACH, and BALLBOY to access this page
   const { hasAccess, isLoading } = useRoleAccess({
-    allowedRoles: [ROLE.ADMIN, ROLE.COACH, ROLE.BALLBOY]
+    allowedRoles: [ROLE.ADMIN, ROLE.ADMIN_VIEWER, ROLE.COACH, ROLE.BALLBOY]
   });
 
   if (isLoading || !hasAccess) {

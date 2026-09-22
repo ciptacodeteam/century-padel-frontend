@@ -16,20 +16,25 @@ import { useEffect } from 'react';
 export default function DashboardPage() {
   const router = useRouter();
   const { data: me } = useQuery(adminProfileQueryOptions);
-  const { data: stats, isLoading, isError } = useQuery(dashboardStatsQueryOptions());
+  const userRole = me?.role?.toUpperCase?.();
+  const canViewDashboard = userRole === ROLE.ADMIN;
+  const {
+    data: stats,
+    isLoading,
+    isError
+  } = useQuery({
+    ...dashboardStatsQueryOptions(),
+    enabled: canViewDashboard
+  });
 
-  // Role-based access control - only ADMIN (super admin) can view dashboard
+  // Only Super Admin can view the dashboard.
   useEffect(() => {
     if (!me) return;
-
-    const userRole = me.role?.toUpperCase?.();
 
     // Redirect based on role
     if (userRole === ROLE.COACH) {
       router.replace('/admin/kelola-karyawan');
-    } else if (userRole === ROLE.CASHIER) {
-      router.replace('/admin/booking-lapangan');
-    } else if (userRole === ROLE.ADMIN_VIEWER) {
+    } else if (userRole === ROLE.CASHIER || userRole === ROLE.ADMIN_VIEWER) {
       router.replace('/admin/booking-lapangan');
     } else if (userRole === ROLE.BALLBOY) {
       router.replace('/admin/kelola-karyawan');
@@ -37,10 +42,9 @@ export default function DashboardPage() {
       // Any other role that's not ADMIN should be redirected
       router.replace('/admin/booking-lapangan');
     }
-  }, [me, router]);
+  }, [me, router, userRole]);
 
-  // Only ADMIN role can view dashboard - show loading for others during redirect
-  if (!me || me.role?.toUpperCase?.() !== ROLE.ADMIN) {
+  if (!canViewDashboard) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-muted-foreground">Redirecting...</div>

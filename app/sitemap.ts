@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import { MetadataRoute } from 'next';
+import { featureFlags } from '@/lib/feature-flags';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://centurypadelid.com';
@@ -23,11 +24,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8
     },
-    {
-      url: `${baseUrl}/tournaments`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5
-    }
+    ...(featureFlags.tournaments
+      ? [
+          {
+            url: `${baseUrl}/tournaments`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly' as const,
+            priority: 0.5
+          }
+        ]
+      : [])
   ];
 }

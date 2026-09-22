@@ -141,3 +141,31 @@
 .scrollable {
   -webkit-overflow-scrolling: touch;
 }
+
+.coming-soon-grid {
+  background-image:
+    linear-gradient(to right, rgb(227 83 54 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(227 83 54 / 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+  animation: coming-soon-grid-shift 18s linear infinite;
+}
+
+.coming-soon-glass {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.35), transparent);
+}
+
+@keyframes coming-soon-grid-shift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 48px 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coming-soon-grid {
+    animation: none;
+  }
+}

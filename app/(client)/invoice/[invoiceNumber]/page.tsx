@@ -362,8 +362,9 @@ export default function InvoiceDetailPage() {
           <PaymentActionCard
             invoice={invoice as any}
             canPay={canPay}
-            onChooseMethod={() => router.push(`/payment/${invoice.id}`)}
+            onChooseMethod={() => refetch()}
             onExpired={handleExpired}
+            onPaid={() => refetch()}
           />
 
           {/* Success Message */}
