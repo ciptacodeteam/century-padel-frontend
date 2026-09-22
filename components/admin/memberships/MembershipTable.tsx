@@ -37,6 +37,11 @@ const MembershipTable = () => {
         cell: (info) => info.getValue() + ' hari',
         meta: { width: 150 }
       }),
+      colHelper.accessor('scheduleVisibilityMonths', {
+        header: 'Visibilitas Jadwal',
+        cell: (info) => (info.getValue() ?? 1) + ' bulan',
+        meta: { width: 160 }
+      }),
       colHelper.accessor('sessions', {
         header: 'Jam',
         cell: (info) => info.getValue() + ' jam',

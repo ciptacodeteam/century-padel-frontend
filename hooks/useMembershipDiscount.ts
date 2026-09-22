@@ -17,6 +17,7 @@ export interface ActiveMembership {
     id: string;
     name: string;
     price: number;
+    scheduleVisibilityMonths?: number;
   };
 }
 

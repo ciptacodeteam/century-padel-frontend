@@ -227,6 +227,7 @@ export type Membership = {
   price: number;
   sessions: number;
   duration: number; // in days
+  scheduleVisibilityMonths: number; // months of schedule visibility for buyers
   sequence: number;
   isActive: boolean;
   createdAt: Date;

@@ -25,6 +25,7 @@ type DatePickerModalProps = {
   value?: Date | null;
   onChange?: (date: Date | null) => void;
   label?: string;
+  maxDate?: Date;
   children?: React.ReactNode;
 };
 
@@ -32,6 +33,7 @@ function DatePickerModal({
   value,
   onChange,
   label = 'Select Date',
+  maxDate,
   children
 }: DatePickerModalProps) {
   const [open, setOpen] = useState(false);
@@ -53,12 +55,22 @@ function DatePickerModal({
         <div className="flex-center p-4 pt-0">
           <Calendar
             mode="single"
-            disabled={{ before: new Date() }}
+            disabled={(date) => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              if (date < today) return true;
+              if (maxDate) {
+                const max = new Date(maxDate);
+                max.setHours(23, 59, 59, 999);
+                if (date > max) return true;
+              }
+              return false;
+            }}
             classNames={{
               root: 'w-full'
             }}
             fromYear={new Date().getFullYear()}
-            toYear={new Date().getFullYear() + 5}
+            toYear={maxDate ? maxDate.getFullYear() : new Date().getFullYear() + 5}
             captionLayout="dropdown"
             selected={internalValue ?? undefined}
             onSelect={handleSelect}

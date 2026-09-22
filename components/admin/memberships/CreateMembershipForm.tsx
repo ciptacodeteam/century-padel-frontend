@@ -23,6 +23,10 @@ const formSchema = z.object({
   price: z.number().min(0, { message: 'Harga tidak boleh negatif' }),
   sessions: z.number().min(0, { message: 'Jumlah jam tidak boleh negatif' }),
   duration: z.number().min(1, { message: 'Durasi minimal 1 hari' }),
+  scheduleVisibilityMonths: z
+    .number()
+    .int()
+    .min(1, { message: 'Visibilitas jadwal minimal 1 bulan' }),
   sequence: z.number().min(1, { message: 'Urutan minimal 1' }),
   isActive: z.boolean().optional(),
   benefits: z.array(z.object({ value: z.string() }))
@@ -41,6 +45,7 @@ const CreateMembershipForm = () => {
       price: 0,
       sessions: 0,
       duration: 30,
+      scheduleVisibilityMonths: 1,
       sequence: 1,
       isActive: true,
       benefits: [{ value: '' }]
@@ -166,6 +171,33 @@ const CreateMembershipForm = () => {
                     )}
                   />
                   <FieldError>{form.formState.errors.duration?.message}</FieldError>
+                </Field>
+                <Field className="lg:col-span-2">
+                  <FieldLabel htmlFor="scheduleVisibilityMonths">
+                    Visibilitas Jadwal (dalam bulan)
+                  </FieldLabel>
+                  <Controller
+                    control={form.control}
+                    name="scheduleVisibilityMonths"
+                    render={({ field }) => (
+                      <NumberInput
+                        id="scheduleVisibilityMonths"
+                        suffix=" bulan"
+                        min={1}
+                        allowNegative={false}
+                        placeholder="e.g. 4 bulan"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
+                    )}
+                  />
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Pembeli membership dapat melihat dan booking jadwal sampai N bulan ke depan
+                    (dihitung sampai akhir bulan kalender).
+                  </p>
+                  <FieldError>
+                    {form.formState.errors.scheduleVisibilityMonths?.message}
+                  </FieldError>
                 </Field>
               </div>
               <Field>

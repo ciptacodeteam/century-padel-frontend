@@ -45,6 +45,7 @@ export const myMembershipsQueryOptions = queryOptions({
 });
 
 export type UserMembershipResponse = {
+  scheduleVisibilityMonths: number;
   activeMembership: {
     id: string;
     startDate: string;
@@ -57,6 +58,7 @@ export type UserMembershipResponse = {
       id: string;
       name: string;
       price: number;
+      scheduleVisibilityMonths: number;
     };
   } | null;
 };

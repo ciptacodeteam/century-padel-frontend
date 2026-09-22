@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import BookingCalendar from '@/components/booking/BookingCalendar';
 import { adminCreateBookingMutationOptions } from '@/mutations/admin/booking';
-import { courtsWithSlotsQueryOptions } from '@/queries/court';
+import { adminCourtsWithSlotsQueryOptions } from '@/queries/admin/court';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useState } from 'react';
@@ -31,8 +31,8 @@ const CreateBookingPage = () => {
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [selectedSlots, setSelectedSlots] = useState<SelectedSlot[]>([]);
 
-  // Fetch courts with slots for selected date (using same endpoint as user view)
-  const { data: courtsData } = useQuery(courtsWithSlotsQueryOptions(selectedDate));
+  // Fetch courts with slots for selected date via admin API (no membership horizon limit)
+  const { data: courtsData } = useQuery(adminCourtsWithSlotsQueryOptions(selectedDate));
 
   const courts = courtsData?.courts || [];
   const slots = courtsData?.slots || [];

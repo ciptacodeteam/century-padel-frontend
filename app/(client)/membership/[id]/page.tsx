@@ -12,7 +12,7 @@ import { profileQueryOptions } from '@/queries/profile';
 import useAuthModalStore from '@/stores/useAuthModalStore';
 import { IconCheck, IconTrophy } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, Clock, CreditCard, Info, PackageCheck } from 'lucide-react';
+import { CalendarDays, Clock, CreditCard, Eye, Info, PackageCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
@@ -110,7 +110,7 @@ export default function MembershipDetailPage({ params }: { params: Promise<{ id:
           </div>
 
           <CardContent className="p-4 sm:p-6 lg:p-8">
-            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2 xl:grid-cols-4">
               {/* Sessions Info */}
               <div className="bg-card flex items-center gap-3 rounded-lg border p-3 sm:p-4 lg:rounded-none">
                 <div className="bg-primary/10 text-primary rounded-lg p-2 sm:p-2.5">
@@ -130,6 +130,19 @@ export default function MembershipDetailPage({ params }: { params: Promise<{ id:
                 <div>
                   <p className="text-base font-bold sm:text-xl">{membership.duration}</p>
                   <p className="text-muted-foreground text-xs">Hari Aktif</p>
+                </div>
+              </div>
+
+              {/* Schedule Visibility */}
+              <div className="bg-card flex items-center gap-3 rounded-lg border p-3 sm:p-4 lg:rounded-none">
+                <div className="bg-primary/10 text-primary rounded-lg p-2 sm:p-2.5">
+                  <Eye className="h-5 w-5 sm:h-6 sm:w-6" />
+                </div>
+                <div>
+                  <p className="text-base font-bold sm:text-xl">
+                    {membership.scheduleVisibilityMonths ?? 1}
+                  </p>
+                  <p className="text-muted-foreground text-xs">Bulan Visibilitas Jadwal</p>
                 </div>
               </div>
 
@@ -206,6 +219,10 @@ export default function MembershipDetailPage({ params }: { params: Promise<{ id:
                     • Membership berlaku selama {membership.duration} hari sejak tanggal aktivasi
                   </li>
                   <li>• Total {membership.sessions} jam dapat digunakan dalam periode aktif</li>
+                  <li>
+                    • Dapat melihat dan booking jadwal hingga{' '}
+                    {membership.scheduleVisibilityMonths ?? 1} bulan ke depan
+                  </li>
                   <li>• Jam yang tidak terpakai akan hangus setelah masa aktif berakhir</li>
                   <li>• Membership tidak dapat dikembalikan atau dipindahtangankan</li>
                 </ul>
@@ -258,6 +275,15 @@ export default function MembershipDetailPage({ params }: { params: Promise<{ id:
                     <div>
                       <p className="text-sm font-semibold">Masa Aktif</p>
                       <p className="text-muted-foreground text-sm">{membership.duration} hari</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Eye className="text-primary mt-0.5 size-5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold">Visibilitas Jadwal</p>
+                      <p className="text-muted-foreground text-sm">
+                        {membership.scheduleVisibilityMonths ?? 1} bulan ke depan
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">

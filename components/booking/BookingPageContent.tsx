@@ -13,9 +13,15 @@ import {
   type BookingSelection
 } from '@/lib/booking';
 import { isHourlyBookingTimeVisible } from '@/lib/booking-slot-cutoff';
+import {
+  DEFAULT_SCHEDULE_VISIBILITY_MONTHS,
+  getScheduleVisibilityHorizonDate
+} from '@/lib/schedule-visibility';
 import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
 import { cn, getPlaceholderImageUrl } from '@/lib/utils';
 import { courtsSlotsQueryOptions } from '@/queries/court';
+import { myMembershipQueryOptions } from '@/queries/membership';
+import { profileQueryOptions } from '@/queries/profile';
 import { useBookingStore } from '@/stores/useBookingStore';
 import type { Court, Slot } from '@/types/model';
 import { IconCalendarFilled, IconInfoCircle } from '@tabler/icons-react';
@@ -62,6 +68,20 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
     setCartOpen
   } = useBookingStore();
 
+  const { data: user } = useQuery(profileQueryOptions);
+  const isAuthenticated = !!user?.id;
+  const { data: membershipData } = useQuery({
+    ...myMembershipQueryOptions,
+    enabled: isAuthenticated
+  });
+
+  const scheduleVisibilityMonths =
+    membershipData?.scheduleVisibilityMonths ?? DEFAULT_SCHEDULE_VISIBILITY_MONTHS;
+  const scheduleHorizon = useMemo(
+    () => getScheduleVisibilityHorizonDate(scheduleVisibilityMonths),
+    [scheduleVisibilityMonths]
+  );
+
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [dateList, setDateList] = useState<
     { label: string; date: string; fullDate: string; active?: boolean }[]
@@ -76,12 +96,12 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   const didSkipInitialStoreSync = useRef(false);
 
   useEffect(() => {
-    const today = dayjs();
-    const endDate = today.add(3, 'month');
+    const today = dayjs().startOf('day');
+    const endDate = scheduleHorizon.endOf('day');
     const updatedDates: { label: string; date: string; fullDate: string; active?: boolean }[] = [];
 
     let current = today;
-    while (current.isBefore(endDate)) {
+    while (current.isBefore(endDate) || current.isSame(endDate, 'day')) {
       updatedDates.push({
         label: current.format('ddd'),
         date: current.format('DD MMM'),
@@ -92,7 +112,10 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
     }
 
     setDateList(updatedDates);
-  }, []);
+    setSelectedDate((prev) =>
+      dayjs(prev).isAfter(endDate, 'day') ? today.format('YYYY-MM-DD') : prev
+    );
+  }, [scheduleHorizon]);
 
   const activeDate = useMemo(
     () => dateList.find((item) => item.fullDate === selectedDate),
@@ -267,7 +290,11 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
         <div className="sticky top-24 z-30 border-b bg-white pb-3 lg:static lg:top-14 lg:pt-2 lg:pb-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center px-2 pl-4">
-              <DatePickerModal onChange={handleSelectDate} label="Select Booking Date">
+              <DatePickerModal
+                onChange={handleSelectDate}
+                label="Select Booking Date"
+                maxDate={scheduleHorizon.toDate()}
+              >
                 <DatePickerModalTrigger>
                   <Button variant="light" size="icon-lg" className="p-2">
                     <IconCalendarFilled className="text-primary size-6" />

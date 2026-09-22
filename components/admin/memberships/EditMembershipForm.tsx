@@ -26,6 +26,10 @@ const formSchema = z.object({
   price: z.number().min(0, { message: 'Harga tidak boleh negatif' }),
   sessions: z.number().min(0, { message: 'Jumlah jam tidak boleh negatif' }),
   duration: z.number().min(1, { message: 'Durasi minimal 1 hari' }),
+  scheduleVisibilityMonths: z
+    .number()
+    .int()
+    .min(1, { message: 'Visibilitas jadwal minimal 1 bulan' }),
   sequence: z.number().min(1, { message: 'Urutan minimal 1' }),
   isActive: z.boolean().optional(),
   benefits: z.array(z.object({ value: z.string() }))
@@ -50,6 +54,7 @@ const EditMembershipForm = ({ membershipId }: Props) => {
       price: data?.price || 0,
       sessions: data?.sessions || 0,
       duration: data?.duration || 30,
+      scheduleVisibilityMonths: data?.scheduleVisibilityMonths || 1,
       sequence: data?.sequence || 1,
       isActive: data?.isActive,
       benefits: data?.benefits
@@ -183,6 +188,33 @@ const EditMembershipForm = ({ membershipId }: Props) => {
                     )}
                   />
                   <FieldError>{form.formState.errors.duration?.message}</FieldError>
+                </Field>
+                <Field className="lg:col-span-2">
+                  <FieldLabel htmlFor="scheduleVisibilityMonths">
+                    Visibilitas Jadwal (dalam bulan)
+                  </FieldLabel>
+                  <Controller
+                    control={form.control}
+                    name="scheduleVisibilityMonths"
+                    render={({ field }) => (
+                      <NumberInput
+                        id="scheduleVisibilityMonths"
+                        suffix=" bulan"
+                        min={1}
+                        allowNegative={false}
+                        placeholder="e.g. 4 bulan"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      />
+                    )}
+                  />
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Pembeli membership dapat melihat dan booking jadwal sampai N bulan ke depan
+                    (dihitung sampai akhir bulan kalender).
+                  </p>
+                  <FieldError>
+                    {form.formState.errors.scheduleVisibilityMonths?.message}
+                  </FieldError>
                 </Field>
               </div>
               <Field>

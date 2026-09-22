@@ -6,7 +6,7 @@
  *
  * Admin routes stay available either way.
  */
-export const COMING_SOON_ENABLED = true;
+export const COMING_SOON_ENABLED = false;
 
 export function isComingSoonEnabled() {
   const envValue = process.env.NEXT_PUBLIC_COMING_SOON;

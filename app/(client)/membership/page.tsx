@@ -13,7 +13,7 @@ import {
 import { membershipsQueryOptions } from '@/queries/membership';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { CheckCircle2, Clock, PackageCheck } from 'lucide-react';
+import { CheckCircle2, Clock, Eye, PackageCheck } from 'lucide-react';
 
 export default function MembershipPage() {
   const { data, isLoading, isError } = useQuery(membershipsQueryOptions());
@@ -100,6 +100,14 @@ export default function MembershipPage() {
                         <Clock className="text-muted-foreground h-4 w-4 shrink-0" />
                         <span className="text-foreground font-medium">{pack.duration}</span>
                         <span className="text-muted-foreground">Hari</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-sm lg:col-span-2 lg:border lg:p-3">
+                        <Eye className="text-muted-foreground h-4 w-4 shrink-0" />
+                        <span className="text-foreground font-medium">
+                          {pack.scheduleVisibilityMonths ?? 1}
+                        </span>
+                        <span className="text-muted-foreground">Bulan Visibilitas Jadwal</span>
                       </div>
                     </div>
                   </div>
