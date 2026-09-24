@@ -5,6 +5,8 @@ export type AdminCheckoutPayload = {
   name?: string;
   phone?: string;
   totalHours: number;
+  /** Admin checkout must always charge the regular court price. */
+  useMembership: false;
   courtSlots?: string[];
   coachSlots?: string[];
   ballboySlots?: string[];

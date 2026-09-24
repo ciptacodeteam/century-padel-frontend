@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { STATUS_BADGE_VARIANT, STATUS_MAP } from '@/lib/constants';
+import { MEMBERSHIP_TYPE_LABEL } from '@/lib/membership-eligibility';
 import { hasCreatePermission, hasEditPermission } from '@/lib/utils';
 import { adminMembershipsQueryOptions } from '@/queries/admin/membership';
 import { adminProfileQueryOptions } from '@/queries/admin/auth';
@@ -31,6 +32,11 @@ const MembershipTable = () => {
         meta: {
           width: 300
         }
+      }),
+      colHelper.accessor('type', {
+        header: 'Tipe Jam',
+        cell: (info) => MEMBERSHIP_TYPE_LABEL[info.getValue() ?? 'ALL_HOUR'],
+        meta: { width: 180 }
       }),
       colHelper.accessor('duration', {
         header: 'Durasi (hari)',

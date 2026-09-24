@@ -218,6 +218,8 @@ export type Staff = {
   updatedAt: Date;
 };
 
+export type MembershipType = 'ALL_HOUR' | 'PEAK_HOUR' | 'HAPPY_HOUR';
+
 export type Membership = {
   id: string;
   name: string;
@@ -227,6 +229,7 @@ export type Membership = {
   price: number;
   sessions: number;
   duration: number; // in days
+  type: MembershipType;
   scheduleVisibilityMonths: number; // months of schedule visibility for buyers
   sequence: number;
   isActive: boolean;

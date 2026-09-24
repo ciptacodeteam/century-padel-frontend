@@ -4,6 +4,7 @@ import MainHeader from '@/components/headers/MainHeader';
 import BottomNavigationWrapper from '@/components/ui/BottomNavigationWrapper';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import SavedCardSelector from '@/components/forms/payment/SavedCardSelector';
 import CreditCardForm, { type CreditCardFormData } from '@/components/forms/payment/CreditCardForm';
@@ -13,6 +14,10 @@ import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
 import { calculatePaymentFee } from '@/lib/payment-fee';
 import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
+import {
+  getMembershipBookingKey,
+  MEMBERSHIP_TYPE_LABEL
+} from '@/lib/membership-eligibility';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
@@ -67,13 +72,15 @@ export default function CheckoutPage() {
   const isAuthenticated = !!user?.id;
   const openAuthModal = useAuthModalStore((state) => state.open);
   const setRedirectPath = useAuthRedirectStore((state) => state.setRedirectPath);
+  const [useMembership, setUseMembership] = useState(false);
 
   // Calculate membership discount for court bookings (only if user is authenticated)
   const membershipDiscount = useMembershipDiscount(
     user?.id || null,
     bookingItems,
     undefined,
-    true // isUser = true, so it fetches membership for current logged-in user
+    true, // isUser = true, so it fetches membership for current logged-in user
+    useMembership
   );
 
   // Apply membership discount to court total
@@ -118,7 +125,7 @@ export default function CheckoutPage() {
       onSuccess: (data) => {
         // New card payments must complete 3DS authentication before redirecting.
         // Saved cards can proceed directly to the invoice after checkout succeeds.
-        if (selectedPaymentMethod?.channel === 'CARDS' && newCardData) {
+        if (requiresPayment && selectedPaymentMethod?.channel === 'CARDS' && newCardData) {
           return;
         }
 
@@ -237,10 +244,17 @@ export default function CheckoutPage() {
     persistPaymentMethodId(selectedPaymentMethod?.id ?? null);
   }, [selectedPaymentMethod, persistPaymentMethodId]);
 
+  useEffect(() => {
+    setAppliedPromoCode(null);
+    setPromoDiscountAmount(0);
+    setPromoError(null);
+  }, [useMembership]);
+
   const subtotalAfterPromo = Math.max(0, grandTotal - promoDiscountAmount);
+  const requiresPayment = subtotalAfterPromo > 0;
 
   const paymentFeeBreakdown = (() => {
-    if (!selectedPaymentMethod) {
+    if (!requiresPayment || !selectedPaymentMethod) {
       return {
         fixedFee: 0,
         percentageRate: 0,
@@ -385,6 +399,7 @@ export default function CheckoutPage() {
     applyPromoMutation.mutate(
       {
         promoCode: trimmedCode,
+        useMembership,
         courtSlots: selections.courtSlots,
         coachSlots: selections.coachSlots,
         ballboySlots: selections.ballboySlots,
@@ -428,24 +443,43 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!selectedPaymentMethod) {
+    if (requiresPayment && !selectedPaymentMethod) {
+      return;
+    }
+
+    if (useMembership && !membershipDiscount.canUseMembership) {
+      toast.error(
+        membershipDiscount.ineligibilityReason || 'Membership tidak dapat digunakan untuk jadwal ini.'
+      );
       return;
     }
 
     // For CARDS channel, check if card is selected or new card data is provided
-    if (selectedPaymentMethod.channel === 'CARDS' && !selectedCard && !newCardData) {
+    if (
+      requiresPayment &&
+      selectedPaymentMethod?.channel === 'CARDS' &&
+      !selectedCard &&
+      !newCardData
+    ) {
       return;
     }
 
-    if (selectedPaymentMethod.channel === 'CARDS' && selectedCard && !selectedCardCvv) {
+    if (
+      requiresPayment &&
+      selectedPaymentMethod?.channel === 'CARDS' &&
+      selectedCard &&
+      !selectedCardCvv
+    ) {
       return;
     }
 
     const { courtSlots, coachSlots, ballboySlots, inventories } = buildCheckoutSelections();
 
-    const payload: any = {
-      paymentMethodId: selectedPaymentMethod.id
-    };
+    const payload: any = { useMembership };
+
+    if (requiresPayment && selectedPaymentMethod) {
+      payload.paymentMethodId = selectedPaymentMethod.id;
+    }
 
     if (appliedPromoCode) {
       payload.promoCode = appliedPromoCode;
@@ -468,7 +502,7 @@ export default function CheckoutPage() {
     }
 
     // Add card payment data if CARDS channel
-    if (selectedPaymentMethod.channel === 'CARDS') {
+    if (requiresPayment && selectedPaymentMethod?.channel === 'CARDS') {
       if (selectedCard) {
         // Use saved card
         payload.cardPayment = {
@@ -496,7 +530,7 @@ export default function CheckoutPage() {
           ) : (
             'Apakah pesanan Anda sudah sesuai?'
           ),
-        confirmText: 'Bayar Sekarang',
+        confirmText: requiresPayment ? 'Bayar Sekarang' : 'Konfirmasi Booking',
         cancelText: 'Cek Lagi',
         dismissible: true
       });
@@ -512,7 +546,8 @@ export default function CheckoutPage() {
       onSuccess: (response) => {
         // If card payment and payment session created, collect card data
         if (
-          selectedPaymentMethod.channel === 'CARDS' &&
+          requiresPayment &&
+          selectedPaymentMethod?.channel === 'CARDS' &&
           newCardData &&
           response.data.paymentSessionId
         ) {
@@ -587,6 +622,8 @@ export default function CheckoutPage() {
     ? 'Memuat...'
     : !isAuthenticated
       ? 'Login untuk Checkout'
+      : !requiresPayment
+        ? 'Konfirmasi Booking'
       : isCollectingCard
         ? 'Memproses Kartu...'
         : checkoutMutation.isPending
@@ -598,12 +635,15 @@ export default function CheckoutPage() {
               : 'Pilih Metode';
 
   const isCheckoutDisabled =
-    ((!selectedPaymentMethod ||
+    ((requiresPayment &&
+      (!selectedPaymentMethod ||
       checkoutMutation.isPending ||
       isCollectingCard ||
       (selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData) ||
-      (selectedPaymentMethod?.channel === 'CARDS' && !!selectedCard && !selectedCardCvv)) &&
+      (selectedPaymentMethod?.channel === 'CARDS' && !!selectedCard && !selectedCardCvv))) &&
       isAuthenticated) ||
+    checkoutMutation.isPending ||
+    (useMembership && !membershipDiscount.canUseMembership) ||
     false;
 
   return (
@@ -657,22 +697,11 @@ export default function CheckoutPage() {
                         return a.timeSlot.localeCompare(b.timeSlot);
                       })
                       .map((slot, slotIndex) => {
-                        // Check if this slot is free due to membership
-                        const sortedBookings = [...bookingItems].sort((a, b) => {
-                          const dateCompare = a.date.localeCompare(b.date);
-                          if (dateCompare !== 0) return dateCompare;
-                          return a.timeSlot.localeCompare(b.timeSlot);
-                        });
-                        const bookingIndex = sortedBookings.findIndex(
-                          (b) =>
-                            b.courtId === slot.courtId &&
-                            b.timeSlot === slot.timeSlot &&
-                            b.date === slot.date
-                        );
                         const isFree =
                           membershipDiscount.canUseMembership &&
-                          bookingIndex >= 0 &&
-                          bookingIndex < membershipDiscount.slotsToDeduct;
+                          membershipDiscount.coveredBookingKeys.includes(
+                            getMembershipBookingKey(slot)
+                          );
                         const showDiscount = !isFree && hasSlotDiscount(slot);
                         const normalPrice = slot.normalPrice ?? slot.price;
                         const effectivePrice =
@@ -695,18 +724,15 @@ export default function CheckoutPage() {
                                 </span>
                                 {isFree && (
                                   <span className="text-xs font-medium text-green-600">
-                                    (Gratis)
+                                    (Ditanggung Membership)
                                   </span>
                                 )}
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
                               {isFree ? (
-                                <span className="text-sm font-semibold text-green-600">
-                                  <span className="text-muted-foreground line-through">
-                                    {formatCurrency(slot.price)}
-                                  </span>{' '}
-                                  <span className="ml-1">Gratis</span>
+                                <span className="text-sm font-semibold text-primary">
+                                  {formatCurrency(effectivePrice)}
                                 </span>
                               ) : showDiscount ? (
                                 <span className="flex flex-col items-end text-sm">
@@ -842,7 +868,8 @@ export default function CheckoutPage() {
               Tambah Add-Ons
             </Button>
 
-            <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+            {requiresPayment ? (
+              <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {selectedPaymentMethod ? (
@@ -882,10 +909,19 @@ export default function CheckoutPage() {
                   Ganti Metode
                 </Button>
               </div>
-            </div>
+              </div>
+            ) : (
+              <div className="border-primary/20 bg-primary/5 rounded-lg border p-4 lg:rounded-none lg:p-6">
+                <p className="text-primary text-sm font-semibold">Tidak perlu pembayaran</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Biaya lapangan sepenuhnya ditanggung membership. Booking akan langsung
+                  dikonfirmasi.
+                </p>
+              </div>
+            )}
 
             {/* Card Payment Selection - Show only if CARDS channel is selected */}
-            {selectedPaymentMethod?.channel === 'CARDS' && (
+            {requiresPayment && selectedPaymentMethod?.channel === 'CARDS' && (
               <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
                 {!newCardData ? (
                   <SavedCardSelector
@@ -922,7 +958,8 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <div className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
+            {requiresPayment && (
+              <div className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium">Kode Promo</p>
@@ -959,7 +996,8 @@ export default function CheckoutPage() {
                   Diskon {formatCurrency(promoDiscountAmount)} diterapkan
                 </p>
               )}
-            </div>
+              </div>
+            )}
 
             {/* Membership Information */}
             {isAuthenticated && membershipDiscount.activeMembership && (
@@ -989,6 +1027,14 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                   <div>
+                    <span className="text-muted-foreground">Tipe:</span>{' '}
+                    <span className="font-medium">
+                      {MEMBERSHIP_TYPE_LABEL[
+                        membershipDiscount.activeMembership.membership.type ?? 'ALL_HOUR'
+                      ]}
+                    </span>
+                  </div>
+                  <div>
                     <span className="text-muted-foreground">Sisa Jam:</span>{' '}
                     <span className="font-medium">{membershipDiscount.remainingSessions} jam</span>
                   </div>
@@ -997,6 +1043,18 @@ export default function CheckoutPage() {
                       {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
                     </div>
                   )}
+                  {membershipDiscount.ineligibilityReason && (
+                    <p className="mt-1 text-xs font-medium text-red-600">
+                      {membershipDiscount.ineligibilityReason}
+                    </p>
+                  )}
+                  <div className="mt-3 flex items-center justify-between border-t pt-3">
+                    <div>
+                      <p className="font-medium">Gunakan membership</p>
+                      <p className="text-muted-foreground">Matikan untuk membayar harga normal.</p>
+                    </div>
+                    <Switch checked={useMembership} onCheckedChange={setUseMembership} />
+                  </div>
                 </div>
               </div>
             )}
@@ -1005,7 +1063,7 @@ export default function CheckoutPage() {
               <h3 className="mb-3 text-base font-semibold">Ringkasan Pembayaran</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-muted-foreground">Subtotal Lapangan</span>
                   <span className="text-foreground font-medium">
                     {formatCurrency(courtSubtotal)}
                   </span>

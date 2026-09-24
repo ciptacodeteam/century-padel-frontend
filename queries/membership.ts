@@ -58,6 +58,7 @@ export type UserMembershipResponse = {
       id: string;
       name: string;
       price: number;
+      type: import('@/types/model').MembershipType;
       scheduleVisibilityMonths: number;
     };
   } | null;

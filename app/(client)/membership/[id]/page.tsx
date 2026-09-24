@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { STATUS_BADGE_VARIANT, STATUS_MAP } from '@/lib/constants';
+import { MEMBERSHIP_TYPE_LABEL } from '@/lib/membership-eligibility';
 import { membershipQueryOptions } from '@/queries/membership';
 import { profileQueryOptions } from '@/queries/profile';
 import useAuthModalStore from '@/stores/useAuthModalStore';
@@ -88,6 +89,9 @@ export default function MembershipDetailPage({ params }: { params: Promise<{ id:
                 {membership.description && (
                   <p className="text-muted-foreground text-sm">{membership.description}</p>
                 )}
+                <p className="text-primary mt-2 text-sm font-semibold">
+                  {MEMBERSHIP_TYPE_LABEL[membership.type ?? 'ALL_HOUR']}
+                </p>
               </div>
               {membership.isActive && (
                 <Badge

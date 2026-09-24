@@ -80,7 +80,9 @@ export default function BookingAddOns() {
   const membershipDiscount = useMembershipDiscount(
     selectedCustomerId || null,
     bookingItems,
-    selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null
+    selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null,
+    false,
+    false
   );
 
   // Update store with membership discount
@@ -543,6 +545,7 @@ export default function BookingAddOns() {
 
     const payload: AdminCheckoutPayload = {
       totalHours: Math.max(1, Math.round(totalHours * 100) / 100), // Round to 2 decimal places, minimum 1,
+      useMembership: false,
       courtSlots: courtSlots.length > 0 ? courtSlots : undefined,
       coachSlots: coachSlots.length > 0 ? coachSlots : undefined,
       ballboySlots: ballboySlots.length > 0 ? ballboySlots : undefined,
@@ -1058,6 +1061,7 @@ export default function BookingAddOns() {
           inventoryTotal={inventoryTotal}
           totalAmount={getTotalAmount()}
           membershipDiscountDetails={membershipDiscount}
+          showMembershipInfo={false}
           primaryAction={{
             label: isConfirming ? 'Processing...' : 'Confirm Booking',
             onClick: handleConfirmBooking,

@@ -34,6 +34,7 @@ export type CustomerMembershipResponse = {
       id: string;
       name: string;
       price: number;
+      type: import('@/types/model').MembershipType;
     };
   } | null;
 };
@@ -63,6 +64,7 @@ export type CustomerSearchResult = {
       id: string;
       name: string;
       price: number;
+      type: import('@/types/model').MembershipType;
     };
   } | null;
 };

@@ -5,6 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { adminCreateMembershipMutationOptions } from '@/mutations/admin/membership';
@@ -23,6 +30,7 @@ const formSchema = z.object({
   price: z.number().min(0, { message: 'Harga tidak boleh negatif' }),
   sessions: z.number().min(0, { message: 'Jumlah jam tidak boleh negatif' }),
   duration: z.number().min(1, { message: 'Durasi minimal 1 hari' }),
+  type: z.enum(['ALL_HOUR', 'PEAK_HOUR', 'HAPPY_HOUR']),
   scheduleVisibilityMonths: z
     .number()
     .int()
@@ -45,6 +53,7 @@ const CreateMembershipForm = () => {
       price: 0,
       sessions: 0,
       duration: 30,
+      type: 'ALL_HOUR',
       scheduleVisibilityMonths: 1,
       sequence: 1,
       isActive: true,
@@ -133,6 +142,28 @@ const CreateMembershipForm = () => {
                 />
                 <FieldError>{form.formState.errors.price?.message}</FieldError>
               </Field>
+              <Field>
+                <FieldLabel>Tipe Jam Membership</FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Pilih tipe jam" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL_HOUR">Semua Jam</SelectItem>
+                        <SelectItem value="PEAK_HOUR">Peak Hour</SelectItem>
+                        <SelectItem value="HAPPY_HOUR">Happy Hour</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Happy Hour berlaku pukul 06:00–14:59. Peak Hour dapat dipakai di semua jam.
+                </p>
+              </Field>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="sessions">Jumlah Jam</FieldLabel>
@@ -192,8 +223,7 @@ const CreateMembershipForm = () => {
                     )}
                   />
                   <p className="text-muted-foreground mt-1 text-xs">
-                    Pembeli membership dapat melihat dan booking jadwal sampai N bulan ke depan
-                    (dihitung sampai akhir bulan kalender).
+                    Pembeli membership dapat melihat dan booking jadwal tepat N bulan ke depan.
                   </p>
                   <FieldError>
                     {form.formState.errors.scheduleVisibilityMonths?.message}

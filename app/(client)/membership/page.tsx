@@ -11,6 +11,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { membershipsQueryOptions } from '@/queries/membership';
+import { MEMBERSHIP_TYPE_LABEL } from '@/lib/membership-eligibility';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { CheckCircle2, Clock, Eye, PackageCheck } from 'lucide-react';
@@ -84,6 +85,9 @@ export default function MembershipPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <p className="text-muted-foreground text-sm font-medium">
+                      {MEMBERSHIP_TYPE_LABEL[pack.type ?? 'ALL_HOUR']}
+                    </p>
                     <div className="text-primary text-2xl font-bold lg:text-3xl">
                       Rp {pack.price.toLocaleString('id-ID')}
                     </div>

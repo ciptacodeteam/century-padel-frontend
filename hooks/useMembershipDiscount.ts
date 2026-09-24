@@ -4,6 +4,11 @@ import { myMembershipQueryOptions } from '@/queries/membership';
 import type { BookingItem } from '@/stores/useBookingStore';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
+import {
+  getMembershipBookingKey,
+  isMembershipEligibleForStartTime
+} from '@/lib/membership-eligibility';
+import type { MembershipType } from '@/types/model';
 
 export interface ActiveMembership {
   id: string;
@@ -17,6 +22,7 @@ export interface ActiveMembership {
     id: string;
     name: string;
     price: number;
+    type: MembershipType;
     scheduleVisibilityMonths?: number;
   };
 }
@@ -30,6 +36,9 @@ export interface MembershipDiscountResult {
   discountAmount: number;
   originalTotal: number;
   discountedTotal: number;
+  isEligibleForSelectedHours: boolean;
+  ineligibilityReason: string | null;
+  coveredBookingKeys: string[];
 }
 
 /**
@@ -44,7 +53,8 @@ export function useMembershipDiscount(
   customerId: string | null,
   bookingItems: BookingItem[],
   membershipData?: { activeMembership: ActiveMembership | null } | null,
-  isUser: boolean = false
+  isUser: boolean = false,
+  useMembership: boolean = false
 ): MembershipDiscountResult {
   // Fetch membership for current user if isUser is true
   const { data: userMembershipData } = useQuery({
@@ -70,45 +80,63 @@ export function useMembershipDiscount(
       !activeMembership.isSuspended &&
       remainingSessions > 0;
 
-    const hoursToDeduct = bookingItems.reduce((total, booking) => {
+    const membershipType = activeMembership?.membership.type ?? 'ALL_HOUR';
+    let allocatedHours = 0;
+    const coveredBookingKeys: string[] = [];
+    const sortedBookings = [...bookingItems].sort((a, b) => {
+      const dateCompare = a.date.localeCompare(b.date);
+      return dateCompare !== 0 ? dateCompare : a.timeSlot.localeCompare(b.timeSlot);
+    });
+
+    for (const booking of sortedBookings) {
+      const startTime = booking.timeSlot.split(' - ')[0]?.trim() ?? '';
+      if (!isMembershipEligibleForStartTime(membershipType, startTime)) continue;
+
       const [rangeStart, rangeEnd] = booking.timeSlot.split(' - ');
       const start = rangeStart?.trim();
       const end = (booking.endTime || rangeEnd)?.trim();
-      if (!start || !end) return total + 1;
+      let bookingHours = 1;
+      if (start && end) {
+        const startAt = dayjs(`2000-01-01 ${start}`);
+        let endAt = dayjs(`2000-01-01 ${end}`);
+        if (!endAt.isAfter(startAt)) endAt = endAt.add(1, 'day');
+        bookingHours = Math.max(1, Math.ceil(endAt.diff(startAt, 'minute') / 60));
+      }
+      if (allocatedHours + bookingHours > remainingSessions) continue;
+      allocatedHours += bookingHours;
+      coveredBookingKeys.push(getMembershipBookingKey(booking));
+    }
 
-      const startAt = dayjs(`2000-01-01 ${start}`);
-      let endAt = dayjs(`2000-01-01 ${end}`);
-      if (!startAt.isValid() || !endAt.isValid()) return total + 1;
-      if (!endAt.isAfter(startAt)) endAt = endAt.add(1, 'day');
+    const isEligibleForSelectedHours = coveredBookingKeys.length > 0;
+    const canUseMembership =
+      useMembership &&
+      !!hasActiveMembership &&
+      bookingItems.length > 0 &&
+      isEligibleForSelectedHours;
 
-      return total + Math.max(1, Math.ceil(endAt.diff(startAt, 'minute') / 60));
-    }, 0);
-    const canUseMembership = !!hasActiveMembership && remainingSessions >= hoursToDeduct;
-    const slotsToDeduct = canUseMembership ? bookingItems.length : 0;
-
+    let ineligibilityReason: string | null = null;
+    if (useMembership && !hasActiveMembership) {
+      ineligibilityReason = 'Membership tidak aktif atau tidak memiliki sisa jam.';
+    } else if (useMembership && !isEligibleForSelectedHours) {
+      ineligibilityReason = 'Tidak ada slot yang dapat ditanggung oleh membership ini.';
+    }
     // Calculate original total
     const originalTotal = bookingItems.reduce((sum, booking) => {
-      const normalPrice = booking.normalPrice ?? booking.price;
       const discountPrice = booking.discountPrice ?? 0;
       const effectivePrice = discountPrice > 0 ? discountPrice : booking.price;
-      return sum + (canUseMembership ? normalPrice : effectivePrice);
+      return sum + effectivePrice;
     }, 0);
 
     // Calculate discount amount
     let discountAmount = 0;
-    if (canUseMembership && slotsToDeduct > 0) {
-      // Sort bookings by date and time to apply discount to earliest slots
-      const sortedBookings = [...bookingItems].sort((a, b) => {
-        const dateCompare = a.date.localeCompare(b.date);
-        if (dateCompare !== 0) return dateCompare;
-        return a.timeSlot.localeCompare(b.timeSlot);
-      });
-
-      // Calculate the price of the first N slots (where N = slotsToDeduct)
-      const slotsToFree = sortedBookings.slice(0, slotsToDeduct);
+    if (canUseMembership && coveredBookingKeys.length > 0) {
+      const coveredKeySet = new Set(coveredBookingKeys);
+      const slotsToFree = bookingItems.filter((booking) =>
+        coveredKeySet.has(getMembershipBookingKey(booking))
+      );
       discountAmount = slotsToFree.reduce((sum, booking) => {
-        const normalPrice = booking.normalPrice ?? booking.price;
-        return sum + normalPrice;
+        const discountPrice = booking.discountPrice ?? 0;
+        return sum + (discountPrice > 0 ? discountPrice : booking.price);
       }, 0);
     }
 
@@ -118,11 +146,14 @@ export function useMembershipDiscount(
       activeMembership,
       canUseMembership: !!canUseMembership,
       remainingSessions,
-      hoursToDeduct: canUseMembership ? hoursToDeduct : 0,
-      slotsToDeduct,
+      hoursToDeduct: canUseMembership ? allocatedHours : 0,
+      slotsToDeduct: canUseMembership ? coveredBookingKeys.length : 0,
       discountAmount,
       originalTotal,
-      discountedTotal
+      discountedTotal,
+      isEligibleForSelectedHours,
+      ineligibilityReason,
+      coveredBookingKeys: canUseMembership ? coveredBookingKeys : []
     };
-  }, [activeMembershipData, bookingItems]);
+  }, [activeMembershipData, bookingItems, useMembership]);
 }

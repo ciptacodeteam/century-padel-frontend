@@ -166,7 +166,9 @@ export default function BookingLapangan() {
   const membershipDiscount = useMembershipDiscount(
     localCustomerId,
     bookingItemsForDiscount,
-    selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null
+    selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null,
+    false,
+    false
   );
 
   // Update store with membership discount
@@ -1126,6 +1128,7 @@ export default function BookingLapangan() {
             courtTotal={membershipDiscount.originalTotal}
             totalAmount={totalPrice}
             membershipDiscountDetails={membershipDiscount}
+            showMembershipInfo={false}
             onBookingRemove={(courtId, timeSlot, date) => {
               // Find the booking index
               const bookingIndex = bookings.findIndex(

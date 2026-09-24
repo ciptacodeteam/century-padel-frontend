@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -32,7 +33,16 @@ import {
 } from '@/queries/admin/customer';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { cn } from '@/lib/utils';
-import type { BookingItem, SelectedCoach, SelectedInventory } from '@/stores/useBookingStore';
+import {
+  getMembershipBookingKey,
+  MEMBERSHIP_TYPE_LABEL
+} from '@/lib/membership-eligibility';
+import {
+  useBookingStore,
+  type BookingItem,
+  type SelectedCoach,
+  type SelectedInventory
+} from '@/stores/useBookingStore';
 import { IconX } from '@tabler/icons-react';
 
 /**
@@ -89,6 +99,9 @@ export interface BookingSummaryProps {
     discountAmount: number;
     originalTotal?: number;
     discountedTotal?: number;
+    isEligibleForSelectedHours: boolean;
+    ineligibilityReason: string | null;
+    coveredBookingKeys: string[];
     activeMembership: {
       id: string;
       startDate: string;
@@ -101,6 +114,7 @@ export interface BookingSummaryProps {
         id: string;
         name: string;
         price: number;
+        type: import('@/types/model').MembershipType;
       };
     } | null;
   } | null;
@@ -250,6 +264,8 @@ export default function BookingSummary({
   const [isWalkInOpen, setIsWalkInOpen] = useState(false);
   const [walkInNameLocal, setWalkInNameLocal] = useState(walkInName || '');
   const [walkInPhoneLocal, setWalkInPhoneLocal] = useState(walkInPhone || '');
+  const useMembership = useBookingStore((state) => state.useMembership);
+  const setUseMembership = useBookingStore((state) => state.setUseMembership);
 
   // Debounce search query
   useEffect(() => {
@@ -271,8 +287,9 @@ export default function BookingSummary({
       setSelectedCustomer(null);
       setCustomerSearch('');
       setDebouncedSearch('');
+      setUseMembership(false);
     }
-  }, [selectedCustomerId]);
+  }, [selectedCustomerId, setUseMembership]);
 
   // Use search endpoint for customers
   const { data: searchResults, isLoading: isSearching } = useQuery(
@@ -314,7 +331,9 @@ export default function BookingSummary({
   const calculatedMembershipDiscount = useMembershipDiscount(
     selectedCustomerId || null,
     bookingItems,
-    selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null
+    selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null,
+    false,
+    useMembership
   );
 
   // Use provided membership discount details if available, otherwise use calculated
@@ -324,7 +343,7 @@ export default function BookingSummary({
     const normalPrice = booking.normalPrice ?? booking.price;
     const discountPrice = booking.discountPrice ?? 0;
     const effectivePrice = discountPrice > 0 ? discountPrice : booking.price;
-    const displayPrice = membershipDiscount.canUseMembership ? normalPrice : effectivePrice;
+    const displayPrice = effectivePrice;
     return { normalPrice, discountPrice, effectivePrice, displayPrice };
   };
 
@@ -564,6 +583,14 @@ export default function BookingSummary({
                   </span>
                 </div>
                 <div>
+                  <span className="text-muted-foreground">Tipe:</span>{' '}
+                  <span className="font-medium">
+                    {MEMBERSHIP_TYPE_LABEL[
+                      membershipDiscount.activeMembership.membership.type ?? 'ALL_HOUR'
+                    ]}
+                  </span>
+                </div>
+                <div>
                   <span className="text-muted-foreground">Sisa Jam:</span>{' '}
                   <span className="font-medium">
                     {membershipDiscount.activeMembership.remainingSessions} jam
@@ -574,6 +601,18 @@ export default function BookingSummary({
                     {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
                   </div>
                 )}
+                {membershipDiscount.ineligibilityReason && (
+                  <p className="mt-1 font-medium text-red-600">
+                    {membershipDiscount.ineligibilityReason}
+                  </p>
+                )}
+                <div className="mt-2 flex items-center justify-between border-t pt-2">
+                  <div>
+                    <p className="font-medium">Gunakan membership</p>
+                    <p className="text-muted-foreground">Matikan untuk harga normal.</p>
+                  </div>
+                  <Switch checked={useMembership} onCheckedChange={setUseMembership} />
+                </div>
               </div>
             </div>
           )}
@@ -593,22 +632,11 @@ export default function BookingSummary({
                       {dateInfo.shortDate}
                     </div>
                     {dateInfo.items.map((booking, index) => {
-                      // Check if this booking is free due to membership
-                      const sortedBookings = [...bookingItems].sort((a, b) => {
-                        const dateCompare = a.date.localeCompare(b.date);
-                        if (dateCompare !== 0) return dateCompare;
-                        return a.timeSlot.localeCompare(b.timeSlot);
-                      });
-                      const bookingIndex = sortedBookings.findIndex(
-                        (b) =>
-                          b.courtId === booking.courtId &&
-                          b.timeSlot === booking.timeSlot &&
-                          b.date === booking.date
-                      );
                       const isFree =
                         membershipDiscount.canUseMembership &&
-                        bookingIndex >= 0 &&
-                        bookingIndex < membershipDiscount.slotsToDeduct;
+                        membershipDiscount.coveredBookingKeys.includes(
+                          getMembershipBookingKey(booking)
+                        );
 
                       const { normalPrice, discountPrice, displayPrice } = getPricing(booking);
 
@@ -628,7 +656,7 @@ export default function BookingSummary({
                                   variant="outline"
                                   className="border-green-500 bg-green-50 text-[10px] text-green-700"
                                 >
-                                  Gratis
+                                  Ditanggung Membership
                                 </Badge>
                               )}
                             </div>
@@ -638,16 +666,11 @@ export default function BookingSummary({
                             <span
                               className={cn(
                                 'font-semibold',
-                                isFree ? 'text-green-600 line-through' : 'text-primary'
+                                'text-primary'
                               )}
                             >
                               {isFree ? (
-                                <>
-                                  <span className="text-muted-foreground">
-                                    {formatCurrency(normalPrice)}
-                                  </span>{' '}
-                                  <span className="ml-1">Gratis</span>
-                                </>
+                                formatCurrency(displayPrice)
                               ) : discountPrice > 0 && discountPrice < normalPrice ? (
                                 <span className="flex flex-col items-end">
                                   <span className="text-muted-foreground text-[10px] line-through">
@@ -763,7 +786,7 @@ export default function BookingSummary({
           <div className="space-y-2">
             {showCourtBookings && (
               <div className="flex items-center justify-between text-sm">
-                <span>Courts</span>
+                <span>Subtotal Lapangan</span>
                 <span>{formatCurrency(courtSubtotal)}</span>
               </div>
             )}
@@ -815,7 +838,11 @@ export default function BookingSummary({
                   className="w-full"
                   size="default"
                   onClick={primaryAction.onClick}
-                  disabled={primaryAction.disabled || primaryAction.loading}
+                  disabled={
+                    primaryAction.disabled ||
+                    primaryAction.loading ||
+                    (useMembership && !membershipDiscount.canUseMembership)
+                  }
                 >
                   {primaryAction.loading ? 'Processing...' : primaryAction.label}
                 </Button>
