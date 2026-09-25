@@ -20,12 +20,13 @@ export const formSchema = z.object({
   courtId: z.string(),
   fromDate: z.date(),
   toDate: z.date(),
-  days: z.array(z.number().min(0).max(7)),
+  days: z.array(z.number().min(1).max(7)).min(1, 'Pilih minimal satu hari operasional.'),
   happyHourPrice: z.number().positive('Harga happy hour harus lebih dari Rp0.'),
   happyHourDiscountPrice: z.number().min(0),
   peakHourPrice: z.number().positive('Harga peak hour harus lebih dari Rp0.'),
   peakHourDiscountPrice: z.number().min(0),
-  closedHours: z.array(z.number()).optional()
+  closedHours: z.array(z.number()).optional(),
+  replaceFutureSchedule: z.boolean()
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -48,7 +49,8 @@ const CreateCourtCostForm = ({ courtId }: Props) => {
       happyHourDiscountPrice: 0,
       peakHourPrice: 0,
       peakHourDiscountPrice: 0,
-      closedHours: []
+      closedHours: [],
+      replaceFutureSchedule: true
     }
   });
 
@@ -259,7 +261,7 @@ const CreateCourtCostForm = ({ courtId }: Props) => {
                 />
               )}
             />
-            <FieldError>{form.formState.errors.toDate?.message}</FieldError>
+            <FieldError>{form.formState.errors.days?.message}</FieldError>
           </Field>
           <Field>
             <div className="inline-flex gap-2">
@@ -303,8 +305,11 @@ const CreateCourtCostForm = ({ courtId }: Props) => {
                 />
               )}
             />
-            <FieldError>{form.formState.errors.toDate?.message}</FieldError>
           </Field>
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+            Menyimpan costing ini akan mengganti seluruh jadwal lapangan mulai hari ini. Tanggal di
+            luar rentang yang dipilih akan ditutup, sedangkan riwayat booking tetap dipertahankan.
+          </div>
           <Field className="mt-2 ml-auto w-fit">
             <div className="flex items-center gap-4">
               <Button

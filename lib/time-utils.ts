@@ -49,9 +49,10 @@ function formatDate(date: Date, format: string): string {
 function parseISOString(
   value: string
 ): { year: number; month: number; day: number; hours: number; minutes: number } | null {
-  // Handle ISO format: "2024-01-15T07:00:00Z" or "2024-01-15T07:00:00+07:00" or "2024-01-15T07:00:00.000Z"
+  // Handle both API format (space-separated) and ISO format without relying
+  // on browser-specific Date string parsing (notably different on mobile Safari).
   const isoRegex =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
   const match = value.match(isoRegex);
 
   if (match) {

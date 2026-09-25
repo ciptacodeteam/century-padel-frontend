@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
 import { isHourlyBookingTimeVisible, isSlotBeforeBookingCutoff } from '@/lib/booking-slot-cutoff';
+import { formatSlotTime, toLocalSlotDate } from '@/lib/time-utils';
 import type { Court, Slot } from '@/types/model';
 import { IconCalendarFilled, IconInfoCircle } from '@tabler/icons-react';
 import dayjs from 'dayjs';
@@ -38,8 +39,8 @@ const BookingCalendar = ({
   onDateChange,
   selectedSlots,
   onSlotSelect,
-  isAdmin = false,
-  userId
+  isAdmin: _isAdmin = false,
+  userId: _userId
 }: BookingCalendarProps) => {
   const bookingClock = useBookingCutoffClock();
   const [selectedCourt, setSelectedCourt] = useState<Court | null>(null);
@@ -103,24 +104,10 @@ const BookingCalendar = ({
     });
 
     selectedDateSlots.forEach((slot) => {
-      // Handle different date formats from API
-      // API returns: "2025-01-20 08:00:00" (space-separated) or ISO format
-      let startAt: Date;
-      const startAtValue = slot.startAt as Date | string;
-      if (startAtValue instanceof Date) {
-        startAt = startAtValue;
-      } else if (typeof startAtValue === 'string') {
-        // Handle space-separated format: "2025-01-20 08:00:00"
-        const dateStr = startAtValue.includes('T') ? startAtValue : startAtValue.replace(' ', 'T');
-        startAt = new Date(dateStr);
-      } else {
-        startAt = new Date(startAtValue);
-      }
-
-      const time = dayjs(startAt).format('HH:mm');
+      const time = formatSlotTime(slot.startAt);
       const courtId = slot.courtId;
 
-      if (courtId && grouped[courtId]) {
+      if (courtId && grouped[courtId] && time !== '-') {
         grouped[courtId][time] = slot;
       }
     });
@@ -136,7 +123,6 @@ const BookingCalendar = ({
   const handleSelectDate = (date: Date | null) => {
     if (!date) return;
     const formattedDate = dayjs(date).format('YYYY-MM-DD');
-    const displayDate = dayjs(date).format('DD MMM');
     onDateChange(formattedDate);
 
     const el = document.getElementById(`date-${formattedDate}`);
@@ -144,19 +130,10 @@ const BookingCalendar = ({
   };
 
   const toggleSlot = (courtId: string, slot: Slot) => {
-    // Parse slot startAt date
-    let startAt: Date;
-    const startAtValue = slot.startAt as Date | string;
-    if (startAtValue instanceof Date) {
-      startAt = startAtValue;
-    } else if (typeof startAtValue === 'string') {
-      const dateStr = startAtValue.includes('T') ? startAtValue : startAtValue.replace(' ', 'T');
-      startAt = new Date(dateStr);
-    } else {
-      startAt = new Date(startAtValue);
-    }
+    const startAt = toLocalSlotDate(slot.startAt);
+    if (!startAt) return;
 
-    const time = dayjs(startAt).format('HH:mm');
+    const time = formatSlotTime(startAt);
     const existingIndex = selectedSlots.findIndex((s) => s.courtId === courtId && s.time === time);
 
     if (existingIndex >= 0) {

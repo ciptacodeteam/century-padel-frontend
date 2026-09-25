@@ -1,4 +1,5 @@
 import dayjs, { type ConfigType } from 'dayjs';
+import { toLocalSlotDate } from './time-utils';
 
 export const BOOKING_SLOT_CUTOFF_MINUTES_BEFORE_END = 5;
 
@@ -6,8 +7,11 @@ export function isSlotBeforeBookingCutoff(
   endAt: ConfigType,
   now: ConfigType = new Date()
 ): boolean {
+  const normalizedEndAt = typeof endAt === 'string' ? toLocalSlotDate(endAt) : endAt;
+  if (!normalizedEndAt) return false;
+
   return dayjs(now).isBefore(
-    dayjs(endAt).subtract(BOOKING_SLOT_CUTOFF_MINUTES_BEFORE_END, 'minute')
+    dayjs(normalizedEndAt).subtract(BOOKING_SLOT_CUTOFF_MINUTES_BEFORE_END, 'minute')
   );
 }
 

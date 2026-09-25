@@ -13,6 +13,7 @@ import {
   type BookingSelection
 } from '@/lib/booking';
 import { isHourlyBookingTimeVisible } from '@/lib/booking-slot-cutoff';
+import { formatSlotTime } from '@/lib/time-utils';
 import {
   DEFAULT_SCHEDULE_VISIBILITY_MONTHS,
   getScheduleVisibilityHorizonDate
@@ -138,7 +139,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   const slots = useMemo(
     () =>
       (slotsData ?? []).filter((slot) => {
-        const slotDate = dayjs(slot.startAt).format('YYYY-MM-DD');
+        const slotDate = formatSlotTime(slot.startAt, 'YYYY-MM-DD');
 
         return slotDate === selectedFullDate && slot.price > 0;
       }),
@@ -194,7 +195,8 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
       const courtId = slot.courtId || slot.court?.id;
       if (!courtId || !slot.startAt) return;
 
-      const time = dayjs(slot.startAt).format('HH:mm');
+      const time = formatSlotTime(slot.startAt);
+      if (time === '-') return;
       map.set(`${courtId}-${time}`, slot);
     });
 
