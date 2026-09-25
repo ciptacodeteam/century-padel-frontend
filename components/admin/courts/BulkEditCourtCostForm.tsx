@@ -81,6 +81,7 @@ export default function BulkEditCourtCostForm({ courtId, slots, dialogId }: Prop
   }, [fromDateKey, selectedDays, selectedHours, slots, toDateKey]);
 
   const isDateRangeInvalid = !!fromDateKey && !!toDateKey && fromDateKey > toDateKey;
+  const isPriceInvalid = price <= 0;
   const isDiscountInvalid = discountPrice > price;
 
   const { mutate: updateBulkPricing, isPending } = useMutation(
@@ -96,7 +97,11 @@ export default function BulkEditCourtCostForm({ courtId, slots, dialogId }: Prop
   );
 
   const canSubmit =
-    selectedSlotIds.length > 0 && !isDateRangeInvalid && !isDiscountInvalid && !isPending;
+    selectedSlotIds.length > 0 &&
+    !isDateRangeInvalid &&
+    !isPriceInvalid &&
+    !isDiscountInvalid &&
+    !isPending;
 
   return (
     <form
@@ -172,7 +177,7 @@ export default function BulkEditCourtCostForm({ courtId, slots, dialogId }: Prop
             thousandSeparator="."
             decimalSeparator=","
             prefix="Rp "
-            min={0}
+            min={1}
             allowNegative={false}
             value={price}
             onValueChange={(value) => setPrice(value || 0)}
@@ -196,6 +201,10 @@ export default function BulkEditCourtCostForm({ courtId, slots, dialogId }: Prop
 
       {isDiscountInvalid && (
         <p className="text-destructive text-xs">Harga diskon tidak boleh melebihi harga normal.</p>
+      )}
+
+      {isPriceInvalid && (
+        <p className="text-destructive text-xs">Harga normal harus lebih dari Rp0.</p>
       )}
 
       <div className="bg-muted rounded-md border p-3 text-sm">

@@ -9,7 +9,6 @@ import { NumberInput } from '@/components/ui/number-input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { hoursInDay } from '@/lib/constants';
 import { adminUpdateCourtCostMutationOptions } from '@/mutations/admin/court';
-import { adminCourtCostingQueryOptionsById } from '@/queries/admin/court';
 import type { CourtCostSchedule } from '@/types/model';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconInfoCircle } from '@tabler/icons-react';
@@ -20,9 +19,9 @@ import z from 'zod';
 
 export const formSchema = z.object({
   date: z.date(),
-  happyHourPrice: z.number().min(0),
+  happyHourPrice: z.number().positive('Harga happy hour harus lebih dari Rp0.'),
   happyHourDiscountPrice: z.number().min(0),
-  peakHourPrice: z.number().min(0),
+  peakHourPrice: z.number().positive('Harga peak hour harus lebih dari Rp0.'),
   peakHourDiscountPrice: z.number().min(0),
   closedHours: z.array(z.number()).optional(),
   isAvailable: z.boolean().optional()
@@ -106,7 +105,7 @@ const EditCourtCostForm = ({ data }: Props) => {
                     thousandSeparator="."
                     decimalSeparator=","
                     prefix="Rp "
-                    min={0}
+                    min={1}
                     allowNegative={false}
                     placeholder="e.g. Rp 100.000"
                     value={field.value}
@@ -128,7 +127,7 @@ const EditCourtCostForm = ({ data }: Props) => {
                     thousandSeparator="."
                     decimalSeparator=","
                     prefix="Rp "
-                    min={0}
+                    min={1}
                     allowNegative={false}
                     placeholder="e.g. Rp 200.000"
                     value={field.value}

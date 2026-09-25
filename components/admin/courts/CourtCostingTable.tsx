@@ -95,6 +95,7 @@ const EditSlotModal = ({ slot, courtId, dialogId }: EditSlotModalProps) => {
   const [price, setPrice] = useState(slot.price || 0);
   const [discountPrice, setDiscountPrice] = useState(slot.discountPrice || 0);
 
+  const isPriceInvalid = price <= 0;
   const isDiscountInvalid = (discountPrice || 0) > (price || 0);
 
   const { mutate: updateSlotPrice, isPending: isUpdating } = useMutation(
@@ -132,13 +133,16 @@ const EditSlotModal = ({ slot, courtId, dialogId }: EditSlotModalProps) => {
               thousandSeparator="."
               decimalSeparator=","
               prefix="Rp "
-              min={0}
+              min={1}
               allowNegative={false}
               placeholder="e.g. Rp 100.000"
               value={price}
               onValueChange={(value) => setPrice(value || 0)}
               withControl={false}
             />
+            {isPriceInvalid && (
+              <p className="text-destructive text-xs">Harga normal harus lebih dari Rp0.</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -166,7 +170,7 @@ const EditSlotModal = ({ slot, courtId, dialogId }: EditSlotModalProps) => {
           <Button type="button" variant="outline" onClick={() => closeDialog(dialogId)}>
             Batal
           </Button>
-          <Button type="submit" disabled={isUpdating || isDiscountInvalid}>
+          <Button type="submit" disabled={isUpdating || isPriceInvalid || isDiscountInvalid}>
             {isUpdating ? 'Memproses...' : 'Simpan'}
           </Button>
         </DialogFooter>
@@ -216,10 +220,12 @@ const CourtCostingTable = ({ courtId }: Props) => {
       return [];
     }
 
-    return data.map((entry) => ({
-      ...entry,
-      slots: [...(entry.slots || [])].sort((a, b) => dayjs(a.startAt).diff(dayjs(b.startAt)))
-    }));
+    return data
+      .filter((entry) => !dayjs(entry.date).isBefore(dayjs(), 'day'))
+      .map((entry) => ({
+        ...entry,
+        slots: [...(entry.slots || [])].sort((a, b) => dayjs(a.startAt).diff(dayjs(b.startAt)))
+      }));
   }, [data]);
 
   const allSlots = useMemo(
@@ -266,7 +272,6 @@ const CourtCostingTable = ({ courtId }: Props) => {
                 accessorKey: 'isAvailable',
                 header: 'Status',
                 cell: (info) => {
-                  const slot = info.row.original as Slot;
                   const isAvailable = info.getValue() as boolean;
                   return (
                     <Badge variant={isAvailable ? 'lightSuccess' : 'lightDestructive'}>

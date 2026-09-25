@@ -176,7 +176,18 @@ export default function BookingLapangan() {
     setMembershipDiscount(membershipDiscount.discountAmount);
   }, [membershipDiscount.discountAmount, setMembershipDiscount]);
 
-  const slots = useMemo(() => slotsData ?? [], [slotsData]);
+  const slots = useMemo(
+    () =>
+      (slotsData ?? []).filter((slot) => {
+        const slotDate =
+          typeof slot.startAt === 'string'
+            ? getDateStringFromISO(slot.startAt)
+            : formatDateString(slot.startAt);
+
+        return slotDate === selectedDateString && slot.price > 0;
+      }),
+    [selectedDateString, slotsData]
+  );
 
   // Extract courts from slots
   const courts = useMemo(() => {
@@ -381,7 +392,7 @@ export default function BookingLapangan() {
 
     // Create new bookings with the current selected date
     const currentDateFormatted = formatDateString(localSelectedDate);
-    const newBookings = selectedSlots.map(({ slot, timeSlot }) => {
+    const newBookings = selectedSlots.map(({ slot }) => {
       // Use simple time format without timezone conversion
       const startTime = formatSlotTime(slot.startAt);
       const endTime = formatSlotTime(slot.endAt);

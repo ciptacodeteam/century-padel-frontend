@@ -135,7 +135,15 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
     courtsSlotsQueryOptions(slotQueryParams)
   );
 
-  const slots = useMemo(() => slotsData ?? [], [slotsData]);
+  const slots = useMemo(
+    () =>
+      (slotsData ?? []).filter((slot) => {
+        const slotDate = dayjs(slot.startAt).format('YYYY-MM-DD');
+
+        return slotDate === selectedFullDate && slot.price > 0;
+      }),
+    [selectedFullDate, slotsData]
+  );
 
   const availableTimeSlots = useMemo(() => {
     const isToday = dayjs(selectedFullDate).isSame(bookingClock, 'day');
@@ -175,16 +183,6 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
           getPlaceholderImageUrl({ width: 160, height: 90, text: 'No Image' })
       });
     });
-
-    if (map.size === 0) {
-      return [
-        {
-          id: 'default-court',
-          name: 'Court',
-          image: getPlaceholderImageUrl({ width: 160, height: 90, text: 'No Image' })
-        }
-      ];
-    }
 
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [slots]);
@@ -336,7 +334,18 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
             <div className="text-muted-foreground p-4 text-center text-sm">Memuat slot...</div>
           )}
 
-          <table className="min-w-full border-separate border-spacing-0 border border-gray-200 text-center">
+          {!isSlotsLoading && courts.length === 0 && (
+            <div className="text-muted-foreground p-8 text-center text-sm">
+              Jadwal lapangan belum tersedia untuk tanggal ini.
+            </div>
+          )}
+
+          <table
+            className={cn(
+              'min-w-full border-separate border-spacing-0 border border-gray-200 text-center',
+              courts.length === 0 && 'hidden'
+            )}
+          >
             <thead className="sticky top-0 z-20 bg-gray-50/90 shadow-sm backdrop-blur md:text-sm md:tracking-tight">
               <tr>
                 <th className="sticky left-0 z-30 w-20 border-r border-b bg-gray-50 px-2 py-2 text-left font-semibold" />

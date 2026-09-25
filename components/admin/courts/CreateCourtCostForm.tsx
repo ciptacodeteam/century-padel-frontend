@@ -9,7 +9,6 @@ import { NumberInput } from '@/components/ui/number-input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { daysOfWeek, hoursInDay } from '@/lib/constants';
 import { adminCreateCourtCostMutationOptions } from '@/mutations/admin/court';
-import { adminCourtCostingQueryOptionsById } from '@/queries/admin/court';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,9 +21,9 @@ export const formSchema = z.object({
   fromDate: z.date(),
   toDate: z.date(),
   days: z.array(z.number().min(0).max(7)),
-  happyHourPrice: z.number().min(0),
+  happyHourPrice: z.number().positive('Harga happy hour harus lebih dari Rp0.'),
   happyHourDiscountPrice: z.number().min(0),
-  peakHourPrice: z.number().min(0),
+  peakHourPrice: z.number().positive('Harga peak hour harus lebih dari Rp0.'),
   peakHourDiscountPrice: z.number().min(0),
   closedHours: z.array(z.number()).optional()
 });
@@ -111,7 +110,7 @@ const CreateCourtCostForm = ({ courtId }: Props) => {
                     thousandSeparator="."
                     decimalSeparator=","
                     prefix="Rp "
-                    min={0}
+                    min={1}
                     allowNegative={false}
                     placeholder="e.g. Rp 100.000"
                     value={field.value}
@@ -133,7 +132,7 @@ const CreateCourtCostForm = ({ courtId }: Props) => {
                     thousandSeparator="."
                     decimalSeparator=","
                     prefix="Rp "
-                    min={0}
+                    min={1}
                     allowNegative={false}
                     placeholder="e.g. Rp 200.000"
                     value={field.value}
