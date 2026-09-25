@@ -207,11 +207,11 @@ const calculateBundleDiscount = (courts: BookingItem[], coaches: SelectedCoach[]
 
     if (Number.isNaN(hour)) return;
 
-    // Happy hour: 06–14, Peak hour: 15–23
+    // Happy hour: 06–15, Peak hour: 16–23
     let slotDiscount = 0;
-    if (hour >= 6 && hour <= 14) {
+    if (hour >= 6 && hour < 16) {
       slotDiscount = 100_000;
-    } else if (hour >= 15 && hour <= 23) {
+    } else if (hour >= 16 && hour < 24) {
       slotDiscount = 70_000;
     }
 

@@ -11,6 +11,7 @@ describe('membership eligibility', () => {
   it('allows happy-hour packages only before peak hour starts', () => {
     expect(isMembershipEligibleForStartTime('HAPPY_HOUR', '06:00')).toBe(true);
     expect(isMembershipEligibleForStartTime('HAPPY_HOUR', '14:00')).toBe(true);
-    expect(isMembershipEligibleForStartTime('HAPPY_HOUR', '15:00')).toBe(false);
+    expect(isMembershipEligibleForStartTime('HAPPY_HOUR', '15:59')).toBe(true);
+    expect(isMembershipEligibleForStartTime('HAPPY_HOUR', '16:00')).toBe(false);
   });
 });

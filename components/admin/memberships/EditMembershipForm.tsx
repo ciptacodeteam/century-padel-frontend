@@ -178,7 +178,7 @@ const EditMembershipForm = ({ membershipId }: Props) => {
                   )}
                 />
                 <p className="text-muted-foreground text-xs">
-                  Happy Hour berlaku pukul 06:00–14:59. Peak Hour dapat dipakai di semua jam.
+                  Happy Hour berlaku pukul 06:00–15:59. Peak Hour dapat dipakai di semua jam.
                 </p>
               </Field>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

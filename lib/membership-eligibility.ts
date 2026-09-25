@@ -12,7 +12,7 @@ export function isMembershipEligibleForStartTime(
 ): boolean {
   if (membershipType !== 'HAPPY_HOUR') return true;
   const hour = Number(startTime.split(':')[0]);
-  return Number.isFinite(hour) && hour >= 6 && hour < 15;
+  return Number.isFinite(hour) && hour >= 6 && hour < 16;
 }
 
 export function getMembershipBookingKey(booking: {
