@@ -5,7 +5,7 @@ import { Field, FieldError, FieldGroup, FieldLabel, FieldSet } from '@/component
 import { Input } from '@/components/ui/input';
 import { InputGroup, InputGroupText } from '@/components/ui/input-group';
 import { PasswordInput } from '@/components/ui/password-input';
-import { formatPhone } from '@/lib/utils';
+import { formatPhone, normalizeIndonesianPhoneInput } from '@/lib/utils';
 import { sendPhoneOtpMutationOptions } from '@/mutations/phone';
 import { usePhoneStore } from '@/stores/usePhoneStore';
 import { useRegisterStore } from '@/stores/useRegisterStore';
@@ -18,7 +18,7 @@ const formSchema = z
   .object({
     firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name is too long'),
     lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name is too long'),
-    phone: z.string().min(1, 'Phone number is required').max(15, 'Phone number is too long'),
+    phone: z.string().regex(/^8[1-9]\d{7,10}$/, 'Enter a valid Indonesian mobile number'),
     password: z
       .string()
       .min(6, 'Password must be at least 6 characters long')
@@ -46,7 +46,7 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      phone: phone && phone.startsWith('+62') ? phone.replace(/^\+62/, '') : phone || '',
+      phone: normalizeIndonesianPhoneInput(phone),
       firstName: '',
       lastName: '',
       password: '',
@@ -57,6 +57,7 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
   const setPhone = usePhoneStore((state) => state.setPhone);
   const setRequestId = usePhoneStore((state) => state.setRequestId);
   const setRegisterData = useRegisterStore((state) => state.setRegisterData);
+  const phoneRegistration = form.register('phone');
 
   const { mutate, isPending } = useMutation(
     sendPhoneOtpMutationOptions({
@@ -130,21 +131,16 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
               <Input
                 id="phone"
                 type="tel"
-                {...form.register('phone')}
+                inputMode="numeric"
+                autoComplete="tel-national"
+                maxLength={12}
+                {...phoneRegistration}
                 placeholder="e.g. 81234567890"
-                onBlur={(e) => {
-                  const val = e.target.value ?? '';
-                  if (val.startsWith('0')) {
-                    const newVal = val.replace(/^0/, '');
-                    e.currentTarget.value = newVal;
-                    form.setValue('phone', newVal, { shouldDirty: true, shouldTouch: true });
-                  }
-                }}
-                onBeforeInput={(e) => {
-                  const char = e.data;
-                  if (char && !/[\d\s]/.test(char)) {
-                    e.preventDefault();
-                  }
+                onChange={(event) => {
+                  event.currentTarget.value = normalizeIndonesianPhoneInput(
+                    event.currentTarget.value
+                  );
+                  void phoneRegistration.onChange(event);
                 }}
               />
             </InputGroup>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { BookingPaymentSources } from '@/components/admin/bookings/BookingPaymentSources';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -208,6 +209,7 @@ function CoachOnlyScheduleCard({ cell, startTime }: { cell: CoachOnlyCell; start
               Rp {new Intl.NumberFormat('id-ID').format(cell.coachBooking.price)}
             </p>
           </div>
+          <BookingPaymentSources booking={cell.booking} />
         </div>
       </DialogContent>
     </ManagedDialog>
@@ -793,6 +795,9 @@ export default function SchedulePage() {
                                                   )}
                                                 </p>
                                               </div>
+                                              <BookingPaymentSources
+                                                booking={bookingCell.booking}
+                                              />
                                               {bookingCell.booking.holdExpiresAt && (
                                                 <div>
                                                   <p className="text-muted-foreground text-sm">

@@ -387,6 +387,21 @@ export type Invoice = {
   membershipUser?: MembershipUser;
 };
 
+export type Payment = {
+  id: string;
+  paymentMethodId: string;
+  status: PaymentStatus;
+  amount: number;
+  fees: number;
+  externalRef: string | null;
+  dueDate: Date | null;
+  paidAt: Date | null;
+  cancelledAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  method?: PaymentMethod;
+};
+
 enum BookingStatus {
   HOLD = 'HOLD', // temporary hold on slots before payment (expiry)
   CONFIRMED = 'CONFIRMED', // paid; slots locked
@@ -438,6 +453,7 @@ export type Booking = {
   status: BookingStatus;
   totalPrice: number;
   processingFee: number;
+  complimentaryCreditMinutes: number;
   courtNormalPrice?: number;
   courtDiscountPrice?: number;
   createdAt: Date;
@@ -463,6 +479,8 @@ export type BookingDetail = {
   courtId: string | null;
   price: number;
   discountPrice?: number | null;
+  membershipUserId: string | null;
+  complimentaryCreditMinutes: number;
   createdAt: Date;
   updatedAt: Date;
 

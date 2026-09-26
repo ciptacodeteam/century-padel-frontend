@@ -119,6 +119,19 @@ export function formatPhone(phone: string | null): string {
   return cleaned.startsWith('+') ? cleaned : `+${cleaned}`;
 }
 
+/**
+ * Converts Indonesian phone input into the local part displayed next to a
+ * fixed +62 prefix. It intentionally accepts common typed and pasted formats.
+ */
+export function normalizeIndonesianPhoneInput(phone: string | null | undefined): string {
+  if (!phone) return '';
+
+  const digits = phone.replace(/\D/g, '');
+  const withoutCountryCode = digits.startsWith('62') ? digits.slice(2) : digits;
+
+  return withoutCountryCode.replace(/^0+/, '');
+}
+
 export async function isJwtAndDecode(token: string): Promise<{ isJwt: boolean; decoded: any }> {
   if (!token || typeof token !== 'string') {
     return { isJwt: false, decoded: null };

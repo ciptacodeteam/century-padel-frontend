@@ -10,6 +10,7 @@ import {
   RescheduleCourtDialog,
   type BookingDetailWithSlot
 } from '@/components/admin/bookings/RescheduleCourtDialog';
+import { BookingPaymentSources } from '@/components/admin/bookings/BookingPaymentSources';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/clipboard-copy';
@@ -386,6 +387,7 @@ const BookingTable = () => {
                           {formatDate(booking.createdAt, 'DD/MM/YYYY HH:mm')}
                         </p>
                       </div>
+                      <BookingPaymentSources booking={booking} />
                       {booking.holdExpiresAt && (
                         <div>
                           <p className="text-muted-foreground text-sm">Kedaluwarsa</p>

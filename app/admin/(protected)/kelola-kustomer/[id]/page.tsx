@@ -30,8 +30,10 @@ const EditCustomerPage = ({ params }: { params: Promise<IdParams> }) => {
   const { data: customer } = useQuery(adminCustomerQueryOptions(param.id));
   const isCashier = me?.role?.toUpperCase?.() === ROLE.CASHIER;
   const isAdmin = me?.role?.toUpperCase?.() === ROLE.ADMIN;
+  const isManager = me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
   const isAdminCoaching = me?.role?.toUpperCase?.() === ROLE.ADMIN_COACHING;
   const isViewOnly = isCashier || isAdminCoaching;
+  const canFullyManageCredit = isAdmin || isManager;
 
   if (isViewOnly) {
     // Cashier and Admin Coaching cannot edit customer profile details.
@@ -132,7 +134,7 @@ const EditCustomerPage = ({ params }: { params: Promise<IdParams> }) => {
     );
   }
 
-  // Full edit mode for ADMIN
+  // Full edit mode for Admin and Manager
   return (
     <main>
       <Section>
@@ -146,7 +148,7 @@ const EditCustomerPage = ({ params }: { params: Promise<IdParams> }) => {
           </div>
           <Separator className="mt-10 mb-6 block xl:hidden" />
           <div>
-            {isAdmin && (
+            {canFullyManageCredit && (
               <>
                 <ComplimentaryCreditCard customerId={param.id} />
                 <Separator className="my-4" />
