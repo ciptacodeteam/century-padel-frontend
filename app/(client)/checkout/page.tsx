@@ -9,7 +9,10 @@ import { useConfirm } from '@/components/ui/confirm-dialog';
 import SavedCardSelector from '@/components/forms/payment/SavedCardSelector';
 import CreditCardForm, { type CreditCardFormData } from '@/components/forms/payment/CreditCardForm';
 import { useBookingStoreHydration } from '@/hooks/useBookingStoreHydration';
-import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
+import {
+  calculateMembershipDiscount,
+  useMembershipDiscount
+} from '@/hooks/useMembershipDiscount';
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
 import { calculatePaymentFee } from '@/lib/payment-fee';
@@ -18,12 +21,13 @@ import { getMembershipBookingKey, MEMBERSHIP_TYPE_LABEL } from '@/lib/membership
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
+import { myMembershipQueryOptions } from '@/queries/membership';
 import { profileQueryOptions } from '@/queries/profile';
 import useAuthModalStore from '@/stores/useAuthModalStore';
 import useAuthRedirectStore from '@/stores/useAuthRedirectStore';
 import { useBookingStore } from '@/stores/useBookingStore';
 import type { PaymentMethod, CreditCard } from '@/types/model';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
@@ -48,6 +52,7 @@ const PAYMENT_METHOD_STORAGE_KEY = 'checkout-selected-payment';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const isCompletingCheckout = useRef(false);
   // const pathname = usePathname();
   // const searchParams = useSearchParams();
@@ -444,12 +449,42 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (useMembership && !membershipDiscount.canUseMembership) {
-      toast.error(
-        membershipDiscount.ineligibilityReason ||
-          'Membership tidak dapat digunakan untuk jadwal ini.'
-      );
-      return;
+    if (useMembership) {
+      try {
+        // Force a server read immediately before checkout so the price shown and
+        // the backend validation use the same user's latest membership state.
+        const latestMembership = await queryClient.fetchQuery({
+          ...myMembershipQueryOptions(user.id),
+          staleTime: 0
+        });
+        const latestDiscount = calculateMembershipDiscount(
+          latestMembership,
+          bookingItems,
+          true
+        );
+
+        if (!latestDiscount.canUseMembership) {
+          toast.error(
+            latestDiscount.ineligibilityReason ||
+              'Membership tidak dapat digunakan untuk jadwal ini.'
+          );
+          return;
+        }
+
+        const membershipDataChanged =
+          latestDiscount.discountAmount !== membershipDiscount.discountAmount ||
+          latestDiscount.hoursToDeduct !== membershipDiscount.hoursToDeduct ||
+          latestDiscount.coveredBookingKeys.join('|') !==
+            membershipDiscount.coveredBookingKeys.join('|');
+
+        if (membershipDataChanged) {
+          toast.info('Data membership diperbarui. Silakan periksa total lalu bayar kembali.');
+          return;
+        }
+      } catch {
+        toast.error('Gagal memeriksa membership terbaru. Silakan coba lagi.');
+        return;
+      }
     }
 
     // For CARDS channel, check if card is selected or new card data is provided
@@ -534,7 +569,7 @@ export default function CheckoutPage() {
       });
 
       if (!ok) return;
-    } catch (e) {
+    } catch {
       // If confirm throws or is rejected, bail out
       return;
     }

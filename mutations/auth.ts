@@ -48,8 +48,11 @@ export const loginMutationOptions = ({ onSuccess, onError, queryClient }: Mutati
     mutationFn: loginApi,
     onSuccess: (data) => {
       toast.success('Login successful!');
-      queryClient?.invalidateQueries({ queryKey: profileQueryOptions.queryKey });
+      // Let the caller persist the new token before any authenticated query is
+      // removed/refetched, otherwise the refetch can still use the old session.
       onSuccess?.(data);
+      queryClient?.removeQueries({ queryKey: ['memberships', 'my'] });
+      queryClient?.invalidateQueries({ queryKey: profileQueryOptions.queryKey });
     },
     onError: (error) => {
       console.error('Error:', error);

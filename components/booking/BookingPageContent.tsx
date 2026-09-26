@@ -72,7 +72,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   const { data: user } = useQuery(profileQueryOptions);
   const isAuthenticated = !!user?.id;
   const { data: membershipData } = useQuery({
-    ...myMembershipQueryOptions,
+    ...myMembershipQueryOptions(user?.id),
     enabled: isAuthenticated
   });
 

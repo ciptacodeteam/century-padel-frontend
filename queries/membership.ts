@@ -4,7 +4,7 @@ import {
   getMyMembershipsApi,
   getMyMembershipApi
 } from '@/api/membership';
-import type { Membership } from '@/types/model';
+import type { Membership, MembershipType } from '@/types/model';
 import { queryOptions } from '@tanstack/react-query';
 
 export const membershipsQueryOptions = () =>
@@ -58,15 +58,20 @@ export type UserMembershipResponse = {
       id: string;
       name: string;
       price: number;
-      type: import('@/types/model').MembershipType;
+      type: MembershipType;
       scheduleVisibilityMonths: number;
     };
   } | null;
 };
 
-export const myMembershipQueryOptions = queryOptions({
-  queryKey: ['memberships', 'my', 'active'],
-  queryFn: getMyMembershipApi,
-  select: (res) => res.data as UserMembershipResponse,
-  enabled: true // Will be controlled by authentication status
-});
+export const myMembershipQueryOptions = (userId?: string | null) =>
+  queryOptions({
+    // Membership data is user-specific. Including the user id prevents data from
+    // a previous login being reused for the next account in the same browser.
+    queryKey: ['memberships', 'my', 'active', userId ?? 'anonymous'],
+    queryFn: async () => {
+      const res = await getMyMembershipApi();
+      return res.data as UserMembershipResponse;
+    },
+    enabled: !!userId
+  });

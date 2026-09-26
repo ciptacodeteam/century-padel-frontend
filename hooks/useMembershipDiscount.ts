@@ -41,6 +41,93 @@ export interface MembershipDiscountResult {
   coveredBookingKeys: string[];
 }
 
+export function calculateMembershipDiscount(
+  activeMembershipData: { activeMembership: ActiveMembership | null } | null | undefined,
+  bookingItems: BookingItem[],
+  useMembership: boolean
+): MembershipDiscountResult {
+  const activeMembership = activeMembershipData?.activeMembership ?? null;
+  const remainingSessions = activeMembership?.remainingSessions ?? 0;
+  const hasActiveMembership =
+    activeMembership &&
+    !activeMembership.isExpired &&
+    !activeMembership.isSuspended &&
+    remainingSessions > 0;
+
+  const membershipType = activeMembership?.membership.type ?? 'ALL_HOUR';
+  let allocatedHours = 0;
+  const coveredBookingKeys: string[] = [];
+  const sortedBookings = [...bookingItems].sort((a, b) => {
+    const dateCompare = a.date.localeCompare(b.date);
+    return dateCompare !== 0 ? dateCompare : a.timeSlot.localeCompare(b.timeSlot);
+  });
+
+  for (const booking of sortedBookings) {
+    const startTime = booking.timeSlot.split(' - ')[0]?.trim() ?? '';
+    if (!isMembershipEligibleForStartTime(membershipType, startTime)) continue;
+
+    const [rangeStart, rangeEnd] = booking.timeSlot.split(' - ');
+    const start = rangeStart?.trim();
+    const end = (booking.endTime || rangeEnd)?.trim();
+    let bookingHours = 1;
+    if (start && end) {
+      const startAt = dayjs(`2000-01-01 ${start}`);
+      let endAt = dayjs(`2000-01-01 ${end}`);
+      if (!endAt.isAfter(startAt)) endAt = endAt.add(1, 'day');
+      bookingHours = Math.max(1, Math.ceil(endAt.diff(startAt, 'minute') / 60));
+    }
+    if (allocatedHours + bookingHours > remainingSessions) continue;
+    allocatedHours += bookingHours;
+    coveredBookingKeys.push(getMembershipBookingKey(booking));
+  }
+
+  const isEligibleForSelectedHours = coveredBookingKeys.length > 0;
+  const canUseMembership =
+    useMembership &&
+    !!hasActiveMembership &&
+    bookingItems.length > 0 &&
+    isEligibleForSelectedHours;
+
+  let ineligibilityReason: string | null = null;
+  if (useMembership && !hasActiveMembership) {
+    ineligibilityReason = 'Membership tidak aktif atau tidak memiliki sisa jam.';
+  } else if (useMembership && !isEligibleForSelectedHours) {
+    ineligibilityReason = 'Tidak ada slot yang dapat ditanggung oleh membership ini.';
+  }
+
+  const originalTotal = bookingItems.reduce((sum, booking) => {
+    const discountPrice = booking.discountPrice ?? 0;
+    const effectivePrice = discountPrice > 0 ? discountPrice : booking.price;
+    return sum + effectivePrice;
+  }, 0);
+
+  let discountAmount = 0;
+  if (canUseMembership && coveredBookingKeys.length > 0) {
+    const coveredKeySet = new Set(coveredBookingKeys);
+    const slotsToFree = bookingItems.filter((booking) =>
+      coveredKeySet.has(getMembershipBookingKey(booking))
+    );
+    discountAmount = slotsToFree.reduce((sum, booking) => {
+      const discountPrice = booking.discountPrice ?? 0;
+      return sum + (discountPrice > 0 ? discountPrice : booking.price);
+    }, 0);
+  }
+
+  return {
+    activeMembership,
+    canUseMembership: !!canUseMembership,
+    remainingSessions,
+    hoursToDeduct: canUseMembership ? allocatedHours : 0,
+    slotsToDeduct: canUseMembership ? coveredBookingKeys.length : 0,
+    discountAmount,
+    originalTotal,
+    discountedTotal: originalTotal - discountAmount,
+    isEligibleForSelectedHours,
+    ineligibilityReason,
+    coveredBookingKeys: canUseMembership ? coveredBookingKeys : []
+  };
+}
+
 /**
  * Custom hook to calculate membership discount for court bookings
  * @param customerId - The customer ID to fetch membership for (optional if membershipData is provided or isUser is true)
@@ -58,8 +145,8 @@ export function useMembershipDiscount(
 ): MembershipDiscountResult {
   // Fetch membership for current user if isUser is true
   const { data: userMembershipData } = useQuery({
-    ...myMembershipQueryOptions,
-    enabled: isUser && !membershipData
+    ...myMembershipQueryOptions(customerId),
+    enabled: isUser && !!customerId && !membershipData
   });
 
   // Fetch membership for customer (admin context) if customerId is provided
@@ -71,89 +158,8 @@ export function useMembershipDiscount(
   // Use provided membership data, user membership data, or admin membership data
   const activeMembershipData = membershipData || userMembershipData || adminMembershipData;
 
-  return useMemo(() => {
-    const activeMembership = activeMembershipData?.activeMembership ?? null;
-    const remainingSessions = activeMembership?.remainingSessions ?? 0;
-    const hasActiveMembership =
-      activeMembership &&
-      !activeMembership.isExpired &&
-      !activeMembership.isSuspended &&
-      remainingSessions > 0;
-
-    const membershipType = activeMembership?.membership.type ?? 'ALL_HOUR';
-    let allocatedHours = 0;
-    const coveredBookingKeys: string[] = [];
-    const sortedBookings = [...bookingItems].sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      return dateCompare !== 0 ? dateCompare : a.timeSlot.localeCompare(b.timeSlot);
-    });
-
-    for (const booking of sortedBookings) {
-      const startTime = booking.timeSlot.split(' - ')[0]?.trim() ?? '';
-      if (!isMembershipEligibleForStartTime(membershipType, startTime)) continue;
-
-      const [rangeStart, rangeEnd] = booking.timeSlot.split(' - ');
-      const start = rangeStart?.trim();
-      const end = (booking.endTime || rangeEnd)?.trim();
-      let bookingHours = 1;
-      if (start && end) {
-        const startAt = dayjs(`2000-01-01 ${start}`);
-        let endAt = dayjs(`2000-01-01 ${end}`);
-        if (!endAt.isAfter(startAt)) endAt = endAt.add(1, 'day');
-        bookingHours = Math.max(1, Math.ceil(endAt.diff(startAt, 'minute') / 60));
-      }
-      if (allocatedHours + bookingHours > remainingSessions) continue;
-      allocatedHours += bookingHours;
-      coveredBookingKeys.push(getMembershipBookingKey(booking));
-    }
-
-    const isEligibleForSelectedHours = coveredBookingKeys.length > 0;
-    const canUseMembership =
-      useMembership &&
-      !!hasActiveMembership &&
-      bookingItems.length > 0 &&
-      isEligibleForSelectedHours;
-
-    let ineligibilityReason: string | null = null;
-    if (useMembership && !hasActiveMembership) {
-      ineligibilityReason = 'Membership tidak aktif atau tidak memiliki sisa jam.';
-    } else if (useMembership && !isEligibleForSelectedHours) {
-      ineligibilityReason = 'Tidak ada slot yang dapat ditanggung oleh membership ini.';
-    }
-    // Calculate original total
-    const originalTotal = bookingItems.reduce((sum, booking) => {
-      const discountPrice = booking.discountPrice ?? 0;
-      const effectivePrice = discountPrice > 0 ? discountPrice : booking.price;
-      return sum + effectivePrice;
-    }, 0);
-
-    // Calculate discount amount
-    let discountAmount = 0;
-    if (canUseMembership && coveredBookingKeys.length > 0) {
-      const coveredKeySet = new Set(coveredBookingKeys);
-      const slotsToFree = bookingItems.filter((booking) =>
-        coveredKeySet.has(getMembershipBookingKey(booking))
-      );
-      discountAmount = slotsToFree.reduce((sum, booking) => {
-        const discountPrice = booking.discountPrice ?? 0;
-        return sum + (discountPrice > 0 ? discountPrice : booking.price);
-      }, 0);
-    }
-
-    const discountedTotal = originalTotal - discountAmount;
-
-    return {
-      activeMembership,
-      canUseMembership: !!canUseMembership,
-      remainingSessions,
-      hoursToDeduct: canUseMembership ? allocatedHours : 0,
-      slotsToDeduct: canUseMembership ? coveredBookingKeys.length : 0,
-      discountAmount,
-      originalTotal,
-      discountedTotal,
-      isEligibleForSelectedHours,
-      ineligibilityReason,
-      coveredBookingKeys: canUseMembership ? coveredBookingKeys : []
-    };
-  }, [activeMembershipData, bookingItems, useMembership]);
+  return useMemo(
+    () => calculateMembershipDiscount(activeMembershipData, bookingItems, useMembership),
+    [activeMembershipData, bookingItems, useMembership]
+  );
 }
