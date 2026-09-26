@@ -16,7 +16,8 @@ import z from 'zod';
 
 const formSchema = z
   .object({
-    name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
+    firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name is too long'),
+    lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name is too long'),
     phone: z.string().min(1, 'Phone number is required').max(15, 'Phone number is too long'),
     password: z
       .string()
@@ -46,7 +47,8 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       phone: phone && phone.startsWith('+62') ? phone.replace(/^\+62/, '') : phone || '',
-      name: '',
+      firstName: '',
+      lastName: '',
       password: '',
       confirmPassword: ''
     }
@@ -82,7 +84,8 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
     const formatedPhone = formatPhone(formData.phone);
     setPhone(formatedPhone);
     setRegisterData({
-      name: formData.name,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
       phone: formatedPhone,
       password: formData.password
     });
@@ -102,13 +105,26 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
               Please register to start using Century Padel.
             </p>
           </header>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="firstName" className="-mb-1">
+                First Name
+              </FieldLabel>
+              <Input id="firstName" {...form.register('firstName')} placeholder="e.g. John" />
+              <FieldError>{form.formState.errors.firstName?.message}</FieldError>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="lastName" className="-mb-1">
+                Last Name
+              </FieldLabel>
+              <Input id="lastName" {...form.register('lastName')} placeholder="e.g. Doe" />
+              <FieldError>{form.formState.errors.lastName?.message}</FieldError>
+            </Field>
+          </div>
           <Field>
-            <FieldLabel htmlFor="name" className='-mb-1'>Name</FieldLabel>
-            <Input id="name" {...form.register('name')} placeholder="e.g. John Doe" />
-            <FieldError>{form.formState.errors.name?.message}</FieldError>
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="phone" className='-mb-1'>Phone</FieldLabel>
+            <FieldLabel htmlFor="phone" className="-mb-1">
+              Phone
+            </FieldLabel>
             <InputGroup>
               <InputGroupText className="px-3">+62</InputGroupText>
               <Input
@@ -135,7 +151,9 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
             <FieldError>{form.formState.errors.phone?.message}</FieldError>
           </Field>
           <Field>
-            <FieldLabel htmlFor="password" className='-mb-1'>Password</FieldLabel>
+            <FieldLabel htmlFor="password" className="-mb-1">
+              Password
+            </FieldLabel>
             <PasswordInput
               id="password"
               {...form.register('password')}
@@ -144,7 +162,9 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
             <FieldError>{form.formState.errors.password?.message}</FieldError>
           </Field>
           <Field>
-            <FieldLabel htmlFor="confirmPassword" className='-mb-1'>Confirm Password</FieldLabel>
+            <FieldLabel htmlFor="confirmPassword" className="-mb-1">
+              Confirm Password
+            </FieldLabel>
             <PasswordInput
               id="confirmPassword"
               {...form.register('confirmPassword')}

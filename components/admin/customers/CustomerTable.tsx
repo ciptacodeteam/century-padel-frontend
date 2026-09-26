@@ -3,20 +3,33 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
+import {
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  ManagedDialog
+} from '@/components/ui/dialog';
 import PreviewImage from '@/components/ui/preview-image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { STATUS_BADGE_VARIANT, STATUS_MAP } from '@/lib/constants';
-import { formatPhone, getNameInitial } from '@/lib/utils';
+import { formatPhone, getNameInitial, hasCreatePermission } from '@/lib/utils';
 import { adminCustomersQueryOptions } from '@/queries/admin/customer';
 import { adminProfileQueryOptions } from '@/queries/admin/auth';
 import type { Customer } from '@/types/model';
-import { ROLE } from '@/lib/constants';
-import { IconCircleCheckFilled, IconCircleXFilled, IconPencil, IconEye } from '@tabler/icons-react';
+import {
+  IconCircleCheckFilled,
+  IconCircleXFilled,
+  IconPencil,
+  IconEye,
+  IconPlus
+} from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import { useMemo } from 'react';
+import CreateCustomerForm from './CreateCustomerForm';
 
 const CustomerTable = () => {
   const { data: me } = useQuery(adminProfileQueryOptions);
@@ -56,7 +69,7 @@ const CustomerTable = () => {
         )
       }),
       colHelper.accessor('name', {
-        header: 'Nama Lapangan',
+        header: 'Nama Customer',
         cell: (info) => info.getValue()
       }),
       colHelper.accessor('phone', {
@@ -142,7 +155,30 @@ const CustomerTable = () => {
   const { data, isPending } = useQuery(adminCustomersQueryOptions);
 
   return (
-    <DataTable loading={isPending} data={data || []} columns={columns} enableRowSelection={false} />
+    <DataTable
+      loading={isPending}
+      data={data || []}
+      columns={columns}
+      enableRowSelection={false}
+      addButton={
+        hasCreatePermission(me?.role) ? (
+          <ManagedDialog id="create-customer">
+            <DialogTrigger asChild>
+              <Button>
+                <IconPlus />
+                Tambah Customer
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader className="mb-4">
+                <DialogTitle>Tambah Customer Baru</DialogTitle>
+              </DialogHeader>
+              <CreateCustomerForm />
+            </DialogContent>
+          </ManagedDialog>
+        ) : undefined
+      }
+    />
   );
 };
 export default CustomerTable;
