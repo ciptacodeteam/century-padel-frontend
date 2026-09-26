@@ -2,7 +2,8 @@ import {
   getCustomerApi,
   getCustomerMembershipApi,
   getCustomersApi,
-  searchCustomersApi
+  searchCustomersApi,
+  getCustomerComplimentaryCreditsApi
 } from '@/api/admin/customer';
 import type { Customer } from '@/types/model';
 import { queryOptions } from '@tanstack/react-query';
@@ -44,6 +45,39 @@ export const adminCustomerMembershipQueryOptions = (id: string) =>
     queryKey: ['admin', 'customers', id, 'membership'],
     queryFn: () => getCustomerMembershipApi(id),
     select: (res) => res.data as CustomerMembershipResponse,
+    enabled: !!id
+  });
+
+export type CustomerComplimentaryCreditsResponse = {
+  user: { id: string; name: string; phone: string };
+  totalMinutes: number;
+  credits: Array<{
+    id: string;
+    purpose: 'TRIAL' | 'COACHING' | 'GOODWILL' | 'OTHER';
+    grantedMinutes: number;
+    remainingMinutes: number;
+    expiresAt: string | null;
+    note: string | null;
+    isActive: boolean;
+    createdAt: string;
+    grantedBy: { id: string; name: string };
+  }>;
+  transactions: Array<{
+    id: string;
+    type: 'GRANT' | 'REDEEM' | 'REFUND' | 'REVOKE';
+    minutes: number;
+    note: string | null;
+    createdAt: string;
+    booking: { id: string; status: string } | null;
+    staff: { id: string; name: string } | null;
+  }>;
+};
+
+export const adminCustomerComplimentaryCreditsQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ['admin', 'customers', id, 'complimentary-credits'],
+    queryFn: () => getCustomerComplimentaryCreditsApi(id),
+    select: (res) => res.data as CustomerComplimentaryCreditsResponse,
     enabled: !!id
   });
 

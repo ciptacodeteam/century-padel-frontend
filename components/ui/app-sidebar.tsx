@@ -231,6 +231,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: me, isLoading } = useQuery(adminProfileQueryOptions);
   const isCoach = me?.role?.toUpperCase?.() === ROLE.COACH;
   const isCashier = me?.role?.toUpperCase?.() === ROLE.CASHIER;
+  const isAdminCoaching = me?.role?.toUpperCase?.() === ROLE.ADMIN_COACHING;
   const isManager = me?.role?.toUpperCase?.() === ROLE.ADMIN_VIEWER;
   const isAdmin = me?.role?.toUpperCase?.() === ROLE.ADMIN;
 
@@ -251,7 +252,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ];
     }
 
-    if (isCashier) {
+    if (isCashier || isAdminCoaching) {
       return [
         {
           title: 'Booking System',
@@ -296,7 +297,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               url: '/admin/kelola-pemesanan/membership'
             }
           ]
-        }
+        },
+        ...(isAdminCoaching
+          ? [
+              {
+                title: 'Kustomer',
+                icon: IconUsers,
+                items: [
+                  {
+                    title: 'Saldo Jam Customer',
+                    url: '/admin/kelola-kustomer'
+                  }
+                ]
+              }
+            ]
+          : [])
       ];
     }
 
@@ -318,24 +333,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     return data.navMain;
-  }, [isCoach, isCashier, isManager, isLoading, me]);
+  }, [isCoach, isCashier, isAdminCoaching, isManager, isLoading, me]);
 
   // Get appropriate dashboard link based on role
   const dashboardLink = React.useMemo(() => {
     if (isLoading || !me) return '/admin/dashboard';
     if (isCoach) return '/admin/kelola-karyawan';
-    if (isCashier) return '/admin/booking-lapangan';
+    if (isCashier || isAdminCoaching) return '/admin/booking-lapangan';
     if (isManager) return '/admin/booking-lapangan';
     return '/admin/dashboard';
-  }, [isCoach, isCashier, isManager, isLoading, me]);
+  }, [isCoach, isCashier, isAdminCoaching, isManager, isLoading, me]);
 
   // Get appropriate subtitle based on role
   const subtitle = React.useMemo(() => {
     if (isLoading || !me) return 'Dashboard Admin';
     if (isAdmin) return 'Dashboard Admin';
+    if (isAdminCoaching) return 'Admin Coaching';
     if (isManager) return 'Manager Panel';
     return 'Admin Panel';
-  }, [isAdmin, isManager, isLoading, me]);
+  }, [isAdmin, isAdminCoaching, isManager, isLoading, me]);
 
   return (
     <Sidebar variant="inset" {...props}>

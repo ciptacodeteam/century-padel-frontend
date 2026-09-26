@@ -9,12 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { formatSlotTime, formatSlotTimeRange } from '@/lib/time-utils';
 import { cn } from '@/lib/utils';
 import { adminCheckoutMutationOptions } from '@/mutations/admin/checkout';
 import { adminCoachAvailabilityQueryOptions } from '@/queries/admin/coach';
-import { type CustomerSearchResult } from '@/queries/admin/customer';
+import {
+  adminCustomerComplimentaryCreditsQueryOptions,
+  type CustomerSearchResult
+} from '@/queries/admin/customer';
 import { adminInventoryAvailabilityQueryOptions } from '@/queries/admin/inventory';
 import { useBookingStore } from '@/stores/useBookingStore';
 import {
@@ -74,6 +78,30 @@ export default function BookingAddOns() {
   // Customer selection is now handled by BookingSummary component
   // Keep selectedCustomer state for membership discount calculation
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSearchResult | null>(null);
+  const [useComplimentaryCredit, setUseComplimentaryCredit] = useState(false);
+  const { data: complimentaryCredit } = useQuery(
+    adminCustomerComplimentaryCreditsQueryOptions(selectedCustomerId || '')
+  );
+
+  const complimentaryMinutesRequired = useMemo(
+    () =>
+      bookingItems.reduce((total, item) => {
+        const start = dayjs(`${item.date} ${item.timeSlot}`);
+        let end = dayjs(`${item.date} ${item.endTime}`);
+        if (!start.isValid() || !end.isValid()) return total + 60;
+        if (!end.isAfter(start)) end = end.add(1, 'day');
+        return total + end.diff(start, 'minute');
+      }, 0),
+    [bookingItems]
+  );
+  const canUseComplimentaryCredit =
+    !!selectedCustomerId &&
+    bookingItems.length > 0 &&
+    (complimentaryCredit?.totalMinutes ?? 0) >= complimentaryMinutesRequired;
+
+  useEffect(() => {
+    if (!canUseComplimentaryCredit) setUseComplimentaryCredit(false);
+  }, [canUseComplimentaryCredit]);
 
   // Calculate membership discount for court bookings
   // Pass membership data from selected customer to avoid separate API call
@@ -469,6 +497,10 @@ export default function BookingAddOns() {
       toast.error('Minimal satu item harus dipilih.');
       return;
     }
+    if (useComplimentaryCredit && !canUseComplimentaryCredit) {
+      toast.error('Saldo jam gratis tidak cukup atau customer belum dipilih.');
+      return;
+    }
 
     const courtSlots = bookingItems.map((b) => b.slotId).filter(Boolean);
     const coachSlots = selectedCoaches.map((c) => c.slotId).filter(Boolean) as string[];
@@ -546,6 +578,7 @@ export default function BookingAddOns() {
     const payload: AdminCheckoutPayload = {
       totalHours: Math.max(1, Math.round(totalHours * 100) / 100), // Round to 2 decimal places, minimum 1,
       useMembership: false,
+      useComplimentaryCredit,
       courtSlots: courtSlots.length > 0 ? courtSlots : undefined,
       coachSlots: coachSlots.length > 0 ? coachSlots : undefined,
       ballboySlots: ballboySlots.length > 0 ? ballboySlots : undefined,
@@ -1026,58 +1059,83 @@ export default function BookingAddOns() {
         </div>
 
         {/* Booking Summary - Responsive */}
-        <BookingSummary
-          bookingItems={bookingItems}
-          selectedCustomerId={selectedCustomerId}
-          selectedCustomerName={storeCustomerName}
-          selectedCustomerPhone={storeCustomerPhone}
-          walkInName={storeWalkInName}
-          walkInPhone={storeWalkInPhone}
-          onCustomerSelect={(customerId, customer) => {
-            setSelectedCustomerId(customerId);
-            setSelectedCustomer(customer);
-            setSelectedCustomerDetails(customer.name, customer.phone);
-            setWalkInCustomer(null, null);
-          }}
-          onCustomerClear={() => {
-            setSelectedCustomerId(null);
-            setSelectedCustomer(null);
-          }}
-          onWalkInSet={(name, phone) => {
-            setWalkInCustomer(name, phone);
-            setSelectedCustomerId(null);
-            setSelectedCustomer(null);
-          }}
-          onWalkInClear={() => {
-            setWalkInCustomer(null, null);
-          }}
-          selectedCoaches={selectedCoaches}
-          selectedInventories={selectedInventories}
-          onCoachRemove={removeCoach}
-          onInventoryRemove={removeInventory}
-          onBookingRemove={removeBookingItem}
-          courtTotal={courtTotal}
-          coachTotal={coachTotal}
-          inventoryTotal={inventoryTotal}
-          totalAmount={getTotalAmount()}
-          membershipDiscountDetails={membershipDiscount}
-          showMembershipInfo={false}
-          primaryAction={{
-            label: isConfirming ? 'Processing...' : 'Confirm Booking',
-            onClick: handleConfirmBooking,
-            disabled: isConfirming,
-            loading: isConfirming
-          }}
-          secondaryActions={[
-            {
-              label: 'Back to Court Selection',
-              onClick: () => router.push('/admin/booking-lapangan'),
-              variant: 'outline',
-              icon: <IconChevronLeft className="mr-2 h-4 w-4" />
-            }
-          ]}
-          width="w-full xl:w-[400px] xl:shrink-0"
-        />
+        <div className="w-full space-y-3 xl:w-[400px] xl:shrink-0">
+          {selectedCustomerId && (complimentaryCredit?.totalMinutes ?? 0) > 0 && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="flex items-center justify-between gap-4 p-4">
+                <div>
+                  <p className="text-sm font-semibold">Gunakan saldo jam gratis</p>
+                  <p className="text-muted-foreground text-xs">
+                    Tersedia {complimentaryCredit?.totalMinutes} menit · kebutuhan{' '}
+                    {complimentaryMinutesRequired} menit. Add-on tetap ditagihkan.
+                  </p>
+                  {!canUseComplimentaryCredit && (
+                    <p className="mt-1 text-xs text-red-600">Saldo tidak cukup.</p>
+                  )}
+                </div>
+                <Switch
+                  checked={useComplimentaryCredit}
+                  disabled={!canUseComplimentaryCredit}
+                  onCheckedChange={setUseComplimentaryCredit}
+                />
+              </CardContent>
+            </Card>
+          )}
+          <BookingSummary
+            bookingItems={bookingItems}
+            selectedCustomerId={selectedCustomerId}
+            selectedCustomerName={storeCustomerName}
+            selectedCustomerPhone={storeCustomerPhone}
+            walkInName={storeWalkInName}
+            walkInPhone={storeWalkInPhone}
+            onCustomerSelect={(customerId, customer) => {
+              setSelectedCustomerId(customerId);
+              setSelectedCustomer(customer);
+              setSelectedCustomerDetails(customer.name, customer.phone);
+              setWalkInCustomer(null, null);
+            }}
+            onCustomerClear={() => {
+              setSelectedCustomerId(null);
+              setSelectedCustomer(null);
+              setUseComplimentaryCredit(false);
+            }}
+            onWalkInSet={(name, phone) => {
+              setWalkInCustomer(name, phone);
+              setSelectedCustomerId(null);
+              setSelectedCustomer(null);
+              setUseComplimentaryCredit(false);
+            }}
+            onWalkInClear={() => {
+              setWalkInCustomer(null, null);
+            }}
+            selectedCoaches={selectedCoaches}
+            selectedInventories={selectedInventories}
+            onCoachRemove={removeCoach}
+            onInventoryRemove={removeInventory}
+            onBookingRemove={removeBookingItem}
+            courtTotal={courtTotal}
+            coachTotal={coachTotal}
+            inventoryTotal={inventoryTotal}
+            totalAmount={getTotalAmount() - (useComplimentaryCredit ? courtTotal : 0)}
+            membershipDiscountDetails={membershipDiscount}
+            showMembershipInfo={false}
+            primaryAction={{
+              label: isConfirming ? 'Processing...' : 'Confirm Booking',
+              onClick: handleConfirmBooking,
+              disabled: isConfirming,
+              loading: isConfirming
+            }}
+            secondaryActions={[
+              {
+                label: 'Back to Court Selection',
+                onClick: () => router.push('/admin/booking-lapangan'),
+                variant: 'outline',
+                icon: <IconChevronLeft className="mr-2 h-4 w-4" />
+              }
+            ]}
+            width="w-full"
+          />
+        </div>
       </div>
     </div>
   );

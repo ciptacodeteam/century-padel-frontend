@@ -34,7 +34,7 @@ export function useRoleAccess(config: RoleAccessConfig) {
         // Default redirect based on role
         if (userRole === ROLE.COACH || userRole === ROLE.BALLBOY) {
           router.replace('/admin/kelola-karyawan');
-        } else if (userRole === ROLE.CASHIER) {
+        } else if (userRole === ROLE.CASHIER || userRole === ROLE.ADMIN_COACHING) {
           router.replace('/admin/booking-lapangan');
         } else if (userRole === ROLE.ADMIN_VIEWER) {
           router.replace('/admin/booking-lapangan');

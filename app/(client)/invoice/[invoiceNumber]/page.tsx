@@ -328,26 +328,7 @@ export default function InvoiceDetailPage() {
   const bookingInventories = booking?.inventories || [];
   const bookingCoaches = booking?.coaches || [];
   const bookingBallboys = booking?.ballboys || [];
-  const bookingCourtDiscountTotal = booking
-    ? (booking.courtDiscountPrice ??
-      bookingDetails.reduce((sum, detail) => {
-        const normalPrice = detail.price || detail.slot?.price || 0;
-        const discountPrice = detail.discountPrice ?? detail.slot?.discountPrice ?? 0;
-        const effectivePrice = discountPrice > 0 ? discountPrice : normalPrice;
-        return sum + effectivePrice;
-      }, 0))
-    : 0;
-  const bookingAddOnsTotal = booking
-    ? bookingCoaches.reduce((sum, item: any) => sum + (item.price || 0), 0) +
-      bookingBallboys.reduce((sum, item: any) => sum + (item.price || 0), 0) +
-      bookingInventories.reduce(
-        (sum, item: any) => sum + (item.price || 0) * (item.quantity || 0),
-        0
-      )
-    : 0;
-  const subtotalForDisplay = booking
-    ? bookingCourtDiscountTotal + bookingAddOnsTotal
-    : invoice.subtotal;
+  const subtotalForDisplay = invoice.subtotal + (invoice.promoDiscountAmount || 0);
   const canPay =
     ['PENDING', 'HOLD'].includes(invoice.status) &&
     (!invoice.dueDate || dayjs().isBefore(dayjs(invoice.dueDate)));

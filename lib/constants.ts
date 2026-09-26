@@ -30,6 +30,7 @@ export const STATUS_BADGE_VARIANT: Record<number, BadgeVariant['variant']> = {
 
 export const ROLE = {
   ADMIN: 'ADMIN',
+  ADMIN_COACHING: 'ADMIN_COACHING',
   ADMIN_VIEWER: 'ADMIN_VIEWER',
   USER: 'USER',
   BALLBOY: 'BALLBOY',
@@ -67,6 +68,7 @@ export const GENDER_BADGE_VARIANT: Record<Gender, BadgeVariant['variant']> = {
 
 export const ROLE_MAP: Record<Role, string> = {
   [ROLE.ADMIN]: 'Super Admin',
+  [ROLE.ADMIN_COACHING]: 'Admin Coaching',
   [ROLE.ADMIN_VIEWER]: 'Manager',
   [ROLE.USER]: 'User',
   [ROLE.BALLBOY]: 'Ballboy',
@@ -76,6 +78,7 @@ export const ROLE_MAP: Record<Role, string> = {
 
 export const ROLE_OPTIONS: Array<{ label: string; value: Role }> = [
   { label: 'Super Admin', value: ROLE.ADMIN },
+  { label: 'Admin Coaching', value: ROLE.ADMIN_COACHING },
   { label: 'Manager', value: ROLE.ADMIN_VIEWER },
   { label: 'User', value: ROLE.USER },
   { label: 'Ballboy', value: ROLE.BALLBOY },
@@ -85,6 +88,7 @@ export const ROLE_OPTIONS: Array<{ label: string; value: Role }> = [
 
 export const ROLE_BADGE_VARIANT: Record<Role, BadgeVariant['variant']> = {
   [ROLE.ADMIN]: 'lightSuccess',
+  [ROLE.ADMIN_COACHING]: 'lightWarning',
   [ROLE.ADMIN_VIEWER]: 'lightNeutral',
   [ROLE.USER]: 'lightNeutral',
   [ROLE.BALLBOY]: 'lightInfo',

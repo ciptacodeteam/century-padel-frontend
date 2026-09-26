@@ -3,7 +3,9 @@ import {
   createCustomerApi,
   sendResetPasswordLinkApi,
   unbanCustomerApi,
-  updateCustomerApi
+  updateCustomerApi,
+  grantCustomerComplimentaryCreditApi,
+  revokeCustomerComplimentaryCreditApi
 } from '@/api/admin/customer';
 import type { MutationFuncProps } from '@/types';
 import { mutationOptions } from '@tanstack/react-query';
@@ -84,6 +86,38 @@ export const adminSendCustomerResetPasswordMutationOptions = ({
     onError: (error) => {
       console.error('Error:', error);
       toast.error(error.msg || 'Gagal mengirim link reset kata sandi. Silakan coba lagi.');
+      onError?.(error);
+    }
+  });
+
+export const adminGrantComplimentaryCreditMutationOptions = ({
+  onSuccess,
+  onError
+}: MutationFuncProps = {}) =>
+  mutationOptions({
+    mutationFn: grantCustomerComplimentaryCreditApi,
+    onSuccess: (data) => {
+      toast.success('Saldo jam gratis berhasil ditambahkan.');
+      onSuccess?.(data);
+    },
+    onError: (error) => {
+      toast.error(error.msg || 'Gagal menambahkan saldo jam gratis.');
+      onError?.(error);
+    }
+  });
+
+export const adminRevokeComplimentaryCreditMutationOptions = ({
+  onSuccess,
+  onError
+}: MutationFuncProps = {}) =>
+  mutationOptions({
+    mutationFn: revokeCustomerComplimentaryCreditApi,
+    onSuccess: (data) => {
+      toast.success('Sisa saldo berhasil dicabut.');
+      onSuccess?.(data);
+    },
+    onError: (error) => {
+      toast.error(error.msg || 'Gagal mencabut saldo.');
       onError?.(error);
     }
   });

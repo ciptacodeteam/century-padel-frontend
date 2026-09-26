@@ -14,10 +14,7 @@ import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
 import { calculatePaymentFee } from '@/lib/payment-fee';
 import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
-import {
-  getMembershipBookingKey,
-  MEMBERSHIP_TYPE_LABEL
-} from '@/lib/membership-eligibility';
+import { getMembershipBookingKey, MEMBERSHIP_TYPE_LABEL } from '@/lib/membership-eligibility';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
@@ -449,7 +446,8 @@ export default function CheckoutPage() {
 
     if (useMembership && !membershipDiscount.canUseMembership) {
       toast.error(
-        membershipDiscount.ineligibilityReason || 'Membership tidak dapat digunakan untuk jadwal ini.'
+        membershipDiscount.ineligibilityReason ||
+          'Membership tidak dapat digunakan untuk jadwal ini.'
       );
       return;
     }
@@ -624,23 +622,23 @@ export default function CheckoutPage() {
       ? 'Login untuk Checkout'
       : !requiresPayment
         ? 'Konfirmasi Booking'
-      : isCollectingCard
-        ? 'Memproses Kartu...'
-        : checkoutMutation.isPending
-          ? 'Memproses...'
-          : selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData
-            ? 'Pilih Kartu'
-            : selectedPaymentMethod
-              ? 'Bayar Sekarang'
-              : 'Pilih Metode';
+        : isCollectingCard
+          ? 'Memproses Kartu...'
+          : checkoutMutation.isPending
+            ? 'Memproses...'
+            : selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData
+              ? 'Pilih Kartu'
+              : selectedPaymentMethod
+                ? 'Bayar Sekarang'
+                : 'Pilih Metode';
 
   const isCheckoutDisabled =
-    ((requiresPayment &&
+    (requiresPayment &&
       (!selectedPaymentMethod ||
-      checkoutMutation.isPending ||
-      isCollectingCard ||
-      (selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData) ||
-      (selectedPaymentMethod?.channel === 'CARDS' && !!selectedCard && !selectedCardCvv))) &&
+        checkoutMutation.isPending ||
+        isCollectingCard ||
+        (selectedPaymentMethod?.channel === 'CARDS' && !selectedCard && !newCardData) ||
+        (selectedPaymentMethod?.channel === 'CARDS' && !!selectedCard && !selectedCardCvv)) &&
       isAuthenticated) ||
     checkoutMutation.isPending ||
     (useMembership && !membershipDiscount.canUseMembership) ||
@@ -731,7 +729,7 @@ export default function CheckoutPage() {
                             </div>
                             <div className="flex items-center gap-3">
                               {isFree ? (
-                                <span className="text-sm font-semibold text-primary">
+                                <span className="text-primary text-sm font-semibold">
                                   {formatCurrency(effectivePrice)}
                                 </span>
                               ) : showDiscount ? (
@@ -870,45 +868,45 @@ export default function CheckoutPage() {
 
             {requiresPayment ? (
               <div className="border-muted rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {selectedPaymentMethod ? (
-                    resolveMediaUrl(selectedPaymentMethod.logo) ? (
-                      <Image
-                        src={resolveMediaUrl(selectedPaymentMethod.logo)!}
-                        alt={selectedPaymentMethod.name}
-                        width={48}
-                        height={48}
-                        className="h-12 w-12 rounded-md object-contain"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-md text-sm font-semibold">
-                        {selectedPaymentMethod.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )
-                  ) : null}
-                  <div>
-                    <p className="text-sm font-medium">
-                      {selectedPaymentMethod
-                        ? selectedPaymentMethod.name
-                        : 'Pilih Metode Pembayaran'}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {selectedPaymentMethod
-                        ? 'Konfirmasi Instan'
-                        : 'Klik untuk memilih metode pembayaran'}
-                    </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {selectedPaymentMethod ? (
+                      resolveMediaUrl(selectedPaymentMethod.logo) ? (
+                        <Image
+                          src={resolveMediaUrl(selectedPaymentMethod.logo)!}
+                          alt={selectedPaymentMethod.name}
+                          width={48}
+                          height={48}
+                          className="h-12 w-12 rounded-md object-contain"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-md text-sm font-semibold">
+                          {selectedPaymentMethod.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )
+                    ) : null}
+                    <div>
+                      <p className="text-sm font-medium">
+                        {selectedPaymentMethod
+                          ? selectedPaymentMethod.name
+                          : 'Pilih Metode Pembayaran'}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {selectedPaymentMethod
+                          ? 'Konfirmasi Instan'
+                          : 'Klik untuk memilih metode pembayaran'}
+                      </p>
+                    </div>
                   </div>
+                  <Button
+                    variant="link"
+                    className="text-primary px-0"
+                    onClick={handlePaymentMethodClick}
+                  >
+                    Ganti Metode
+                  </Button>
                 </div>
-                <Button
-                  variant="link"
-                  className="text-primary px-0"
-                  onClick={handlePaymentMethodClick}
-                >
-                  Ganti Metode
-                </Button>
-              </div>
               </div>
             ) : (
               <div className="border-primary/20 bg-primary/5 rounded-lg border p-4 lg:rounded-none lg:p-6">
@@ -960,42 +958,42 @@ export default function CheckoutPage() {
 
             {requiresPayment && (
               <div className="border-muted space-y-3 rounded-lg border bg-white p-4 lg:rounded-none lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">Kode Promo</p>
-                  <p className="text-muted-foreground text-xs">
-                    Masukkan kode promo untuk mendapatkan diskon
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Kode Promo</p>
+                    <p className="text-muted-foreground text-xs">
+                      Masukkan kode promo untuk mendapatkan diskon
+                    </p>
+                  </div>
+                  {appliedPromoCode && promoDiscountAmount > 0 && (
+                    <span className="text-xs font-semibold text-green-600">Terpasang</span>
+                  )}
                 </div>
-                {appliedPromoCode && promoDiscountAmount > 0 && (
-                  <span className="text-xs font-semibold text-green-600">Terpasang</span>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    placeholder="Contoh: HEMAT10"
+                    value={promoCode}
+                    onChange={(event) => handlePromoInputChange(event.target.value)}
+                    className="border-muted/70 focus:border-primary focus:ring-primary/20 h-11 flex-1 rounded-md border bg-white px-3 text-sm transition outline-none"
+                  />
+                  <Button
+                    type="button"
+                    className="h-11 px-5"
+                    onClick={handleApplyPromo}
+                    disabled={
+                      !selectedPaymentMethod || applyPromoMutation.isPending || !promoCode.trim()
+                    }
+                  >
+                    {applyPromoMutation.isPending ? 'Memproses...' : 'Gunakan'}
+                  </Button>
+                </div>
+                {promoError && <p className="text-xs text-red-600">{promoError}</p>}
+                {!promoError && appliedPromoCode && promoDiscountAmount > 0 && (
+                  <p className="text-xs text-green-600">
+                    Diskon {formatCurrency(promoDiscountAmount)} diterapkan
+                  </p>
                 )}
-              </div>
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  placeholder="Contoh: HEMAT10"
-                  value={promoCode}
-                  onChange={(event) => handlePromoInputChange(event.target.value)}
-                  className="border-muted/70 focus:border-primary focus:ring-primary/20 h-11 flex-1 rounded-md border bg-white px-3 text-sm transition outline-none"
-                />
-                <Button
-                  type="button"
-                  className="h-11 px-5"
-                  onClick={handleApplyPromo}
-                  disabled={
-                    !selectedPaymentMethod || applyPromoMutation.isPending || !promoCode.trim()
-                  }
-                >
-                  {applyPromoMutation.isPending ? 'Memproses...' : 'Gunakan'}
-                </Button>
-              </div>
-              {promoError && <p className="text-xs text-red-600">{promoError}</p>}
-              {!promoError && appliedPromoCode && promoDiscountAmount > 0 && (
-                <p className="text-xs text-green-600">
-                  Diskon {formatCurrency(promoDiscountAmount)} diterapkan
-                </p>
-              )}
               </div>
             )}
 
@@ -1029,9 +1027,11 @@ export default function CheckoutPage() {
                   <div>
                     <span className="text-muted-foreground">Tipe:</span>{' '}
                     <span className="font-medium">
-                      {MEMBERSHIP_TYPE_LABEL[
-                        membershipDiscount.activeMembership.membership.type ?? 'ALL_HOUR'
-                      ]}
+                      {
+                        MEMBERSHIP_TYPE_LABEL[
+                          membershipDiscount.activeMembership.membership.type ?? 'ALL_HOUR'
+                        ]
+                      }
                     </span>
                   </div>
                   <div>

@@ -53,6 +53,36 @@ export async function getCustomerMembershipApi(id: string) {
   return data;
 }
 
+export async function getCustomerComplimentaryCreditsApi(id: string) {
+  const { data } = await adminApi.get(`/customers/${id}/complimentary-credits`);
+  return data;
+}
+
+export async function grantCustomerComplimentaryCreditApi(payload: {
+  customerId: string;
+  minutes: number;
+  purpose: 'TRIAL' | 'COACHING' | 'GOODWILL' | 'OTHER';
+  expiresAt?: string | null;
+  note?: string;
+}) {
+  const { customerId, ...data } = payload;
+  const response = await adminApi.post(`/customers/${customerId}/complimentary-credits`, data);
+  return response.data;
+}
+
+export async function revokeCustomerComplimentaryCreditApi(payload: {
+  customerId: string;
+  creditId: string;
+  note?: string;
+}) {
+  const { customerId, creditId, ...data } = payload;
+  const response = await adminApi.post(
+    `/customers/${customerId}/complimentary-credits/${creditId}/revoke`,
+    data
+  );
+  return response.data;
+}
+
 export async function searchCustomersApi(params: { q: string; limit?: string }) {
   const url = '/customers/search';
   const mergedUrl = mergedQueryParamUrl(url, params);
