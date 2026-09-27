@@ -4,19 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { useConfirm } from '@/components/ui/confirm-dialog';
 import MainHeader from '@/components/headers/MainHeader';
 import MainBottomNavigation from '@/components/footers/MainBottomNavigation';
+import { cancelBookingApi } from '@/api/booking';
 import { invoicesQueryOptions } from '@/queries/invoice';
 import { profileQueryOptions } from '@/queries/profile';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { Calendar, ChevronRight, CreditCard, FileText, Receipt, Crown, Clock } from 'lucide-react';
+import {
+  Calendar,
+  ChevronRight,
+  CreditCard,
+  FileText,
+  Receipt,
+  Crown,
+  Clock,
+  XCircle
+} from 'lucide-react';
 import type { Invoice } from '@/types/model';
 import useAuthModalStore from '@/stores/useAuthModalStore';
+import { toast } from 'sonner';
 
 dayjs.locale('id');
 dayjs.extend(relativeTime);
@@ -57,6 +69,8 @@ const getStatusLabel = (status: string) => {
 
 export default function InvoiceHistoryPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const { data: user, isPending: isUserPending } = useQuery(profileQueryOptions);
   const isAuthenticated = !!user?.id;
   const openAuthModal = useAuthModalStore((state) => state.open);
@@ -76,6 +90,38 @@ export default function InvoiceHistoryPage() {
     if (typeFilter === 'BOOKING') return invoices.filter((inv) => !!inv.booking);
     return invoices;
   }, [invoices, typeFilter]);
+
+  const cancelTransactionMutation = useMutation({
+    mutationFn: (invoiceNumber: string) =>
+      cancelBookingApi(invoiceNumber, {
+        reason: 'Dibatalkan oleh pengguna sebelum pembayaran'
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoice'] }),
+        queryClient.invalidateQueries({ queryKey: ['courts', 'slots'] }),
+        queryClient.invalidateQueries({ queryKey: ['memberships', 'my'] })
+      ]);
+      toast.success('Transaksi dibatalkan. Slot sudah tersedia kembali.');
+    },
+    onError: (error: any) => {
+      toast.error(error?.msg || 'Transaksi gagal dibatalkan. Silakan coba lagi.');
+    }
+  });
+
+  const handleCancelTransaction = async (invoiceNumber: string) => {
+    const confirmed = await confirm({
+      title: 'Batalkan transaksi?',
+      description:
+        'Slot yang sedang ditahan akan dilepas dan invoice ini tidak dapat dibayar lagi. Jam membership yang digunakan akan dikembalikan.',
+      confirmText: 'Ya, batalkan',
+      cancelText: 'Kembali',
+      destructive: true
+    });
+    if (!confirmed) return;
+    cancelTransactionMutation.mutate(invoiceNumber);
+  };
 
   // Show login if not authenticated
   if (!isUserPending && !isAuthenticated) {
@@ -217,7 +263,13 @@ export default function InvoiceHistoryPage() {
                 const booking = invoice.booking;
                 const membershipUser = invoice.membershipUser;
                 const membership = membershipUser?.membership;
-                const isPending = invoice.status === 'PENDING' || booking?.status === 'HOLD';
+                const isPending = invoice.status === 'PENDING';
+                const isPaymentPeriodActive =
+                  !invoice.dueDate || dayjs(invoice.dueDate).isAfter(dayjs());
+                const canCancelTransaction = !!booking && isPending && isPaymentPeriodActive;
+                const isCancelling =
+                  cancelTransactionMutation.isPending &&
+                  cancelTransactionMutation.variables === invoice.number;
 
                 return (
                   <Card
@@ -369,17 +421,36 @@ export default function InvoiceHistoryPage() {
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                           {isPending ? (
-                            <Button
-                              size="sm"
-                              className="w-full sm:w-auto"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/invoice/${invoice.number}`);
-                              }}
-                            >
-                              <CreditCard className="mr-2 h-4 w-4" />
-                              Bayar
-                            </Button>
+                            <>
+                              {canCancelTransaction && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 sm:w-auto"
+                                  loading={isCancelling}
+                                  disabled={cancelTransactionMutation.isPending}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void handleCancelTransaction(invoice.number);
+                                  }}
+                                >
+                                  <XCircle className="mr-1 h-4 w-4" />
+                                  Batalkan Transaksi
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                className="w-full sm:w-auto"
+                                disabled={isCancelling}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/invoice/${invoice.number}`);
+                                }}
+                              >
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Bayar
+                              </Button>
+                            </>
                           ) : (
                             <Button
                               variant="ghost"

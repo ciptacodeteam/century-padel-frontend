@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock } from 'lucide-react';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { expireInvoiceApi } from '@/api/booking';
 
 dayjs.extend(duration);
@@ -23,6 +23,7 @@ export default function PaymentCountdown({
   invoiceId,
   onExpired
 }: PaymentCountdownProps) {
+  const queryClient = useQueryClient();
   const [timeLeft, setTimeLeft] = useState<{
     hours: number;
     minutes: number;
@@ -32,11 +33,23 @@ export default function PaymentCountdown({
 
   const { mutate: expireInvoice } = useMutation({
     mutationFn: () => expireInvoiceApi(invoiceId),
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['courts', 'slots'] }),
+        queryClient.invalidateQueries({ queryKey: ['memberships', 'my'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      ]);
       onExpired?.();
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       console.error('Failed to expire invoice:', error);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['courts', 'slots'] }),
+        queryClient.invalidateQueries({ queryKey: ['memberships', 'my'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      ]);
       // Still call onExpired to refresh the UI even if API fails
       onExpired?.();
     }

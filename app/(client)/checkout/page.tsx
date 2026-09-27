@@ -5,19 +5,21 @@ import BottomNavigationWrapper from '@/components/ui/BottomNavigationWrapper';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useConfirm } from '@/components/ui/confirm-dialog';
 import SavedCardSelector from '@/components/forms/payment/SavedCardSelector';
 import CreditCardForm, { type CreditCardFormData } from '@/components/forms/payment/CreditCardForm';
 import { useBookingStoreHydration } from '@/hooks/useBookingStoreHydration';
-import {
-  calculateMembershipDiscount,
-  useMembershipDiscount
-} from '@/hooks/useMembershipDiscount';
+import { calculateMembershipDiscount, useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
 import { calculatePaymentFee } from '@/lib/payment-fee';
 import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
-import { getMembershipBookingKey, MEMBERSHIP_TYPE_LABEL } from '@/lib/membership-eligibility';
+import {
+  getMembershipBookingKey,
+  isMembershipEligibleForStartTime,
+  MEMBERSHIP_TYPE_LABEL
+} from '@/lib/membership-eligibility';
 import { cn, resolveMediaUrl } from '@/lib/utils';
 import { applyPromoMutationOptions, checkoutMutationOptions } from '@/mutations/booking';
 import { paymentMethodsQueryOptions } from '@/queries/paymentMethod';
@@ -54,6 +56,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const isCompletingCheckout = useRef(false);
+  const hasInitializedMembershipSelection = useRef(false);
   // const pathname = usePathname();
   // const searchParams = useSearchParams();
   const isBookingStoreHydrated = useBookingStoreHydration();
@@ -75,6 +78,13 @@ export default function CheckoutPage() {
   const openAuthModal = useAuthModalStore((state) => state.open);
   const setRedirectPath = useAuthRedirectStore((state) => state.setRedirectPath);
   const [useMembership, setUseMembership] = useState(false);
+  const [selectedMembershipByBookingKey, setSelectedMembershipByBookingKey] = useState<
+    Record<string, string>
+  >({});
+  const selectedMembershipBookingKeys = useMemo(
+    () => Object.keys(selectedMembershipByBookingKey),
+    [selectedMembershipByBookingKey]
+  );
 
   // Calculate membership discount for court bookings (only if user is authenticated)
   const membershipDiscount = useMembershipDiscount(
@@ -82,8 +92,42 @@ export default function CheckoutPage() {
     bookingItems,
     undefined,
     true, // isUser = true, so it fetches membership for current logged-in user
-    useMembership
+    useMembership,
+    useMembership ? selectedMembershipBookingKeys : undefined,
+    useMembership ? selectedMembershipByBookingKey : undefined
   );
+
+  useEffect(() => {
+    if (
+      hasInitializedMembershipSelection.current ||
+      !membershipDiscount.activeMembership ||
+      bookingItems.length === 0
+    ) {
+      return;
+    }
+
+    const preview = calculateMembershipDiscount(
+      {
+        activeMembership: membershipDiscount.activeMembership,
+        activeMemberships: membershipDiscount.activeMemberships
+      },
+      bookingItems,
+      true
+    );
+
+    hasInitializedMembershipSelection.current = true;
+    if (preview.coveredBookingKeys.length > 0) {
+      setSelectedMembershipByBookingKey(
+        Object.fromEntries(
+          preview.membershipAllocations.map((allocation) => [
+            allocation.bookingKey,
+            allocation.membershipUserId
+          ])
+        )
+      );
+      setUseMembership(true);
+    }
+  }, [bookingItems, membershipDiscount.activeMembership, membershipDiscount.activeMemberships]);
 
   // Apply membership discount to court total
   const courtSubtotal = membershipDiscount.originalTotal;
@@ -250,7 +294,14 @@ export default function CheckoutPage() {
     setAppliedPromoCode(null);
     setPromoDiscountAmount(0);
     setPromoError(null);
-  }, [useMembership]);
+  }, [selectedMembershipBookingKeys, useMembership]);
+
+  useEffect(() => {
+    const currentBookingKeys = new Set(bookingItems.map(getMembershipBookingKey));
+    setSelectedMembershipByBookingKey((current) =>
+      Object.fromEntries(Object.entries(current).filter(([key]) => currentBookingKeys.has(key)))
+    );
+  }, [bookingItems]);
 
   const subtotalAfterPromo = Math.max(0, grandTotal - promoDiscountAmount);
   const requiresPayment = subtotalAfterPromo > 0;
@@ -387,6 +438,68 @@ export default function CheckoutPage() {
     setAddCardModalOpen(false);
   };
 
+  const handleUseMembershipChange = (checked: boolean) => {
+    if (!checked) {
+      setUseMembership(false);
+      setSelectedMembershipByBookingKey({});
+      return;
+    }
+
+    const preview = calculateMembershipDiscount(
+      {
+        activeMembership: membershipDiscount.activeMembership,
+        activeMemberships: membershipDiscount.activeMemberships
+      },
+      bookingItems,
+      true
+    );
+    if (preview.coveredBookingKeys.length === 0) {
+      setUseMembership(false);
+      toast.info('Tidak ada slot yang dapat menggunakan membership ini.');
+      return;
+    }
+
+    setUseMembership(true);
+    setSelectedMembershipByBookingKey(
+      Object.fromEntries(
+        preview.membershipAllocations.map((allocation) => [
+          allocation.bookingKey,
+          allocation.membershipUserId
+        ])
+      )
+    );
+  };
+
+  const setSlotPaymentSource = (bookingKey: string, membershipUserId: string | null) => {
+    const nextSelection = { ...selectedMembershipByBookingKey };
+    if (membershipUserId) {
+      nextSelection[bookingKey] = membershipUserId;
+    } else {
+      delete nextSelection[bookingKey];
+    }
+    const nextKeys = Object.keys(nextSelection);
+
+    if (membershipUserId) {
+      const preview = calculateMembershipDiscount(
+        {
+          activeMembership: membershipDiscount.activeMembership,
+          activeMemberships: membershipDiscount.activeMemberships
+        },
+        bookingItems,
+        true,
+        nextKeys,
+        nextSelection
+      );
+      if (preview.coveredBookingKeys.length !== nextKeys.length) {
+        toast.error('Slot ini tidak memenuhi aturan atau melebihi sisa jam membership.');
+        return;
+      }
+    }
+
+    setSelectedMembershipByBookingKey(nextSelection);
+    setUseMembership(nextKeys.length > 0);
+  };
+
   const handleApplyPromo = () => {
     if (!selectedPaymentMethod) return;
 
@@ -402,6 +515,16 @@ export default function CheckoutPage() {
       {
         promoCode: trimmedCode,
         useMembership,
+        membershipAllocations: useMembership
+          ? bookingItems
+              .filter((item) =>
+                selectedMembershipBookingKeys.includes(getMembershipBookingKey(item))
+              )
+              .map((item) => ({
+                slotId: item.slotId,
+                membershipUserId: selectedMembershipByBookingKey[getMembershipBookingKey(item)]
+              }))
+          : undefined,
         courtSlots: selections.courtSlots,
         coachSlots: selections.coachSlots,
         ballboySlots: selections.ballboySlots,
@@ -460,7 +583,9 @@ export default function CheckoutPage() {
         const latestDiscount = calculateMembershipDiscount(
           latestMembership,
           bookingItems,
-          true
+          true,
+          selectedMembershipBookingKeys,
+          selectedMembershipByBookingKey
         );
 
         if (!latestDiscount.canUseMembership) {
@@ -475,7 +600,13 @@ export default function CheckoutPage() {
           latestDiscount.discountAmount !== membershipDiscount.discountAmount ||
           latestDiscount.hoursToDeduct !== membershipDiscount.hoursToDeduct ||
           latestDiscount.coveredBookingKeys.join('|') !==
-            membershipDiscount.coveredBookingKeys.join('|');
+            membershipDiscount.coveredBookingKeys.join('|') ||
+          latestDiscount.membershipAllocations
+            .map((allocation) => `${allocation.bookingKey}:${allocation.membershipUserId}`)
+            .join('|') !==
+            membershipDiscount.membershipAllocations
+              .map((allocation) => `${allocation.bookingKey}:${allocation.membershipUserId}`)
+              .join('|');
 
         if (membershipDataChanged) {
           toast.info('Data membership diperbarui. Silakan periksa total lalu bayar kembali.');
@@ -509,6 +640,15 @@ export default function CheckoutPage() {
     const { courtSlots, coachSlots, ballboySlots, inventories } = buildCheckoutSelections();
 
     const payload: any = { useMembership };
+
+    if (useMembership) {
+      payload.membershipAllocations = bookingItems
+        .filter((item) => selectedMembershipBookingKeys.includes(getMembershipBookingKey(item)))
+        .map((item) => ({
+          slotId: item.slotId,
+          membershipUserId: selectedMembershipByBookingKey[getMembershipBookingKey(item)]
+        }));
+    }
 
     if (requiresPayment && selectedPaymentMethod) {
       payload.paymentMethodId = selectedPaymentMethod.id;
@@ -679,6 +819,15 @@ export default function CheckoutPage() {
     (useMembership && !membershipDiscount.canUseMembership) ||
     false;
 
+  const membershipUsageSummary = membershipDiscount.activeMemberships
+    .map((membership) => ({
+      membership,
+      hours: membershipDiscount.membershipAllocations
+        .filter((allocation) => allocation.membershipUserId === membership.id)
+        .reduce((total, allocation) => total + allocation.hours, 0)
+    }))
+    .filter(({ hours }) => hours > 0);
+
   return (
     <div className="min-h-screen pb-16 lg:bg-neutral-50 lg:pb-0">
       <MainHeader
@@ -730,11 +879,19 @@ export default function CheckoutPage() {
                         return a.timeSlot.localeCompare(b.timeSlot);
                       })
                       .map((slot, slotIndex) => {
+                        const bookingKey = getMembershipBookingKey(slot);
                         const isFree =
                           membershipDiscount.canUseMembership &&
-                          membershipDiscount.coveredBookingKeys.includes(
-                            getMembershipBookingKey(slot)
+                          membershipDiscount.coveredBookingKeys.includes(bookingKey);
+                        const startTime = slot.timeSlot.split(' - ')[0]?.trim() ?? '';
+                        const eligibleMembershipsForSlot =
+                          membershipDiscount.activeMemberships.filter((membership) =>
+                            isMembershipEligibleForStartTime(membership.membership.type, startTime)
                           );
+                        const selectedMembershipUserId = selectedMembershipByBookingKey[bookingKey];
+                        const selectedMembership = membershipDiscount.activeMemberships.find(
+                          (membership) => membership.id === selectedMembershipUserId
+                        );
                         const showDiscount = !isFree && hasSlotDiscount(slot);
                         const normalPrice = slot.normalPrice ?? slot.price;
                         const effectivePrice =
@@ -746,54 +903,115 @@ export default function CheckoutPage() {
                           <div
                             key={`${slot.courtId}-${slot.timeSlot}-${slotIndex}`}
                             className={cn(
-                              'border-muted/60 flex items-center justify-between rounded-md border px-4 py-3 lg:rounded-none',
+                              'border-muted/60 flex flex-col gap-3 rounded-xl border p-4 transition-colors lg:rounded-none',
                               isFree ? 'border-green-200 bg-green-50' : 'bg-muted/50'
                             )}
                           >
-                            <div className="flex flex-col">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <span className="text-foreground block text-base font-semibold">
                                   {slot.timeSlot} - {slot.endTime}
                                 </span>
-                                {isFree && (
-                                  <span className="text-xs font-medium text-green-600">
-                                    (Ditanggung Membership)
+                              </div>
+                              <div className="flex shrink-0 items-start gap-2">
+                                {isFree ? (
+                                  <span className="flex flex-col items-end text-sm">
+                                    <span className="text-muted-foreground text-xs line-through">
+                                      {formatCurrency(effectivePrice)}
+                                    </span>
+                                    <span className="font-semibold text-green-700">Rp0</span>
+                                  </span>
+                                ) : showDiscount ? (
+                                  <span className="flex flex-col items-end text-sm">
+                                    <span className="text-muted-foreground text-xs line-through">
+                                      {formatCurrency(normalPrice)}
+                                    </span>
+                                    <span className="text-primary font-semibold">
+                                      {formatCurrency(effectivePrice)}
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <span className="text-sm font-semibold">
+                                    {formatCurrency(slot.price)}
                                   </span>
                                 )}
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="text-muted-foreground hover:text-destructive -mt-2 -mr-2 h-10 w-10"
+                                  aria-label="Hapus slot"
+                                  onClick={() =>
+                                    removeBookingItem(slot.courtId, slot.timeSlot, slot.date)
+                                  }
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              {isFree ? (
-                                <span className="text-primary text-sm font-semibold">
-                                  {formatCurrency(effectivePrice)}
-                                </span>
-                              ) : showDiscount ? (
-                                <span className="flex flex-col items-end text-sm">
-                                  <span className="text-muted-foreground text-xs line-through">
-                                    {formatCurrency(normalPrice)}
+
+                            {useMembership && (
+                              <div className="space-y-2.5">
+                                <p className="text-muted-foreground text-xs font-medium">
+                                  Pilih sumber pembayaran
+                                </p>
+                                <ToggleGroup
+                                  type="single"
+                                  value={selectedMembershipUserId ?? 'normal'}
+                                  onValueChange={(value) => {
+                                    if (!value) return;
+                                    setSlotPaymentSource(
+                                      bookingKey,
+                                      value === 'normal' ? null : value
+                                    );
+                                  }}
+                                  variant="outline"
+                                  className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2"
+                                  spacing={2}
+                                  aria-label={`Sumber pembayaran ${slot.timeSlot} - ${slot.endTime}`}
+                                >
+                                  <ToggleGroupItem
+                                    value="normal"
+                                    className="data-[state=on]:border-primary data-[state=on]:bg-primary/10 data-[state=on]:text-primary min-h-14 w-full justify-start rounded-lg border px-4 py-2 text-left"
+                                  >
+                                    <span className="flex flex-col items-start">
+                                      <span className="text-sm font-semibold">Harga normal</span>
+                                      <span className="text-muted-foreground text-[11px] font-normal">
+                                        Bayar dengan metode pembayaran
+                                      </span>
+                                    </span>
+                                  </ToggleGroupItem>
+                                  {eligibleMembershipsForSlot.map((membership) => (
+                                    <ToggleGroupItem
+                                      key={membership.id}
+                                      value={membership.id}
+                                      className="min-h-14 w-full justify-start rounded-lg border px-4 py-2 text-left data-[state=on]:border-green-500 data-[state=on]:bg-green-100 data-[state=on]:text-green-700"
+                                    >
+                                      <span className="flex min-w-0 flex-col items-start">
+                                        <span className="max-w-full truncate text-sm font-semibold">
+                                          {membership.membership.name}
+                                        </span>
+                                        <span className="text-muted-foreground text-[11px] font-normal data-[state=on]:text-green-700">
+                                          {MEMBERSHIP_TYPE_LABEL[membership.membership.type]} · sisa{' '}
+                                          {membership.remainingSessions} jam
+                                        </span>
+                                      </span>
+                                    </ToggleGroupItem>
+                                  ))}
+                                </ToggleGroup>
+                                {isFree && (
+                                  <span className="inline-flex w-fit rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                                    {selectedMembership?.membership.name ?? 'Membership'} digunakan
+                                    untuk slot ini
                                   </span>
-                                  <span className="text-primary font-semibold">
-                                    {formatCurrency(effectivePrice)}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="text-sm font-semibold">
-                                  {formatCurrency(slot.price)}
-                                </span>
-                              )}
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="text-muted-foreground hover:text-destructive h-8 w-8"
-                                aria-label="Hapus slot"
-                                onClick={() =>
-                                  removeBookingItem(slot.courtId, slot.timeSlot, slot.date)
-                                }
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
+                                )}
+                                {eligibleMembershipsForSlot.length === 0 && (
+                                  <p className="text-muted-foreground text-[11px]">
+                                    Tidak ada membership yang berlaku pada jam ini.
+                                  </p>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}
@@ -1033,50 +1251,46 @@ export default function CheckoutPage() {
             )}
 
             {/* Membership Information */}
-            {isAuthenticated && membershipDiscount.activeMembership && (
+            {isAuthenticated && membershipDiscount.activeMemberships.length > 0 && (
               <div className="border-muted bg-primary/5 rounded-lg border p-4 lg:rounded-none">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-primary text-sm font-medium">Membership Aktif</span>
-                  <span
-                    className={
-                      membershipDiscount.activeMembership.isExpired ||
-                      membershipDiscount.activeMembership.isSuspended
-                        ? 'text-xs text-red-600'
-                        : 'text-xs text-green-600'
-                    }
-                  >
-                    {membershipDiscount.activeMembership.isExpired
-                      ? 'Expired'
-                      : membershipDiscount.activeMembership.isSuspended
-                        ? 'Suspended'
-                        : 'Active'}
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-semibold text-green-700">
+                    {membershipDiscount.activeMemberships.length} paket
                   </span>
                 </div>
-                <div className="space-y-1 text-xs">
-                  <div>
-                    <span className="text-muted-foreground">Paket:</span>{' '}
-                    <span className="font-medium">
-                      {membershipDiscount.activeMembership.membership.name}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Tipe:</span>{' '}
-                    <span className="font-medium">
-                      {
-                        MEMBERSHIP_TYPE_LABEL[
-                          membershipDiscount.activeMembership.membership.type ?? 'ALL_HOUR'
-                        ]
-                      }
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Sisa Jam:</span>{' '}
-                    <span className="font-medium">{membershipDiscount.remainingSessions} jam</span>
-                  </div>
-                  {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
-                    <div className="text-primary mt-1 font-medium">
-                      {membershipDiscount.hoursToDeduct} jam akan digunakan dari membership
+                <div className="space-y-2 text-xs">
+                  {membershipDiscount.activeMemberships.map((membership) => (
+                    <div
+                      key={membership.id}
+                      className="flex items-center justify-between gap-3 rounded-md bg-white/80 px-3 py-2.5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold">{membership.membership.name}</p>
+                        <p className="text-muted-foreground">
+                          {MEMBERSHIP_TYPE_LABEL[membership.membership.type]}
+                        </p>
+                      </div>
+                      <span className="shrink-0 font-semibold">
+                        {membership.remainingSessions} jam tersisa
+                      </span>
                     </div>
+                  ))}
+                  {membershipDiscount.canUseMembership && bookingItems.length > 0 && (
+                    <div className="mt-2 space-y-1 rounded-md bg-green-50 px-3 py-2 text-green-700">
+                      <p className="font-semibold">Pemakaian untuk booking ini</p>
+                      {membershipUsageSummary.map(({ membership, hours }) => (
+                        <div key={membership.id} className="flex justify-between gap-3">
+                          <span>{membership.membership.name}</span>
+                          <span className="font-semibold">{hours} jam</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {!useMembership && bookingItems.length > 0 && (
+                    <p className="text-muted-foreground mt-2 rounded-md bg-white/70 px-3 py-2">
+                      Membership tidak digunakan untuk booking ini.
+                    </p>
                   )}
                   {membershipDiscount.ineligibilityReason && (
                     <p className="mt-1 text-xs font-medium text-red-600">
@@ -1085,10 +1299,12 @@ export default function CheckoutPage() {
                   )}
                   <div className="mt-3 flex items-center justify-between border-t pt-3">
                     <div>
-                      <p className="font-medium">Gunakan membership</p>
-                      <p className="text-muted-foreground">Matikan untuk membayar harga normal.</p>
+                      <p className="font-medium">Pakai membership untuk booking ini</p>
+                      <p className="text-muted-foreground">
+                        Aktif jika minimal satu slot memakai membership.
+                      </p>
                     </div>
-                    <Switch checked={useMembership} onCheckedChange={setUseMembership} />
+                    <Switch checked={useMembership} onCheckedChange={handleUseMembershipChange} />
                   </div>
                 </div>
               </div>

@@ -44,24 +44,27 @@ export const myMembershipsQueryOptions = queryOptions({
     }
 });
 
+export type UserActiveMembership = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  remainingSessions: number;
+  remainingDuration: number;
+  isExpired: boolean;
+  isSuspended: boolean;
+  membership: {
+    id: string;
+    name: string;
+    price: number;
+    type: MembershipType;
+    scheduleVisibilityMonths: number;
+  };
+};
+
 export type UserMembershipResponse = {
   scheduleVisibilityMonths: number;
-  activeMembership: {
-    id: string;
-    startDate: string;
-    endDate: string;
-    remainingSessions: number;
-    remainingDuration: number;
-    isExpired: boolean;
-    isSuspended: boolean;
-    membership: {
-      id: string;
-      name: string;
-      price: number;
-      type: MembershipType;
-      scheduleVisibilityMonths: number;
-    };
-  } | null;
+  activeMembership: UserActiveMembership | null;
+  activeMemberships?: UserActiveMembership[];
 };
 
 export const myMembershipQueryOptions = (userId?: string | null) =>
