@@ -341,7 +341,7 @@ export function DataTable<TData extends RowData>({
   const hasSelection = selectedRowIds.length > 0;
 
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex flex-wrap items-center gap-3 py-4">
         {enableGlobalSearch && (
           <Input
@@ -419,7 +419,7 @@ export function DataTable<TData extends RowData>({
 
       {children && <div className="py-2">{children}</div>}
 
-      <div className="mt-1 rounded-md border">
+      <div className="mt-1 min-w-0 rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

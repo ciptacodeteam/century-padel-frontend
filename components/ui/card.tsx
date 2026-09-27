@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card"
       className={cn(
-        'bg-card text-card-foreground flex flex-col gap-3 border py-4',
+        'bg-card text-card-foreground flex min-w-0 flex-col gap-3 border py-4',
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ function CardAction({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 function CardContent({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div data-slot="card-content" className={cn('px-4', className)} {...props} />;
+  return <div data-slot="card-content" className={cn('min-w-0 px-4', className)} {...props} />;
 }
 
 function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
