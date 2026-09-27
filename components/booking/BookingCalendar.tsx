@@ -159,9 +159,13 @@ const BookingCalendar = ({
     return slotsByCourtAndTime[courtId]?.[time];
   };
 
+  const isSlotOnHold = (courtId: string, time: string) => {
+    return getSlot(courtId, time)?.bookingStatus === 'HOLD';
+  };
+
   const isSlotBooked = (courtId: string, time: string) => {
     const slot = getSlot(courtId, time);
-    return slot ? !slot.isAvailable : false;
+    return slot ? !slot.isAvailable && slot.bookingStatus !== 'HOLD' : false;
   };
 
   const isSlotAvailable = (courtId: string, time: string) => {
@@ -279,6 +283,7 @@ const BookingCalendar = ({
                   {/* Scrollable slot cells */}
                   {courts.map((court) => {
                     const slot = getSlot(court.id, time);
+                    const onHold = isSlotOnHold(court.id, time);
                     const booked = isSlotBooked(court.id, time);
                     const selected = isSlotSelected(court.id, time);
                     const available = isSlotAvailable(court.id, time);
@@ -294,7 +299,9 @@ const BookingCalendar = ({
                           disabled={!available || booked}
                           className={cn(
                             `flex h-14 w-full flex-col items-center justify-center rounded border px-2 py-1 text-sm font-semibold transition-all`,
-                            !available || booked
+                            onHold
+                              ? 'cursor-not-allowed border-amber-200 bg-amber-50 text-amber-700'
+                              : !available || booked
                               ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
                               : selected
                                 ? 'border-primary bg-primary border-2 text-white shadow-lg'
@@ -320,9 +327,10 @@ const BookingCalendar = ({
                               )}
                             </span>
                           )}
+                          {onHold && <span className="text-xs">On Hold</span>}
                           {booked && <span className="text-xs">Terisi</span>}
                           {!slot && <span className="text-xs text-gray-400">-</span>}
-                          {slot && !available && !booked && (
+                          {slot && !available && !booked && !onHold && (
                             <span className="text-xs text-gray-400">Tidak tersedia</span>
                           )}
                         </button>

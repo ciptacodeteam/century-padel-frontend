@@ -1017,9 +1017,15 @@ export default function BookingLapangan() {
                         const isSelected = selectedTimeSlots.includes(timeSlot);
                         // When a court is selected, check if that specific court has the slot booked
                         // When no court is selected, only mark as booked if ALL courts have it booked
-                        const isBooked = selectedCourt
-                          ? isTimeSlotBooked(timeSlot, selectedCourt)
-                          : courts.every((court) => isTimeSlotBooked(timeSlot, court.id));
+                        const isOnHold = selectedCourt
+                          ? slotsByCourtAndTime.get(selectedCourt)?.get(timeSlot)?.bookingStatus ===
+                            'HOLD'
+                          : false;
+                        const isBooked = (
+                          selectedCourt
+                            ? isTimeSlotBooked(timeSlot, selectedCourt)
+                            : courts.every((court) => isTimeSlotBooked(timeSlot, court.id))
+                        ) && !isOnHold;
                         const availableCourts = courts.filter(
                           (court) => !isTimeSlotBooked(timeSlot, court.id)
                         );
@@ -1028,18 +1034,25 @@ export default function BookingLapangan() {
                         return (
                           <div key={timeSlot} className="relative">
                             <Badge
-                              variant={isSelected ? 'default' : isBooked ? 'secondary' : 'outline'}
+                              variant={
+                                isSelected ? 'default' : isBooked || isOnHold ? 'secondary' : 'outline'
+                              }
                               className={cn(
                                 'w-full justify-center px-2 py-1 text-xs font-medium transition-all lg:w-auto lg:px-4 lg:py-2 lg:text-sm',
                                 isSelected && 'bg-primary text-primary-foreground shadow-lg',
+                                isOnHold &&
+                                  'cursor-not-allowed bg-amber-50 text-amber-700 opacity-100',
                                 isBooked &&
                                   'cursor-not-allowed bg-gray-100 text-gray-500 opacity-50',
                                 !isBooked &&
+                                  !isOnHold &&
                                   !isSelected &&
                                   'hover:bg-primary/10 hover:border-primary cursor-pointer hover:scale-105'
                               )}
                               onClick={() => {
-                                if (isBooked) {
+                                if (isOnHold) {
+                                  toast.info('Slot ini sedang on hold');
+                                } else if (isBooked) {
                                   toast.info('Slot ini sudah dipesan');
                                 } else {
                                   handleTimeSlotSelect(timeSlot);
@@ -1053,6 +1066,12 @@ export default function BookingLapangan() {
                                 </span>
                               )}
                             </Badge>
+                            {isOnHold && (
+                              <div
+                                className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-amber-500"
+                                title="On Hold"
+                              ></div>
+                            )}
                             {isBooked && (
                               <div
                                 className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"
@@ -1091,6 +1110,12 @@ export default function BookingLapangan() {
                     <div className="flex items-center gap-1">
                       <div className="bg-primary h-3 w-3 rounded"></div>
                       <span>Selected</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="relative h-3 w-3 rounded bg-amber-100">
+                        <div className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-amber-500"></div>
+                      </div>
+                      <span>On Hold</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="relative h-3 w-3 rounded bg-gray-300">

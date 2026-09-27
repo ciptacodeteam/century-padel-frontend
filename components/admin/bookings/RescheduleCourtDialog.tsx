@@ -347,7 +347,9 @@ export function RescheduleCourtDialog({
                                     {formatCurrency(slot.price || 0)}
                                   </span>
                                   {!slot.isAvailable && (
-                                    <span className="mt-0.5 text-[9px] text-amber-600">Booked</span>
+                                    <span className="mt-0.5 text-[9px] text-amber-600">
+                                      {slot.bookingStatus === 'HOLD' ? 'On Hold' : 'Booked'}
+                                    </span>
                                   )}
                                   {isPast && (
                                     <span className="mt-0.5 text-[9px] text-amber-600">Past</span>

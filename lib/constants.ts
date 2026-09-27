@@ -148,13 +148,13 @@ export const BookingStatus = {
 export type BookingStatus = keyof typeof BookingStatus;
 
 export const BOOKING_STATUS_MAP: Record<BookingStatus, string> = {
-  [BookingStatus.HOLD]: 'Hold',
+  [BookingStatus.HOLD]: 'On Hold',
   [BookingStatus.CONFIRMED]: 'Confirmed',
   [BookingStatus.CANCELLED]: 'Cancelled'
 };
 
 export const BOOKING_STATUS_OPTIONS: Array<{ label: string; value: BookingStatus }> = [
-  { label: 'Hold', value: BookingStatus.HOLD },
+  { label: 'On Hold', value: BookingStatus.HOLD },
   { label: 'Confirmed', value: BookingStatus.CONFIRMED },
   { label: 'Cancelled', value: BookingStatus.CANCELLED }
 ];

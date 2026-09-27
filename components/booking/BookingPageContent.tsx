@@ -378,7 +378,8 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                   {courts.map((court) => {
                     const slot = slotMap.get(`${court.id}-${time}`);
                     const hasSlot = !!slot;
-                    const isAvailable = !!slot?.isAvailable;
+                    const isOnHold = slot?.bookingStatus === 'HOLD';
+                    const isAvailable = !!slot?.isAvailable && !isOnHold;
                     const selected = selectedCells.some(
                       (cell) => cell.courtId === court.id && cell.time === time
                     );
@@ -394,6 +395,8 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                             'flex h-14 w-full flex-col items-start justify-between rounded px-2 py-1 text-base font-semibold transition-all',
                             !hasSlot
                               ? 'text-muted-foreground cursor-not-allowed bg-gray-100'
+                              : isOnHold
+                                ? 'cursor-not-allowed bg-amber-50 text-amber-700'
                               : !isAvailable
                                 ? 'cursor-not-allowed bg-gray-200 text-gray-400'
                                 : selected
@@ -439,7 +442,9 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                             });
                           }}
                         >
-                          {hasSlot ? (
+                          {isOnHold ? (
+                            <span className="text-xs font-medium">On Hold</span>
+                          ) : hasSlot ? (
                             <>
                               {discountPrice > 0 && discountPrice < normalPrice ? (
                                 <span className="flex flex-col items-start text-xs">

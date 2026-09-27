@@ -442,6 +442,7 @@ export type Slot = {
   discountPrice?: number | null;
   normalPrice?: number | null;
   isAvailable: boolean;
+  bookingStatus?: 'HOLD' | null;
   createdAt: Date;
   updatedAt: Date;
 
