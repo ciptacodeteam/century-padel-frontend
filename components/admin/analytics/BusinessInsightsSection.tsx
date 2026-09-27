@@ -140,8 +140,9 @@ export default function BusinessInsightsSection({
             color: 'text-teal-500',
             bgColor: 'bg-teal-500/10',
             stats: [
-              { label: 'Total Revenue', value: formatCurrency(revenue.total || 0) },
-              { label: 'Transactions', value: revenue.transactions || 0 },
+              { label: 'Pendapatan Bersih', value: formatCurrency(revenue.net || 0) },
+              { label: 'Pendapatan Kotor', value: formatCurrency(revenue.gross || 0) },
+              { label: 'Refund', value: formatCurrency(revenue.refunds || 0) },
               {
                 label: 'Avg/Transaction',
                 value: formatCurrency(Number(revenue.avgPerTransaction) || 0)

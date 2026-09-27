@@ -33,8 +33,8 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
     return (
       <Card>
         <CardHeader>
-          <CardTitle>No Data Available</CardTitle>
-          <CardDescription>Unable to load income analytics</CardDescription>
+          <CardTitle>Data Tidak Tersedia</CardTitle>
+          <CardDescription>Analitik pendapatan tidak dapat dimuat</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -86,7 +86,7 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
       {/* Summary Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Total Income Summary</CardTitle>
+          <CardTitle>Ringkasan Pendapatan</CardTitle>
           <CardDescription>
             {data.dateRange?.startDate && data.dateRange?.endDate && (
               <>
@@ -99,11 +99,11 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
         <CardContent>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Total Income</span>
+              <span className="text-sm font-medium">Pendapatan Bersih</span>
               <span className="text-2xl font-bold">{formatCurrency(summary.totalIncome || 0)}</span>
             </div>
             <div className="text-muted-foreground flex items-center justify-between text-sm">
-              <span>Total Transactions</span>
+              <span>Total Transaksi</span>
               <span className="font-medium">{summary.totalTransactions || 0}</span>
             </div>
 
@@ -111,17 +111,21 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
 
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span>Total Gross Amount</span>
+                <span>Pendapatan Kotor</span>
                 <span className="font-medium">{formatCurrency(summary.totalGrossAmount || 0)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>Total Processing Fees</span>
+                <span>Biaya Proses</span>
                 <span className="font-medium">
                   {formatCurrency(summary.totalProcessingFees || 0)}
                 </span>
               </div>
+              <div className="flex items-center justify-between text-red-600">
+                <span>Total Refund</span>
+                <span className="font-medium">-{formatCurrency(summary.totalRefunds || 0)}</span>
+              </div>
               <div className="flex items-center justify-between">
-                <span>Total Net Amount</span>
+                <span>Pendapatan Bersih</span>
                 <span className="font-medium">{formatCurrency(summary.totalNetAmount || 0)}</span>
               </div>
             </div>

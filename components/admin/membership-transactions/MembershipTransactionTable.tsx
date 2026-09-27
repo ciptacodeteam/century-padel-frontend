@@ -34,6 +34,7 @@ import {
   useApproveMembershipTransactionMutation,
   useRejectMembershipTransactionMutation,
   useSuspendMembershipTransactionMutation,
+  useTerminateAndRefundMembershipMutation,
   useUnsuspendMembershipTransactionMutation,
   useExportMembershipTransactionsExcel
 } from '@/mutations/admin/membershipTransaction';
@@ -46,6 +47,9 @@ const formatDate = (date: Date | string): string => {
   return dayjs(date).format('DD MMM YYYY');
 };
 
+const getMembershipRefund = (transaction: MembershipUser) =>
+  transaction.invoice?.payment?.meta?.refund;
+
 const MembershipTransactionTable = () => {
   const [source, setSource] = useState<string>('');
   const { data: transactions = [], isLoading } = useQuery(
@@ -56,12 +60,13 @@ const MembershipTransactionTable = () => {
   const { confirmAndMutate: rejectTx } = useRejectMembershipTransactionMutation();
   const { mutate: suspendTx } = useSuspendMembershipTransactionMutation();
   const { confirmAndMutate: unsuspendTx } = useUnsuspendMembershipTransactionMutation();
+  const { mutate: terminateAndRefundTx } = useTerminateAndRefundMembershipMutation();
   const { mutate: exportExcel, isPending: exporting } = useExportMembershipTransactionsExcel();
 
   const columns = useMemo(
     () => [
       columnHelper.accessor('user', {
-        header: 'Customer',
+        header: 'Pelanggan',
         cell: (info) => {
           const user = info.getValue();
           if (!user) return '-';
@@ -122,7 +127,7 @@ const MembershipTransactionTable = () => {
         size: 180
       }),
       columnHelper.accessor('startDate', {
-        header: 'Period',
+        header: 'Periode',
         cell: (info) => {
           const row = info.row.original;
           // Calculate end date based on start date + remaining duration
@@ -135,7 +140,7 @@ const MembershipTransactionTable = () => {
             <div className="text-sm">
               <p className="font-medium">{formatDate(row.startDate)}</p>
               <p className="text-muted-foreground text-xs">
-                to {calculatedEndDate ? formatDate(calculatedEndDate) : '-'}
+                s.d. {calculatedEndDate ? formatDate(calculatedEndDate) : '-'}
               </p>
             </div>
           );
@@ -143,7 +148,7 @@ const MembershipTransactionTable = () => {
         size: 160
       }),
       columnHelper.accessor('remainingSessions', {
-        header: 'Remaining',
+        header: 'Sisa',
         cell: (info) => {
           const row = info.row.original;
           return (
@@ -160,22 +165,28 @@ const MembershipTransactionTable = () => {
         header: 'Status',
         cell: (info) => {
           const row = info.row.original;
+          const refund = getMembershipRefund(row);
 
           return (
             <div className="flex flex-col gap-1">
-              {row.isSuspended && (
+              {refund && (
                 <Badge variant="destructive" className="w-fit">
-                  Suspended
+                  Dihentikan & Refund
                 </Badge>
               )}
-              {row.isExpired && (
+              {!refund && row.isSuspended && (
+                <Badge variant="destructive" className="w-fit">
+                  Ditangguhkan
+                </Badge>
+              )}
+              {!refund && row.isExpired && (
                 <Badge variant="secondary" className="w-fit">
-                  Expired
+                  Kedaluwarsa
                 </Badge>
               )}
               {!row.isSuspended && !row.isExpired && (
                 <Badge variant="success" className="w-fit">
-                  Active
+                  Aktif
                 </Badge>
               )}
               {row.invoice?.status && (
@@ -190,7 +201,7 @@ const MembershipTransactionTable = () => {
       }),
       columnHelper.display({
         id: 'amount',
-        header: 'Amount',
+        header: 'Nominal',
         cell: (info) => {
           const invoice = info.row.original.invoice;
           if (!invoice) return '-';
@@ -198,6 +209,11 @@ const MembershipTransactionTable = () => {
           return (
             <div className="text-right">
               <p className="font-semibold">{formatCurrency(invoice.total)}</p>
+              {getMembershipRefund(info.row.original) && (
+                <p className="text-destructive text-xs">
+                  Refund {formatCurrency(getMembershipRefund(info.row.original)?.amount || 0)}
+                </p>
+              )}
               {invoice.payment && (
                 <p className="text-muted-foreground text-xs">via {invoice.payment.method.name}</p>
               )}
@@ -208,10 +224,13 @@ const MembershipTransactionTable = () => {
       }),
       columnHelper.display({
         id: 'actions',
-        header: 'Actions',
+        header: 'Tindakan',
         cell: (info) => {
           const transaction = info.row.original;
           const canApproveOrReject = transaction.invoice?.status === 'PENDING';
+          const refund = getMembershipRefund(transaction);
+          const canTerminateAndRefund =
+            transaction.invoice?.status === 'PAID' && !transaction.isExpired && !refund;
 
           return (
             <div className="flex gap-2">
@@ -223,7 +242,7 @@ const MembershipTransactionTable = () => {
                 </DialogTrigger>
                 <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Membership Transaction Detail</DialogTitle>
+                    <DialogTitle>Detail Transaksi Membership</DialogTitle>
                   </DialogHeader>
                   <MembershipTransactionDetail transaction={transaction} />
                 </DialogContent>
@@ -236,29 +255,37 @@ const MembershipTransactionTable = () => {
                     variant="secondarySuccess"
                     onClick={() => approveTx(transaction.id)}
                   >
-                    Approve
+                    Setujui
                   </Button>
                   <Button
                     size="sm"
                     variant="secondaryDanger"
                     onClick={() => rejectTx({ id: transaction.id })}
                   >
-                    Reject
+                    Tolak
                   </Button>
                 </div>
               )}
 
               {!transaction.isSuspended && !transaction.isExpired && (
                 <SuspendMembershipDialog
+                  dialogId={transaction.id}
                   onSubmit={(reason, endDate) =>
                     suspendTx({ id: transaction.id, reason, endDate: endDate ?? undefined })
                   }
                 />
               )}
-              {transaction.isSuspended && (
+              {transaction.isSuspended && !transaction.isExpired && (
                 <Button size="sm" variant="outline" onClick={() => unsuspendTx(transaction.id)}>
-                  Unsuspend
+                  Aktifkan Kembali
                 </Button>
+              )}
+              {canTerminateAndRefund && (
+                <TerminateAndRefundMembershipDialog
+                  dialogId={transaction.id}
+                  invoiceTotal={transaction.invoice?.total || 0}
+                  onSubmit={(payload) => terminateAndRefundTx({ id: transaction.id, ...payload })}
+                />
               )}
             </div>
           );
@@ -266,7 +293,7 @@ const MembershipTransactionTable = () => {
         size: 100
       })
     ],
-    [approveTx, rejectTx, suspendTx, unsuspendTx]
+    [approveTx, rejectTx, suspendTx, terminateAndRefundTx, unsuspendTx]
   );
 
   return (
@@ -299,7 +326,7 @@ const MembershipTransactionTable = () => {
               disabled={exporting}
             >
               <IconFileExcel />
-              {exporting ? 'Exporting…' : 'Export Excel'}
+              {exporting ? 'Mengekspor…' : 'Ekspor Excel'}
             </Button>
           </div>
         }
@@ -310,19 +337,20 @@ const MembershipTransactionTable = () => {
 
 const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipUser }) => {
   const { user, membership, invoice } = transaction;
+  const refund = getMembershipRefund(transaction);
 
   return (
     <div className="space-y-6">
       {/* Customer Info */}
       <div className="border-b pb-4">
-        <h3 className="mb-3 font-semibold">Customer Information</h3>
+        <h3 className="mb-3 font-semibold">Informasi Pelanggan</h3>
         <div className="grid gap-3 md:grid-cols-2">
           <div>
-            <p className="text-muted-foreground text-sm">Name</p>
+            <p className="text-muted-foreground text-sm">Nama</p>
             <p className="font-medium">{user?.name || '-'}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Phone</p>
+            <p className="text-muted-foreground text-sm">Nomor Telepon</p>
             <p className="font-medium">{user?.phone || '-'}</p>
           </div>
           <div>
@@ -334,10 +362,10 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
 
       {/* Membership Info */}
       <div className="border-b pb-4">
-        <h3 className="mb-3 font-semibold">Membership Details</h3>
+        <h3 className="mb-3 font-semibold">Detail Membership</h3>
         <div className="space-y-3">
           <div>
-            <p className="text-muted-foreground text-sm">Package</p>
+            <p className="text-muted-foreground text-sm">Paket</p>
             <p className="text-lg font-semibold">{membership?.name || '-'}</p>
             <p className="text-muted-foreground text-sm">{membership?.description || ''}</p>
           </div>
@@ -347,17 +375,17 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
               <p className="font-medium">{membership?.sessions || 0} jam</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Duration</p>
-              <p className="font-medium">{membership?.duration || 0} days</p>
+              <p className="text-muted-foreground text-sm">Durasi</p>
+              <p className="font-medium">{membership?.duration || 0} hari</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Price</p>
+              <p className="text-muted-foreground text-sm">Harga</p>
               <p className="font-medium">{formatCurrency(membership?.price || 0)}</p>
             </div>
           </div>
           {membership?.benefits && membership.benefits.length > 0 && (
             <div>
-              <p className="text-muted-foreground mb-2 text-sm">Benefits</p>
+              <p className="text-muted-foreground mb-2 text-sm">Benefit</p>
               <ul className="list-inside list-disc space-y-1">
                 {membership.benefits.map((benefit) => (
                   <li key={benefit.id} className="text-sm">
@@ -372,14 +400,14 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
 
       {/* Transaction Info */}
       <div className="border-b pb-4">
-        <h3 className="mb-3 font-semibold">Transaction Information</h3>
+        <h3 className="mb-3 font-semibold">Informasi Transaksi</h3>
         <div className="grid gap-3 md:grid-cols-2">
           <div>
-            <p className="text-muted-foreground text-sm">Start Date</p>
+            <p className="text-muted-foreground text-sm">Tanggal Mulai</p>
             <p className="font-medium">{formatDate(transaction.startDate)}</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">End Date</p>
+            <p className="text-muted-foreground text-sm">Tanggal Berakhir</p>
             <p className="font-medium">
               {transaction.remainingDuration > 0
                 ? formatDate(
@@ -393,28 +421,33 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
             <p className="font-medium">{transaction.remainingSessions} jam</p>
           </div>
           <div>
-            <p className="text-muted-foreground text-sm">Remaining Duration</p>
-            <p className="font-medium">{transaction.remainingDuration} days</p>
+            <p className="text-muted-foreground text-sm">Sisa Durasi</p>
+            <p className="font-medium">{transaction.remainingDuration} hari</p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Status</p>
             <div className="flex gap-2">
-              {transaction.isSuspended && <Badge variant="destructive">Suspended</Badge>}
-              {transaction.isExpired && <Badge variant="secondary">Expired</Badge>}
+              {refund && <Badge variant="destructive">Dihentikan & Refund</Badge>}
+              {!refund && transaction.isSuspended && (
+                <Badge variant="destructive">Ditangguhkan</Badge>
+              )}
+              {!refund && transaction.isExpired && <Badge variant="secondary">Kedaluwarsa</Badge>}
               {!transaction.isSuspended && !transaction.isExpired && (
-                <Badge variant="success">Active</Badge>
+                <Badge variant="success">Aktif</Badge>
               )}
             </div>
           </div>
           {transaction.isSuspended && (
             <>
               <div>
-                <p className="text-muted-foreground text-sm">Suspension Reason</p>
+                <p className="text-muted-foreground text-sm">
+                  {refund ? 'Alasan Penghentian' : 'Alasan Penangguhan'}
+                </p>
                 <p className="font-medium">{transaction.suspensionReason || '-'}</p>
               </div>
               {transaction.suspensionEndDate && (
                 <div>
-                  <p className="text-muted-foreground text-sm">Suspension End Date</p>
+                  <p className="text-muted-foreground text-sm">Batas Penangguhan</p>
                   <p className="font-medium">{formatDate(transaction.suspensionEndDate)}</p>
                 </div>
               )}
@@ -426,33 +459,33 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
       {/* Invoice Info */}
       {invoice && (
         <div>
-          <h3 className="mb-3 font-semibold">Payment Information</h3>
+          <h3 className="mb-3 font-semibold">Informasi Pembayaran</h3>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <p className="text-muted-foreground text-sm">Invoice Number</p>
+              <p className="text-muted-foreground text-sm">Nomor Invoice</p>
               <div className="flex items-center gap-2">
                 <p className="font-mono font-medium">{invoice.number}</p>
                 <CopyButton variant={'ghost'} size={'sm'} value={invoice.number} />
               </div>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Payment Status</p>
+              <p className="text-muted-foreground text-sm">Status Pembayaran</p>
               <Badge variant={PAYMENT_STATUS_BADGE_VARIANT[invoice.status]}>
                 {PAYMENT_STATUS_MAP[invoice.status]}
               </Badge>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Total Amount</p>
+              <p className="text-muted-foreground text-sm">Total Pembayaran</p>
               <p className="text-lg font-semibold">{formatCurrency(invoice.total)}</p>
             </div>
             {invoice.payment && (
               <>
                 <div>
-                  <p className="text-muted-foreground text-sm">Payment Method</p>
+                  <p className="text-muted-foreground text-sm">Metode Pembayaran</p>
                   <p className="font-medium">{invoice.payment.method.name}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Payment Fee</p>
+                  <p className="text-muted-foreground text-sm">Biaya Pembayaran</p>
                   <p className="font-medium">{formatCurrency(invoice.payment.fee)}</p>
                 </div>
                 <div>
@@ -465,6 +498,18 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
               <div>
                 <p className="text-muted-foreground text-sm">Paid At</p>
                 <p className="font-medium">{formatDate(invoice.paidAt)}</p>
+              </div>
+            )}
+            {refund && (
+              <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-3 md:col-span-2">
+                <p className="text-destructive font-medium">
+                  Refund {refund.type === 'FULL' ? 'Penuh' : 'Sebagian'} ·{' '}
+                  {formatCurrency(refund.amount)}
+                </p>
+                <p className="text-muted-foreground mt-1 text-sm">Alasan: {refund.reason}</p>
+                <p className="text-muted-foreground text-xs">
+                  Dicatat {dayjs(refund.refundedAt).format('DD MMM YYYY HH:mm')}
+                </p>
               </div>
             )}
             {invoice.expiresAt && invoice.status === 'PENDING' && (
@@ -480,8 +525,8 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
       {/* Timestamps */}
       <div className="border-t pt-4">
         <div className="text-muted-foreground grid gap-2 text-xs">
-          <p>Created: {dayjs(transaction.createdAt).format('DD MMM YYYY HH:mm')}</p>
-          <p>Updated: {dayjs(transaction.updatedAt).format('DD MMM YYYY HH:mm')}</p>
+          <p>Dibuat: {dayjs(transaction.createdAt).format('DD MMM YYYY HH:mm')}</p>
+          <p>Diperbarui: {dayjs(transaction.updatedAt).format('DD MMM YYYY HH:mm')}</p>
         </div>
       </div>
     </div>
@@ -491,8 +536,10 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
 export default MembershipTransactionTable;
 
 const SuspendMembershipDialog = ({
+  dialogId,
   onSubmit
 }: {
+  dialogId: string;
   onSubmit: (reason: string, endDate?: string | null) => void;
 }) => {
   const [open, setOpen] = React.useState(false);
@@ -508,35 +555,151 @@ const SuspendMembershipDialog = ({
   }
 
   return (
-    <ManagedDialog id={`suspend-membership`} open={open} onOpenChange={setOpen}>
+    <ManagedDialog id={`suspend-membership-${dialogId}`} open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
-          Suspend
+          Tangguhkan Sementara
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Suspend Membership</DialogTitle>
+          <DialogTitle>Tangguhkan Membership Sementara</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <p className="mb-1 text-sm">Reason</p>
+            <p className="mb-1 text-sm font-medium">Alasan penangguhan</p>
             <Input
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Enter reason"
+              placeholder="Contoh: permintaan pelanggan"
             />
           </div>
           <div>
-            <p className="mb-1 text-sm">End Date (optional)</p>
+            <p className="mb-1 text-sm font-medium">Batas penangguhan (opsional)</p>
             <DatePickerInput value={endDate ?? null} onValueChange={setEndDate} />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
+              Batal
             </Button>
             <Button onClick={handleSubmit} disabled={!reason.trim()}>
-              Confirm Suspend
+              Tangguhkan Sementara
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </ManagedDialog>
+  );
+};
+
+const TerminateAndRefundMembershipDialog = ({
+  dialogId,
+  invoiceTotal,
+  onSubmit
+}: {
+  dialogId: string;
+  invoiceTotal: number;
+  onSubmit: (payload: {
+    reason: string;
+    refundType: 'FULL' | 'PARTIAL';
+    refundAmount?: number;
+  }) => void;
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const [reason, setReason] = React.useState('');
+  const [refundType, setRefundType] = React.useState<'FULL' | 'PARTIAL'>('FULL');
+  const [refundAmount, setRefundAmount] = React.useState('');
+
+  const partialAmount = Number(refundAmount);
+  const isValid =
+    reason.trim().length >= 3 &&
+    (refundType === 'FULL' ||
+      (Number.isInteger(partialAmount) && partialAmount > 0 && partialAmount <= invoiceTotal));
+
+  function handleSubmit() {
+    if (!isValid) return;
+    onSubmit({
+      reason: reason.trim(),
+      refundType,
+      refundAmount: refundType === 'PARTIAL' ? partialAmount : undefined
+    });
+    setOpen(false);
+    setReason('');
+    setRefundType('FULL');
+    setRefundAmount('');
+  }
+
+  return (
+    <ManagedDialog
+      id={`terminate-refund-membership-${dialogId}`}
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <DialogTrigger asChild>
+        <Button size="sm" variant="secondaryDanger">
+          Hentikan & Refund
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Hentikan Membership & Refund</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="border-destructive/30 bg-destructive/5 rounded-lg border p-3 text-sm">
+            <p className="font-medium">Tindakan ini bersifat permanen.</p>
+            <p className="text-muted-foreground mt-1">
+              Membership tidak dapat diaktifkan kembali. Pastikan dana sudah dikembalikan kepada
+              pelanggan karena sistem akan mencatat refund sebagai selesai.
+            </p>
+          </div>
+          <div>
+            <p className="mb-1 text-sm font-medium">Jenis refund</p>
+            <Select
+              value={refundType}
+              onValueChange={(value) => setRefundType(value as 'FULL' | 'PARTIAL')}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FULL">Refund penuh ({formatCurrency(invoiceTotal)})</SelectItem>
+                <SelectItem value="PARTIAL">Refund sebagian</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {refundType === 'PARTIAL' && (
+            <div>
+              <p className="mb-1 text-sm font-medium">Nominal refund</p>
+              <Input
+                type="number"
+                min={1}
+                max={invoiceTotal}
+                step={1}
+                value={refundAmount}
+                onChange={(event) => setRefundAmount(event.target.value)}
+                placeholder={`Maksimal ${formatCurrency(invoiceTotal)}`}
+              />
+              {partialAmount > invoiceTotal && (
+                <p className="text-destructive mt-1 text-xs">
+                  Nominal tidak boleh melebihi total pembayaran.
+                </p>
+              )}
+            </div>
+          )}
+          <div>
+            <p className="mb-1 text-sm font-medium">Alasan penghentian dan refund</p>
+            <Input
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              placeholder="Contoh: refund atas permintaan pelanggan"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Batal
+            </Button>
+            <Button variant="destructive" onClick={handleSubmit} disabled={!isValid}>
+              Hentikan & Catat Refund
             </Button>
           </div>
         </div>

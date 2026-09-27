@@ -62,7 +62,9 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
   // Calculate metrics
   const avgTransactionValue =
     summary.totalTransactions > 0 ? summary.totalAmount / summary.totalTransactions : 0;
-  const netRevenue = (summary.totalAmount || 0) - (summary.totalProcessingFees || 0);
+  const netRevenue =
+    summary.netRevenue ??
+    (summary.totalAmount || 0) - (summary.totalProcessingFees || 0) - (summary.totalRefunds || 0);
   const feePercentage =
     summary.totalAmount > 0 ? ((summary.totalProcessingFees || 0) / summary.totalAmount) * 100 : 0;
 
@@ -75,18 +77,18 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardDescription className="text-sm">Gross Revenue</CardDescription>
+            <CardDescription className="text-sm">Pendapatan Kotor</CardDescription>
             <IconTrendingUp className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(summary.totalAmount || 0)}</div>
-            <p className="text-muted-foreground text-xs">Before processing fees</p>
+            <p className="text-muted-foreground text-xs">Sebelum biaya dan refund</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardDescription className="text-sm">Processing Fees</CardDescription>
+            <CardDescription className="text-sm">Biaya Proses</CardDescription>
             <IconReceiptTax className="text-destructive h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -99,26 +101,27 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardDescription className="text-sm">Net Revenue</CardDescription>
+            <CardDescription className="text-sm">Pendapatan Bersih</CardDescription>
             <IconTrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatCurrency(netRevenue)}</div>
-            <p className="text-muted-foreground text-xs">
-              Avg: {formatCurrency(avgTransactionValue)}
-            </p>
+            <p className="text-muted-foreground text-xs">Setelah biaya dan refund</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardDescription className="text-sm">Transactions</CardDescription>
+            <CardDescription className="text-sm">Refund</CardDescription>
             <IconUsers className="text-primary h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary.totalTransactions || 0}</div>
+            <div className="text-destructive text-2xl font-bold">
+              {formatCurrency(summary.totalRefunds || 0)}
+            </div>
             <p className="text-muted-foreground text-xs">
-              {summary.methodCount || 0} payment method{(summary.methodCount || 0) !== 1 ? 's' : ''}
+              {summary.totalTransactions || 0} transaksi · {formatCurrency(avgTransactionValue)}{' '}
+              rata-rata
             </p>
           </CardContent>
         </Card>
@@ -141,7 +144,8 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
           <div className="space-y-4">
             {sortedMethods.map((method) => {
               const avgPerTransaction = method.count > 0 ? method.total / method.count : 0;
-              const netAmount = (method.total || 0) - (method.processingFee || 0);
+              const netAmount =
+                (method.total || 0) - (method.processingFee || 0) - (method.refunds || 0);
               const methodFeePercentage =
                 method.total > 0 ? ((method.processingFee || 0) / method.total) * 100 : 0;
 
@@ -181,7 +185,7 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
                     <Progress value={method.percentage || 0} className="h-2.5" />
 
                     {/* Metrics Grid */}
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
                       <div className="space-y-1">
                         <p className="text-muted-foreground text-xs">Gross Amount</p>
                         <p className="font-semibold">{formatCurrency(method.total)}</p>
@@ -190,6 +194,12 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
                         <p className="text-muted-foreground text-xs">Fees</p>
                         <p className="text-destructive font-semibold">
                           {formatCurrency(method.processingFee || 0)}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">Refund</p>
+                        <p className="text-destructive font-semibold">
+                          {formatCurrency(method.refunds || 0)}
                         </p>
                       </div>
                       <div className="space-y-1">

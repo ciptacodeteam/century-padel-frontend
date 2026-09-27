@@ -48,3 +48,15 @@ export async function unsuspendAdminMembershipTransactionApi(id: string) {
   const { data } = await adminApi.put(`/membership-transactions/${id}/unsuspend`);
   return data;
 }
+
+export async function terminateAndRefundAdminMembershipTransactionApi(
+  id: string,
+  payload: {
+    reason: string;
+    refundType: 'FULL' | 'PARTIAL';
+    refundAmount?: number;
+  }
+) {
+  const { data } = await adminApi.put(`/membership-transactions/${id}/terminate-refund`, payload);
+  return data;
+}

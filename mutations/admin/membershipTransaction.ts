@@ -2,6 +2,7 @@ import {
   approveAdminMembershipTransactionApi,
   rejectAdminMembershipTransactionApi,
   suspendAdminMembershipTransactionApi,
+  terminateAndRefundAdminMembershipTransactionApi,
   unsuspendAdminMembershipTransactionApi,
   exportAdminMembershipTransactionsExcelApi
 } from '@/api/admin/membershipTransaction';
@@ -16,14 +17,14 @@ export const useApproveMembershipTransactionMutation = () => {
       mutationFn: (id: string) => approveAdminMembershipTransactionApi(id)
     },
     {
-      title: 'Approve transaction?',
-      description: 'This will approve the membership transaction.',
-      confirmText: 'Approve',
+      title: 'Setujui transaksi?',
+      description: 'Transaksi membership akan disetujui.',
+      confirmText: 'Setujui',
       destructive: false,
       toastMessages: {
-        loading: 'Approving…',
-        success: 'Transaction approved',
-        error: 'Failed to approve transaction'
+        loading: 'Menyetujui…',
+        success: 'Transaksi berhasil disetujui',
+        error: 'Gagal menyetujui transaksi'
       },
       invalidate: [['admin', 'membership-transactions']]
     }
@@ -36,14 +37,14 @@ export const useRejectMembershipTransactionMutation = () => {
       mutationFn: ({ id, reason }) => rejectAdminMembershipTransactionApi(id, { reason })
     },
     {
-      title: 'Reject transaction?',
-      description: 'This will reject the membership transaction.',
-      confirmText: 'Reject',
+      title: 'Tolak transaksi?',
+      description: 'Transaksi membership akan ditolak.',
+      confirmText: 'Tolak',
       destructive: true,
       toastMessages: {
-        loading: 'Rejecting…',
-        success: 'Transaction rejected',
-        error: 'Failed to reject transaction'
+        loading: 'Menolak…',
+        success: 'Transaksi berhasil ditolak',
+        error: 'Gagal menolak transaksi'
       },
       invalidate: [['admin', 'membership-transactions']]
     }
@@ -57,9 +58,9 @@ export const useSuspendMembershipTransactionMutation = () => {
       suspendAdminMembershipTransactionApi(vars.id, { reason: vars.reason, endDate: vars.endDate }),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['admin', 'membership-transactions'] });
-      toast.success('Membership suspended');
+      toast.success('Membership berhasil ditangguhkan sementara');
     },
-    onError: () => toast.error('Failed to suspend membership')
+    onError: () => toast.error('Gagal menangguhkan membership')
   });
 };
 
@@ -69,18 +70,43 @@ export const useUnsuspendMembershipTransactionMutation = () => {
       mutationFn: (id: string) => unsuspendAdminMembershipTransactionApi(id)
     },
     {
-      title: 'Unsuspend membership?',
-      description: 'This will reactivate the membership.',
-      confirmText: 'Unsuspend',
+      title: 'Aktifkan kembali membership?',
+      description: 'Membership akan dapat digunakan kembali.',
+      confirmText: 'Aktifkan Kembali',
       destructive: false,
       toastMessages: {
-        loading: 'Unsuspending…',
-        success: 'Membership unsuspended',
-        error: 'Failed to unsuspend membership'
+        loading: 'Mengaktifkan…',
+        success: 'Membership berhasil diaktifkan kembali',
+        error: 'Gagal mengaktifkan membership'
       },
       invalidate: [['admin', 'membership-transactions']]
     }
   );
+};
+
+export const useTerminateAndRefundMembershipMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      id: string;
+      reason: string;
+      refundType: 'FULL' | 'PARTIAL';
+      refundAmount?: number;
+    }) =>
+      terminateAndRefundAdminMembershipTransactionApi(vars.id, {
+        reason: vars.reason,
+        refundType: vars.refundType,
+        refundAmount: vars.refundAmount
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin', 'membership-transactions'] }),
+        qc.invalidateQueries({ queryKey: ['admin', 'analytics'] })
+      ]);
+      toast.success('Membership dihentikan dan refund berhasil dicatat');
+    },
+    onError: () => toast.error('Gagal menghentikan membership dan mencatat refund')
+  });
 };
 
 export const useExportMembershipTransactionsExcel = () => {
@@ -95,8 +121,8 @@ export const useExportMembershipTransactionsExcel = () => {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      toast.success('Export generated');
+      toast.success('File ekspor berhasil dibuat');
     },
-    onError: () => toast.error('Failed to export Excel')
+    onError: () => toast.error('Gagal mengekspor Excel')
   });
 };

@@ -288,6 +288,15 @@ export type MembershipInvoice = {
     amount: number;
     fee: number;
     referenceId: string;
+    meta?: {
+      refund?: {
+        type: 'FULL' | 'PARTIAL';
+        amount: number;
+        reason: string;
+        status: 'COMPLETED';
+        refundedAt: string;
+      };
+    } | null;
     paymentMethodId: string;
     createdAt: Date;
     method: {
@@ -858,6 +867,10 @@ export type BusinessInsightsResponse = {
   };
   revenue?: {
     total: number;
+    gross: number;
+    processingFees: number;
+    refunds: number;
+    net: number;
     transactions: number;
     avgPerTransaction: string;
   };
