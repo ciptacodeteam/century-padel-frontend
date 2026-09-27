@@ -18,6 +18,7 @@ const formSchema = z
   .object({
     firstName: z.string().trim().min(1, 'First name is required').max(50, 'First name is too long'),
     lastName: z.string().trim().min(1, 'Last name is required').max(50, 'Last name is too long'),
+    email: z.string().trim().email('Enter a valid email').max(100, 'Email is too long'),
     phone: z.string().regex(/^8[1-9]\d{7,10}$/, 'Enter a valid Indonesian mobile number'),
     password: z
       .string()
@@ -49,6 +50,7 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
       phone: normalizeIndonesianPhoneInput(phone),
       firstName: '',
       lastName: '',
+      email: '',
       password: '',
       confirmPassword: ''
     }
@@ -87,6 +89,7 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
     setRegisterData({
       firstName: formData.firstName,
       lastName: formData.lastName,
+      email: formData.email.trim().toLowerCase(),
       phone: formatedPhone,
       password: formData.password
     });
@@ -145,6 +148,19 @@ const RegisterForm = ({ onRegisterSuccess, onLoginClick }: Props) => {
               />
             </InputGroup>
             <FieldError>{form.formState.errors.phone?.message}</FieldError>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="email" className="-mb-1">
+              Email
+            </FieldLabel>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              {...form.register('email')}
+              placeholder="e.g. john@email.com"
+            />
+            <FieldError>{form.formState.errors.email?.message}</FieldError>
           </Field>
           <Field>
             <FieldLabel htmlFor="password" className="-mb-1">
