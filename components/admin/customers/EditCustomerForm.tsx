@@ -151,7 +151,7 @@ const EditCustomerForm = ({ customerId }: Props) => {
             <FieldError>{form.formState.errors.name?.message}</FieldError>
           </Field>
           <Field>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <FieldLabel htmlFor="email">Email (Opsional)</FieldLabel>
             <Input
               id="email"
               type="text"
