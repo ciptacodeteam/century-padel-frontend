@@ -141,9 +141,9 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
             total: fallbackSourceTotals[config.key] || 0
           };
           const Icon = config.icon;
-          const percentage = summary.totalIncome
-            ? ((sourceData.total / summary.totalIncome) * 100).toFixed(1)
-            : '0.0';
+          // const percentage = summary.totalIncome
+          //   ? ((sourceData.total / summary.totalIncome) * 100).toFixed(1)
+          //   : '0.0';
 
           return (
             <Card key={config.key}>
@@ -157,7 +157,6 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
                 <div className="text-2xl font-bold">{formatCurrency(sourceData.total)}</div>
                 <p className="text-muted-foreground text-xs">
                   {sourceData.count ? `${sourceData.count} transactions • ` : ''}
-                  {percentage}% of total
                 </p>
               </CardContent>
             </Card>
