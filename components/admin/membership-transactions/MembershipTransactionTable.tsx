@@ -658,7 +658,7 @@ const TerminateAndRefundMembershipDialog = ({
               value={refundType}
               onValueChange={(value) => setRefundType(value as 'FULL' | 'PARTIAL')}
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
