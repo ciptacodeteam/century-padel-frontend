@@ -17,25 +17,33 @@ export default function PaymentSummaryCard({
   processingFee,
   promoDiscountAmount,
   total,
-  method
+  method,
+  receipt = false
 }: {
   subtotal: number;
   processingFee: number;
   promoDiscountAmount?: number;
   total: number;
   method?: Method;
+  receipt?: boolean;
 }) {
   return (
-    <Card className="gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
-      <CardHeader className="border-b border-gray-100 px-5 py-5 sm:px-6">
+    <Card
+      className={
+        receipt
+          ? 'gap-0 rounded-none border-x-0 border-b-0 py-0 shadow-none'
+          : 'gap-0 overflow-hidden rounded-xl py-0 shadow-sm'
+      }
+    >
+      <CardHeader className="border-b border-gray-100 px-5 py-5 sm:px-8 sm:py-6">
         <CardTitle className="flex items-center gap-2.5 text-base sm:text-lg">
           <span className="bg-primary/10 flex size-9 items-center justify-center rounded-lg">
             <Receipt className="text-primary h-4 w-4" />
           </span>
-          <span>Ringkasan Pembayaran</span>
+          <span>{receipt ? 'Rincian Pembayaran' : 'Ringkasan Pembayaran'}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-5 py-5 sm:px-6 sm:py-6">
+      <CardContent className="px-5 py-5 sm:px-8 sm:py-6">
         <div className={method ? 'grid gap-6 md:grid-cols-[1fr_1.25fr] md:gap-10' : ''}>
           {method && (
             <div>
@@ -82,12 +90,14 @@ export default function PaymentSummaryCard({
           </div>
         </div>
 
-        <div className="bg-primary/5 mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-1 rounded-xl px-4 py-4 sm:mt-6 sm:px-5">
-          <p className="text-sm font-medium text-gray-600">Total pembayaran</p>
-          <p className="text-primary text-2xl font-bold tracking-tight sm:text-3xl">
-            {formatCurrency(total)}
-          </p>
-        </div>
+        {!receipt && (
+          <div className="bg-primary/5 mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-1 rounded-xl px-4 py-4 sm:mt-6 sm:px-5">
+            <p className="text-sm font-medium text-gray-600">Total pembayaran</p>
+            <p className="text-primary text-2xl font-bold tracking-tight sm:text-3xl">
+              {formatCurrency(total)}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

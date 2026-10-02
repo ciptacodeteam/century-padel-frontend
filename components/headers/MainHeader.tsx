@@ -32,6 +32,7 @@ type Props = {
   withLogo?: boolean;
   title?: string;
   withBorder?: boolean;
+  withMobileBorder?: boolean;
   withNotificationBadge?: boolean;
   withCartBadge?: boolean;
 };
@@ -48,6 +49,7 @@ const MainHeader = ({
   withLogo = true,
   title,
   withBorder = false,
+  withMobileBorder = false,
   withNotificationBadge,
   withCartBadge
 }: Props) => {
@@ -86,7 +88,11 @@ const MainHeader = ({
   return (
     <>
       <header
-        className={cn('fixed top-0 right-0 left-0 z-40', withBorder && 'border-b', 'bg-white')}
+        className={cn(
+          'fixed top-0 right-0 left-0 z-40 bg-white',
+          withBorder && 'border-b',
+          withMobileBorder && 'border-b lg:border-b-0'
+        )}
       >
         <div className="mx-auto w-11/12 py-2 lg:max-w-7xl">
           <main className="flex min-h-16 items-center gap-4 lg:min-h-12">

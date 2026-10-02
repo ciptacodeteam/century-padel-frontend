@@ -1,13 +1,17 @@
 'use client';
 
+import logo from '@/assets/img/logo.webp';
 import MainHeader from '@/components/headers/MainHeader';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { CopyButton } from '@/components/ui/clipboard-copy';
 import { invoiceQueryOptions } from '@/queries/invoice';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, FileText } from 'lucide-react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 // Local typed view-models for the invoice detail API response
 type ApiUser = {
@@ -171,14 +175,20 @@ type InvoiceDetailApiResponse = {
 
 import AddOnsCard from '@/components/invoice/AddOnsCard';
 import BookingDetailsCard from '@/components/invoice/BookingDetailsCard';
-import CustomerInfoCard from '@/components/invoice/CustomerInfoCard';
-import InvoiceInfoCard from '@/components/invoice/InvoiceInfoCard';
 import MembershipDetailsCard from '@/components/invoice/MembershipDetailsCard';
 import PaymentActionCard from '@/components/invoice/PaymentActionCard';
 import PaymentSummaryCard from '@/components/invoice/PaymentSummaryCard';
-import SuccessMessageCard from '@/components/invoice/SuccessMessageCard';
+import { getStatusColor, getStatusLabel } from '@/components/invoice/status';
 
 dayjs.locale('id');
+
+const currencyFormatter = new Intl.NumberFormat('id-ID', {
+  style: 'currency',
+  currency: 'IDR',
+  minimumFractionDigits: 0
+});
+
+const formatCurrency = (value: number) => currencyFormatter.format(value).replace(/\s/g, '');
 
 export default function InvoiceDetailPage() {
   const params = useParams();
@@ -221,7 +231,12 @@ export default function InvoiceDetailPage() {
   if (isLoading || (isPending && !response)) {
     return (
       <div className="min-h-screen">
-        <MainHeader title="Detail Transaksi" withLogo={false} backHref="/invoice" />
+        <MainHeader
+          title="Detail Transaksi"
+          withLogo={false}
+          backHref="/invoice"
+          withMobileBorder
+        />
         <div className="container mx-auto mt-28 pb-10">
           <div className="mx-auto w-11/12 max-w-7xl">
             <div className="animate-pulse space-y-4">
@@ -302,7 +317,12 @@ export default function InvoiceDetailPage() {
   if (isError || !invoice) {
     return (
       <div className="min-h-screen">
-        <MainHeader />
+        <MainHeader
+          title="Detail Transaksi"
+          withLogo={false}
+          backHref="/invoice"
+          withMobileBorder
+        />
         <div className="container mx-auto mt-28 px-4 pb-24 lg:mt-28">
           <div className="mx-auto max-w-4xl text-center">
             <Card>
@@ -332,74 +352,129 @@ export default function InvoiceDetailPage() {
   const canPay =
     ['PENDING', 'HOLD'].includes(invoice.status) &&
     (!invoice.dueDate || dayjs().isBefore(dayjs(invoice.dueDate)));
+  const isPaid = invoice.status === 'PAID';
+  const transactionDate = invoice.paidAt || invoice.dueDate || invoice.issuedAt;
+  const transactionDateLabel = invoice.paidAt
+    ? 'Dibayar pada'
+    : invoice.dueDate
+      ? 'Batas bayar'
+      : 'Diterbitkan pada';
 
   return (
-    <div className="min-h-screen">
-      <MainHeader title="Detail Transaksi" withLogo={false} backHref="/invoice" />
+    <div className="min-h-screen bg-[#f7f7f8]">
+      <MainHeader title="Detail Transaksi" withLogo={false} backHref="/invoice" withMobileBorder />
 
-      <main className="mx-auto w-full max-w-5xl px-4 pt-24 pb-10 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32 lg:pb-16">
-        <div className="hidden lg:mb-8 lg:block">
-          <p className="text-primary mb-2 text-sm font-semibold tracking-wide uppercase">
-            Riwayat booking
+      <div
+        className="bg-primary absolute top-20 right-0 left-0 h-64 bg-linear-to-br from-[#e35336] to-[#c93f28] lg:top-20 lg:h-80"
+        aria-hidden="true"
+      />
+
+      <main className="relative mx-auto w-full max-w-3xl px-4 pt-24 pb-14 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32 lg:pb-20">
+        <div className="mb-7 hidden text-center text-white lg:block">
+          <p className="text-sm font-semibold tracking-[0.2em] text-white/75 uppercase">
+            Century Padel
           </p>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-950">Detail Transaksi</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Informasi invoice, jadwal booking, dan rincian pembayaran Anda.
-          </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">Invoice Transaksi</h1>
         </div>
 
-        <div className="space-y-5 sm:space-y-6">
-          {/* Payment Action */}
-          <PaymentActionCard
-            invoice={invoice as any}
-            canPay={canPay}
-            onChooseMethod={() => refetch()}
-            onExpired={handleExpired}
-            onPaid={() => refetch()}
-          />
+        <article className="relative overflow-visible rounded-t-2xl bg-white shadow-[0_18px_50px_rgba(51,32,26,0.16)]">
+          <header className="px-5 pt-8 pb-6 text-center sm:px-8 sm:pt-10 sm:pb-8">
+            <Image
+              src={logo}
+              alt="Century Padel"
+              priority
+              className="mx-auto h-auto w-48 sm:w-56"
+            />
+            <p className="text-primary mt-4 text-xs font-bold tracking-[0.22em] uppercase">
+              Invoice Digital
+            </p>
+          </header>
 
-          {/* Success Message */}
-          {invoice.status === 'PAID' && <SuccessMessageCard />}
-
-          {/* {membershipUser && (
-            <div className="mb-4">
-              <Badge className="border-amber-200 bg-amber-100 text-amber-800" variant="outline">
-                Invoice Membership
+          <section className="border-y border-dashed border-gray-200 px-5 py-6 sm:px-8 sm:py-7">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={`flex size-8 items-center justify-center rounded-full ${
+                    isPaid ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'
+                  }`}
+                >
+                  {isPaid ? <CheckCircle2 className="size-5" /> : <Clock3 className="size-5" />}
+                </span>
+                <div>
+                  <p className="text-xs text-gray-500">Status transaksi</p>
+                  <p className="font-semibold text-gray-950">
+                    {isPaid ? 'Transaksi berhasil' : getStatusLabel(invoice.status)}
+                  </p>
+                </div>
+              </div>
+              <Badge className={getStatusColor(invoice.status)} variant="outline">
+                {getStatusLabel(invoice.status)}
               </Badge>
             </div>
-          )} */}
 
-          {/* Essential transaction information */}
-          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
-            <InvoiceInfoCard
-              invoiceNumber={invoice.number}
-              dueDate={invoice.dueDate}
-              paidAt={invoice.paidAt}
-              invoiceStatus={invoice.status}
-            />
-            <CustomerInfoCard
-              user={invoice.user as { name?: string | null; phone?: string | null }}
-            />
-          </div>
+            <div className="bg-primary/10 mt-6 rounded-xl px-4 py-4 sm:px-5 sm:py-5">
+              <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
+                <p className="text-sm font-medium text-gray-600">Total Bayar</p>
+                <p className="text-primary text-2xl font-bold tracking-tight sm:text-3xl">
+                  {formatCurrency(invoice.total)}
+                </p>
+              </div>
+            </div>
 
-          {/* Membership Details (if membership purchase) */}
+            <div className="mt-6">
+              <h2 className="mb-4 text-base font-bold text-gray-950">Detail Transaksi</h2>
+              <dl className="space-y-4 text-sm">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+                  <dt className="text-gray-500">Nomor invoice</dt>
+                  <dd className="flex min-w-0 items-center justify-end gap-1 font-semibold text-gray-950">
+                    <span className="max-w-52 truncate sm:max-w-none">{invoice.number}</span>
+                    <CopyButton
+                      variant="ghost"
+                      size="sm"
+                      content={invoice.number}
+                      aria-label="Salin nomor invoice"
+                    />
+                  </dd>
+                </div>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
+                  <dt className="text-gray-500">Pelanggan</dt>
+                  <dd className="max-w-52 text-right font-semibold break-words text-gray-950 sm:max-w-sm">
+                    {invoice.user?.name || '-'}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
+                  <dt className="text-gray-500">Nomor telepon</dt>
+                  <dd className="text-right font-medium text-gray-700">
+                    {invoice.user?.phone || '-'}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
+                  <dt className="text-gray-500">{transactionDateLabel}</dt>
+                  <dd className="text-right font-medium text-gray-700">
+                    {dayjs(transactionDate).format('DD MMM YYYY, HH:mm')}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </section>
+
           {membershipUser && (
-            <MembershipDetailsCard membershipUser={membershipUser as unknown as any} />
+            <MembershipDetailsCard membershipUser={membershipUser as unknown as any} receipt />
           )}
 
-          {/* Booking Details (if booking invoice) */}
-          {booking && bookingDetails.length > 0 && <BookingDetailsCard details={bookingDetails} />}
+          {booking && bookingDetails.length > 0 && (
+            <BookingDetailsCard details={bookingDetails} receipt />
+          )}
 
-          {/* Add-ons Section (only for bookings) */}
           {booking && (
             <AddOnsCard
               coaches={bookingCoaches as any}
               ballboys={bookingBallboys as any}
               inventories={bookingInventories as any}
+              receipt
             />
           )}
 
-          {/* Payment Summary */}
           <PaymentSummaryCard
             subtotal={subtotalForDisplay}
             processingFee={invoice.processingFee}
@@ -414,8 +489,23 @@ export default function InvoiceDetailPage() {
                   }
                 : undefined
             }
+            receipt
           />
-        </div>
+
+          <div className="invoice-receipt-edge" aria-hidden="true" />
+        </article>
+
+        {canPay && (
+          <div className="mt-8">
+            <PaymentActionCard
+              invoice={invoice as any}
+              canPay={canPay}
+              onChooseMethod={() => refetch()}
+              onExpired={handleExpired}
+              onPaid={() => refetch()}
+            />
+          </div>
+        )}
       </main>
     </div>
   );

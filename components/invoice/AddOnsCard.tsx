@@ -5,17 +5,29 @@ type Props = {
   coaches: any[];
   ballboys: any[];
   inventories: any[];
+  receipt?: boolean;
 };
 
-export default function AddOnsCard({ coaches = [], ballboys = [], inventories = [] }: Props) {
+export default function AddOnsCard({
+  coaches = [],
+  ballboys = [],
+  inventories = [],
+  receipt = false
+}: Props) {
   if ((coaches.length || ballboys.length || inventories.length) === 0) return null;
 
   return (
-    <Card className="gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
-      <CardHeader className="border-b border-gray-100 px-5 py-5 sm:px-6">
+    <Card
+      className={
+        receipt
+          ? 'gap-0 rounded-none border-x-0 border-b-0 py-0 shadow-none'
+          : 'gap-0 overflow-hidden rounded-xl py-0 shadow-sm'
+      }
+    >
+      <CardHeader className="border-b border-gray-100 px-5 py-5 sm:px-8 sm:py-6">
         <CardTitle className="flex items-center gap-2">Layanan Tambahan</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
+      <CardContent className="space-y-5 px-5 py-5 sm:px-8 sm:py-6">
         {coaches.length > 0 && (
           <div>
             <h4 className="mb-2 font-semibold">Pelatih</h4>

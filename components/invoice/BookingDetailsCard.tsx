@@ -85,7 +85,13 @@ const formatDateDisplay = (dateString: string): string => {
   return `${dayName}, ${day} ${month} ${year}`;
 };
 
-export default function BookingDetailsCard({ details }: { details: Detail[] }) {
+export default function BookingDetailsCard({
+  details,
+  receipt = false
+}: {
+  details: Detail[];
+  receipt?: boolean;
+}) {
   const grouped = (details || []).reduce(
     (acc: any, detail: any) => {
       const slotStartAt = detail.slot?.startAt;
@@ -108,8 +114,14 @@ export default function BookingDetailsCard({ details }: { details: Detail[] }) {
   const totalSlots = (details || []).length;
 
   return (
-    <Card className="gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
-      <CardHeader className="flex-row items-center justify-between gap-3 border-b border-gray-100 px-5 py-5 sm:px-6">
+    <Card
+      className={
+        receipt
+          ? 'gap-0 rounded-none border-x-0 border-b-0 py-0 shadow-none'
+          : 'gap-0 overflow-hidden rounded-xl py-0 shadow-sm'
+      }
+    >
+      <CardHeader className="flex-row items-center justify-between gap-3 border-b border-gray-100 px-5 py-5 sm:px-8 sm:py-6">
         <CardTitle className="flex items-center gap-2.5 text-base sm:text-lg">
           <span className="bg-primary/10 flex size-9 items-center justify-center rounded-lg">
             <Calendar className="text-primary h-4 w-4" />
@@ -120,7 +132,7 @@ export default function BookingDetailsCard({ details }: { details: Detail[] }) {
           {totalSlots} slot
         </span>
       </CardHeader>
-      <CardContent className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
+      <CardContent className="space-y-4 px-5 py-5 sm:px-8 sm:py-6">
         {Object.entries(grouped).map(([date, courts]) => (
           <div key={date} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 sm:p-5">
             <p className="mb-4 text-sm font-semibold text-gray-950 sm:text-base">

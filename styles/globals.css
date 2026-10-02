@@ -142,6 +142,16 @@
   -webkit-overflow-scrolling: touch;
 }
 
+.invoice-receipt-edge {
+  position: absolute;
+  right: 0;
+  bottom: -12px;
+  left: 0;
+  height: 12px;
+  background: radial-gradient(circle at 6px 12px, transparent 6px, white 6.5px) 0 0 / 12px 12px
+    repeat-x;
+}
+
 .coming-soon-grid {
   background-image:
     linear-gradient(to right, rgb(227 83 54 / 0.06) 1px, transparent 1px),
