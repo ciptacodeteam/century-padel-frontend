@@ -199,10 +199,7 @@ export default function TermsAndConditionsPage() {
               <div className="space-y-2 pl-6">
                 <p>
                   <strong>Email:</strong>{' '}
-                  <a
-                    href="mailto:centurypadel@gmail.com"
-                    className="text-primary hover:underline"
-                  >
+                  <a href="mailto:centurypadel@gmail.com" className="text-primary hover:underline">
                     centurypadel@gmail.com
                   </a>
                 </p>
@@ -210,18 +207,19 @@ export default function TermsAndConditionsPage() {
                   <strong>WhatsApp:</strong>{' '}
                   <a
                     href={getWhatsappMessageUrl(
-                      '+6282311160880',
+                      '+6285927828239',
                       'Hello, I would like to ask about Century Padel.'
                     )}
                     className="text-primary hover:underline"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    +62 812-3456-7890
+                    0859 2782 8239
                   </a>
                 </p>
                 <p>
-                  <strong>Venue Address:</strong> Jl. Mongonsidi No.51, Polonia, Kec. Medan Polonia, Kota Medan, Sumatera Utara 20152
+                  <strong>Venue Address:</strong> Jl. Mongonsidi No.51, Polonia, Kec. Medan Polonia,
+                  Kota Medan, Sumatera Utara 20152
                 </p>
               </div>
             </section>

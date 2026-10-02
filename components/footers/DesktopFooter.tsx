@@ -75,12 +75,12 @@ const DesktopFooter = () => {
             <p>
               <span>WhatsApp:</span>{' '}
               <a
-                href="https://wa.me/6281234567890"
+                href="https://wa.me/6285927828239"
                 target="_blank"
                 rel="noreferrer"
                 className="text-primary hover:text-primary/80 transition-colors"
               >
-                +62 812-3456-7890
+                0859 2782 8239
               </a>
             </p>
           </div>

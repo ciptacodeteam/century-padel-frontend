@@ -1,7 +1,7 @@
 import type { BadgeVariant } from '@/components/ui/badge';
 
 export const SUPPORT_CIPTACODE_PHONE_NUMBER = '+6285360027891';
-export const SUPPORT_PHONE_NUMBER = '+6281234567890';
+export const SUPPORT_PHONE_NUMBER = '+6285927828239';
 
 const ACTIVE = 1;
 const INACTIVE = 0;

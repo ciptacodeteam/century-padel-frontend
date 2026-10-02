@@ -14,7 +14,6 @@ import { calculateMembershipDiscount, useMembershipDiscount } from '@/hooks/useM
 import { useXenditCardCollection } from '@/hooks/useXenditTokenization';
 import { hasSlotDiscount } from '@/lib/booking';
 import { calculatePaymentFee } from '@/lib/payment-fee';
-import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
 import {
   getMembershipBookingKey,
   isMembershipEligibleForStartTime,
@@ -694,15 +693,7 @@ export default function CheckoutPage() {
     try {
       const ok = await confirm({
         title: 'Konfirmasi Pemesanan',
-        description:
-          courtSlots.length > 0 ? (
-            <>
-              <span className="block">Apakah pesanan Anda sudah sesuai?</span>
-              <span className="mt-2 block font-medium">{CUSTOMER_RESCHEDULE_POLICY_TEXT}</span>
-            </>
-          ) : (
-            'Apakah pesanan Anda sudah sesuai?'
-          ),
+        description: 'Apakah pesanan Anda sudah sesuai?',
         confirmText: requiresPayment ? 'Bayar Sekarang' : 'Konfirmasi Booking',
         cancelText: 'Cek Lagi',
         dismissible: true
