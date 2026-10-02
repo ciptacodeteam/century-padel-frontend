@@ -1,18 +1,34 @@
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatSlotTime } from '@/lib/time-utils';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 
 type Detail = any;
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0
-  })
-    .format(value)
-    .replace(/\s/g, '');
+type TimeRange = {
+  startAt: string | Date;
+  endAt: string | Date;
+};
+
+const mergeConsecutiveSlots = (items: Detail[]): TimeRange[] => {
+  const sortedSlots = items
+    .filter((item) => item.slot?.startAt && item.slot?.endAt)
+    .map((item) => ({ startAt: item.slot.startAt, endAt: item.slot.endAt }))
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+
+  return sortedSlots.reduce<TimeRange[]>((ranges, slot) => {
+    const previousRange = ranges[ranges.length - 1];
+    const isConsecutive =
+      previousRange && new Date(previousRange.endAt).getTime() === new Date(slot.startAt).getTime();
+
+    if (isConsecutive) {
+      previousRange.endAt = slot.endAt;
+    } else {
+      ranges.push({ ...slot });
+    }
+
+    return ranges;
+  }, []);
+};
 
 // Helper to extract date string from ISO string without timezone conversion
 const getDateStringFromISO = (isoString: string): string => {
@@ -89,135 +105,40 @@ export default function BookingDetailsCard({ details }: { details: Detail[] }) {
     {} as Record<string, Record<string, Detail[]>>
   );
 
-  // Calculate total price
-  // const totalPrice = (details || []).reduce((sum, detail) => sum + (detail.price || 0), 0);
   const totalSlots = (details || []).length;
-  const resolvePrices = (detail: any) => {
-    const normalPrice = detail.price || detail.slot?.price || 0;
-    const discountPrice = detail.discountPrice ?? detail.slot?.discountPrice ?? 0;
-    const effectivePrice = discountPrice > 0 ? discountPrice : normalPrice;
-    return { normalPrice, discountPrice, effectivePrice };
-  };
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-4 text-lg sm:text-xl">
-            <div className="rounded-lg bg-gray-100 p-2">
-              <Calendar className="h-5 w-5 text-gray-600" />
-            </div>
-            <span className="text-base">Detail Pemesanan Lapangan</span>
-          </CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">{totalSlots} Slot</Badge>
-            {/* <Badge variant="outline">{formatCurrency(totalPrice)}</Badge> */}
-          </div>
-        </div>
+    <Card className="mb-4 gap-2 py-3">
+      <CardHeader className="flex-row items-center justify-between px-4">
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-gray-600" />
+          <span>Jadwal Booking</span>
+        </CardTitle>
+        <span className="text-sm text-gray-500">{totalSlots} slot</span>
       </CardHeader>
-      <CardContent className="space-y-4 p-4 sm:space-y-6 sm:p-6">
+      <CardContent className="space-y-2 px-4">
         {Object.entries(grouped).map(([date, courts]) => (
-          <div key={date} className="space-y-3 sm:space-y-4">
-            {/* Date Header */}
-            <div className="bg-muted/30 flex items-center gap-2.5 rounded-lg border p-3 sm:gap-3 sm:p-4">
-              <div className="bg-muted/50 rounded-lg p-2">
-                <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">{formatDateDisplay(date)}</p>
-                <p className="text-xs text-gray-600 sm:text-sm">
-                  {Object.keys(courts as Record<string, any>).length} Lapangan
-                </p>
-              </div>
-            </div>
-
-            {/* Courts */}
-            <div className="space-y-3">
+          <div key={date} className="rounded-md border px-3 py-2">
+            <p className="mb-2 text-sm font-semibold">{formatDateDisplay(date)}</p>
+            <div className="space-y-2">
               {Object.entries(courts as Record<string, Detail[]>).map(([courtName, items]) => (
-                <div
-                  key={courtName}
-                  className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md sm:p-4"
-                >
-                  {/* Court Name */}
-                  <div className="mb-3 flex items-center gap-2 border-b border-gray-100 pb-2">
-                    <MapPin className="h-4 w-4 shrink-0 text-gray-600 sm:h-5 sm:w-5" />
-                    <span className="text-base font-semibold text-gray-900">{courtName}</span>
+                <div key={courtName} className="flex items-center gap-2">
+                  <div className="flex min-w-32 items-center gap-1.5 text-sm font-medium">
+                    <MapPin className="h-4 w-4 shrink-0 text-gray-500" />
+                    <span>{courtName}</span>
                   </div>
-
-                  {/* Time Slots */}
-                  <div className="space-y-2">
-                    {items.map((detail: any, idx: number) => (
-                      <div
-                        key={detail.id || idx}
-                        className="flex flex-col gap-2 rounded-md bg-gray-50 p-2.5 sm:flex-row sm:items-center sm:justify-between sm:p-3"
+                  <div className="flex flex-wrap gap-1.5">
+                    {mergeConsecutiveSlots(items).map((range, idx) => (
+                      <span
+                        key={`${String(range.startAt)}-${idx}`}
+                        className="flex items-center gap-1 rounded bg-gray-50 px-2 py-1 text-sm"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="rounded-md bg-white p-1.5">
-                            <Clock className="h-3.5 w-3.5 text-gray-600 sm:h-4 sm:w-4" />
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-900">
-                              {formatSlotTime(detail.slot?.startAt, 'HH:mm')} -{' '}
-                              {formatSlotTime(detail.slot?.endAt, 'HH:mm')}
-                            </span>
-                            <p className="text-xs text-gray-500 sm:hidden">
-                              {(() => {
-                                const { normalPrice, discountPrice, effectivePrice } =
-                                  resolvePrices(detail);
-                                if (discountPrice > 0 && discountPrice < normalPrice) {
-                                  return (
-                                    <span className="flex flex-col">
-                                      <span className="line-through">
-                                        {formatCurrency(normalPrice)}
-                                      </span>
-                                      <span className="text-green-700">
-                                        {formatCurrency(effectivePrice)}
-                                      </span>
-                                    </span>
-                                  );
-                                }
-                                return formatCurrency(effectivePrice);
-                              })()}
-                            </p>
-                          </div>
-                        </div>
-                        <span className="hidden text-sm font-bold sm:block">
-                          {(() => {
-                            const { normalPrice, discountPrice, effectivePrice } =
-                              resolvePrices(detail);
-                            if (discountPrice > 0 && discountPrice < normalPrice) {
-                              return (
-                                <span className="flex flex-col items-end">
-                                  <span className="text-xs text-gray-400 line-through">
-                                    {formatCurrency(normalPrice)}
-                                  </span>
-                                  <span className="text-green-700">
-                                    {formatCurrency(effectivePrice)}
-                                  </span>
-                                </span>
-                              );
-                            }
-                            return formatCurrency(effectivePrice);
-                          })()}
-                        </span>
-                      </div>
+                        <Clock className="h-3.5 w-3.5 text-gray-500" />
+                        {formatSlotTime(range.startAt, 'HH:mm')}–
+                        {formatSlotTime(range.endAt, 'HH:mm')}
+                      </span>
                     ))}
                   </div>
-
-                  {/* Court Subtotal */}
-                  {items.length > 1 && (
-                    <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3 text-sm sm:text-base">
-                      <span className="text-sm text-gray-600">Subtotal ({items.length} slot)</span>
-                      <span className="text-sm font-bold text-gray-900">
-                        {formatCurrency(
-                          items.reduce((sum: number, d: any) => {
-                            const { effectivePrice } = resolvePrices(d);
-                            return sum + effectivePrice;
-                          }, 0)
-                        )}
-                      </span>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { resolveMediaUrl } from '@/lib/utils';
-import { CreditCard, Receipt, Wallet } from 'lucide-react';
+import { Receipt } from 'lucide-react';
 import Image from 'next/image';
 
 const currencyFormatter = new Intl.NumberFormat('id-ID', {
@@ -27,79 +26,56 @@ export default function PaymentSummaryCard({
   method?: Method;
 }) {
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-3 text-lg sm:text-xl">
-          <div className="bg-primary/10 rounded-lg p-2">
-            <Receipt className="text-primary h-5 w-5" />
-          </div>
-          <span className="text-base">Ringkasan Pembayaran</span>
+    <Card className="mb-4 gap-2 py-3">
+      <CardHeader className="px-4">
+        <CardTitle className="flex items-center gap-2">
+          <Receipt className="text-primary h-4 w-4" />
+          <span>Ringkasan Pembayaran</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 p-4 sm:p-6">
-        {/* Price Breakdown */}
-        <div className="space-y-3 rounded-lg bg-gray-50 p-3 sm:p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Subtotal</span>
-            <span className="text-sm font-semibold text-gray-900">{formatCurrency(subtotal)}</span>
+      <CardContent className="grid grid-cols-[1fr_auto] items-end gap-3 px-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">
+          <div>
+            <p className="text-gray-500">Subtotal</p>
+            <p className="font-semibold">{formatCurrency(subtotal)}</p>
           </div>
           {promoDiscountAmount && promoDiscountAmount > 0 && (
-            <div className="flex items-center justify-between text-green-600">
-              <span className="text-sm font-medium">Diskon Promo</span>
-              <span className="text-sm font-semibold">- {formatCurrency(promoDiscountAmount)}</span>
+            <div className="text-green-600">
+              <p>Diskon</p>
+              <p className="font-semibold">-{formatCurrency(promoDiscountAmount)}</p>
             </div>
           )}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Biaya Layanan</span>
-            <span className="text-sm font-semibold text-gray-900">
+          <div>
+            <p className="text-gray-500">Biaya layanan</p>
+            <p className="font-semibold">
               {processingFee > 0 ? formatCurrency(processingFee) : 'Gratis'}
-            </span>
+            </p>
           </div>
-        </div>
-
-        <Separator />
-
-        {/* Total */}
-        <div className="bg-primary/5 rounded-lg p-3 sm:p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Wallet className="text-primary h-5 w-5" />
-              <span className="text-base font-bold text-gray-900">Total Pembayaran</span>
-            </div>
-            <span className="text-primary text-base font-bold">{formatCurrency(total)}</span>
-          </div>
-        </div>
-
-        {/* Payment Method */}
-        {method && (
-          <div className="rounded-lg border bg-white p-3 sm:p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-gray-600" />
-              <h4 className="text-sm font-semibold text-gray-700 sm:text-base">
-                Metode Pembayaran
-              </h4>
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="mt-2 flex items-center gap-3">
+          {method && (
+            <div>
+              <p className="text-gray-500">Metode</p>
+              <div className="flex items-center gap-2 font-semibold">
                 {method.logo && (
-                  <div className="flex h-10 w-16 items-center justify-center p-2">
+                  <div className="flex h-5 w-10 items-center justify-center">
                     <Image
                       src={resolveMediaUrl(method.logo) || ''}
                       unoptimized
                       alt={method.name || 'Payment Method'}
-                      width={64}
-                      height={32}
+                      width={40}
+                      height={20}
                       className="h-auto w-full object-contain"
                     />
                   </div>
                 )}
-                <div>
-                  <p className="font-medium text-gray-900">{method.name || 'Transfer Bank'}</p>
-                </div>
+                <span>{method.name || 'Transfer Bank'}</span>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        <div className="bg-primary/5 rounded-md px-3 py-2 text-right sm:px-4">
+          <p className="text-sm text-gray-600">Total</p>
+          <p className="text-primary text-lg font-bold">{formatCurrency(total)}</p>
+        </div>
       </CardContent>
     </Card>
   );

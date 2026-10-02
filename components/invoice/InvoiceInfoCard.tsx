@@ -6,61 +6,35 @@ import { getStatusColor, getStatusLabel } from './status';
 
 type Props = {
   invoiceNumber?: string;
-  issuedAt: string | Date;
   dueDate?: string | Date | null;
   paidAt?: string | Date | null;
   invoiceStatus?: string;
 };
 
-export default function InvoiceInfoCard({
-  invoiceNumber,
-  issuedAt,
-  dueDate,
-  paidAt,
-  invoiceStatus
-}: Props) {
-  return (
-    <Card className="my-6">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">Informasi Invoice</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <p className="text-sm text-gray-600">Sales ID</p>
-            <div className="flex items-center">
-              <p className="font-semibold">{invoiceNumber}</p>
-              <CopyButton variant={'ghost'} content={invoiceNumber || ''} className="ml-2" />
-            </div>
-          </div>
+export default function InvoiceInfoCard({ invoiceNumber, dueDate, paidAt, invoiceStatus }: Props) {
+  const transactionDate = paidAt || dueDate;
+  const transactionDateLabel = paidAt ? 'Dibayar' : 'Batas bayar';
 
-          <div>
-            <p className="text-sm text-gray-600">Tanggal Pembuatan</p>
-            <p className="font-semibold">{dayjs(issuedAt).format('DD MMMM YYYY, HH:mm')}</p>
-          </div>
-          {dueDate && (
-            <div>
-              <p className="text-sm text-gray-600">Jatuh Tempo</p>
-              <p className="font-semibold">{dayjs(dueDate).format('DD MMMM YYYY, HH:mm')}</p>
-            </div>
-          )}
-          {paidAt && (
-            <div>
-              <p className="text-sm text-gray-600">Tanggal Pembayaran</p>
-              <p className="font-semibold text-green-600">
-                {dayjs(paidAt).format('DD MMMM YYYY, HH:mm')}
-              </p>
-            </div>
-          )}
-          {invoiceStatus && (
-            <div>
-              <p className="text-sm text-gray-600">Status</p>
-              <Badge className={getStatusColor(invoiceStatus)} variant="outline">
-                {getStatusLabel(invoiceStatus)}
-              </Badge>
-            </div>
-          )}
+  return (
+    <Card className="h-full gap-1.5 py-2.5 sm:gap-2 sm:py-3">
+      <CardHeader className="flex-row items-center justify-between px-4">
+        <CardTitle>Invoice</CardTitle>
+        {invoiceStatus && (
+          <Badge className={getStatusColor(invoiceStatus)} variant="outline">
+            {getStatusLabel(invoiceStatus)}
+          </Badge>
+        )}
+      </CardHeader>
+      <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4">
+        <div className="flex min-w-0 items-center">
+          <p className="truncate font-semibold">{invoiceNumber}</p>
+          <CopyButton variant="ghost" content={invoiceNumber || ''} className="ml-1 h-7 w-7" />
         </div>
+        {transactionDate && (
+          <p className="text-sm text-gray-600">
+            {transactionDateLabel}: {dayjs(transactionDate).format('DD MMM YYYY, HH:mm')}
+          </p>
+        )}
       </CardContent>
     </Card>
   );

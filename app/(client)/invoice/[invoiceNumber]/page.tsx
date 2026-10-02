@@ -337,7 +337,7 @@ export default function InvoiceDetailPage() {
     <div className="min-h-screen">
       <MainHeader title="Detail Transaksi" withLogo={false} backHref="/invoice" />
 
-      <div className="container mx-auto mt-28 pb-10">
+      <div className="container mx-auto mt-20 pb-6 lg:mt-28 lg:pb-10">
         <div className="mx-auto w-11/12 max-w-7xl">
           {/* Payment Action */}
           <PaymentActionCard
@@ -359,19 +359,18 @@ export default function InvoiceDetailPage() {
             </div>
           )} */}
 
-          {/* Invoice Information */}
-          <InvoiceInfoCard
-            invoiceNumber={invoice.number}
-            issuedAt={invoice.issuedAt}
-            dueDate={invoice.dueDate}
-            paidAt={invoice.paidAt}
-            invoiceStatus={invoice.status}
-          />
-
-          {/* Customer Information */}
-          <CustomerInfoCard
-            user={invoice.user as { name?: string | null; phone?: string | null }}
-          />
+          {/* Essential transaction information */}
+          <div className="my-3 grid gap-2 md:my-4 md:grid-cols-2 md:gap-3">
+            <InvoiceInfoCard
+              invoiceNumber={invoice.number}
+              dueDate={invoice.dueDate}
+              paidAt={invoice.paidAt}
+              invoiceStatus={invoice.status}
+            />
+            <CustomerInfoCard
+              user={invoice.user as { name?: string | null; phone?: string | null }}
+            />
+          </div>
 
           {/* Membership Details (if membership purchase) */}
           {membershipUser && (
