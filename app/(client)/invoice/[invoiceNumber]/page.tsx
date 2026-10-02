@@ -13,6 +13,7 @@ import 'dayjs/locale/id';
 import { ArrowLeft, CheckCircle2, Clock3, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+import { useRef } from 'react';
 // Local typed view-models for the invoice detail API response
 type ApiUser = {
   id: string;
@@ -195,6 +196,7 @@ export default function InvoiceDetailPage() {
   const params = useParams();
   const router = useRouter();
   const invoiceNumber = params.invoiceNumber as string;
+  const invoiceReceiptRef = useRef<HTMLElement>(null);
 
   const {
     data: response,
@@ -378,7 +380,10 @@ export default function InvoiceDetailPage() {
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Invoice Transaksi</h1>
         </div>
 
-        <article className="relative overflow-visible rounded-t-2xl bg-white shadow-[0_18px_50px_rgba(51,32,26,0.16)]">
+        <article
+          ref={invoiceReceiptRef}
+          className="relative overflow-visible rounded-t-2xl bg-white shadow-[0_18px_50px_rgba(51,32,26,0.16)]"
+        >
           <header className="px-5 pt-8 pb-6 text-center sm:px-8 sm:pt-10 sm:pb-8">
             <Image
               src={logo}
@@ -499,8 +504,9 @@ export default function InvoiceDetailPage() {
         <InvoiceShareButton
           invoiceNumber={invoice.number}
           total={invoice.total}
+          captureRef={invoiceReceiptRef}
           size="lg"
-          className="mt-7 w-full bg-white shadow-sm"
+          className="mt-7 w-full bg-white shadow-none"
         />
 
         {canPay && (

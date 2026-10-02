@@ -29,7 +29,6 @@ import {
 import type { Invoice } from '@/types/model';
 import useAuthModalStore from '@/stores/useAuthModalStore';
 import { toast } from 'sonner';
-import InvoiceShareButton from '@/components/invoice/InvoiceShareButton';
 
 dayjs.locale('id');
 dayjs.extend(relativeTime);
@@ -421,11 +420,6 @@ export default function InvoiceHistoryPage() {
                         </div>
 
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                          <InvoiceShareButton
-                            invoiceNumber={invoice.number}
-                            total={invoice.total}
-                            className="w-full sm:w-auto"
-                          />
                           {isPending ? (
                             <>
                               {canCancelTransaction && (
