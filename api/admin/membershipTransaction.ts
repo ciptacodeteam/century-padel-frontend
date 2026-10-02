@@ -60,3 +60,11 @@ export async function terminateAndRefundAdminMembershipTransactionApi(
   const { data } = await adminApi.put(`/membership-transactions/${id}/terminate-refund`, payload);
   return data;
 }
+
+export async function transferAdminMembershipBalanceApi(
+  id: string,
+  payload: { toUserId: string; hours: number; reason: string }
+) {
+  const { data } = await adminApi.post(`/membership-transactions/${id}/transfer`, payload);
+  return data;
+}

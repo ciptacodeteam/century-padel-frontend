@@ -184,81 +184,85 @@ export default function ProfilePage() {
       <main className="mt-24 pb-24 lg:relative lg:left-1/2 lg:mt-0 lg:min-h-screen lg:w-screen lg:-translate-x-1/2 lg:bg-neutral-50 lg:pt-28 lg:pb-24">
         <div className="mx-auto w-11/12 max-w-7xl space-y-4 lg:grid lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:space-y-0">
           <aside className="space-y-4 lg:sticky lg:top-28">
-          {/* Profile Header Card */}
-          <Card className="lg:border-neutral-200 lg:bg-white">
-            <CardContent className="pt-6 lg:p-8">
-              <div className="flex flex-col items-center space-y-4">
-                {/* Profile Image */}
-                <div className="border-primary/10 relative h-24 w-24 overflow-hidden rounded-full border-4">
-                  <Image
-                    src={
-                      user.image ||
-                      getPlaceholderImageUrl({
-                        width: 200,
-                        height: 200,
-                        text: user.name.charAt(0).toUpperCase()
-                      })
-                    }
-                    alt={user.name}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-
-                {/* Name */}
-                <div className="text-center">
-                  <h1 className="text-2xl font-bold capitalize">{user.name}</h1>
-                  {'banned' in user && (user as any).banned && (
-                    <p className="text-destructive mt-1 text-sm">Account Banned</p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="hidden space-y-4 lg:block">
+            {/* Profile Header Card */}
             <Card className="lg:border-neutral-200 lg:bg-white">
-              <CardHeader>
-                <CardTitle className="mb-1">Kata Sandi</CardTitle>
-                <CardDescription>Mengelola Kata Sandi</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full" onClick={() => setPasswordModalOpen(true)}>
-                  Ganti Kata Sandi
-                </Button>
+              <CardContent className="pt-6 lg:p-8">
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Profile Image */}
+                  <div className="border-primary/10 relative h-24 w-24 overflow-hidden rounded-full border-4">
+                    <Image
+                      src={
+                        user.image ||
+                        getPlaceholderImageUrl({
+                          width: 200,
+                          height: 200,
+                          text: user.name.charAt(0).toUpperCase()
+                        })
+                      }
+                      alt={user.name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+
+                  {/* Name */}
+                  <div className="text-center">
+                    <h1 className="text-2xl font-bold capitalize">{user.name}</h1>
+                    {'banned' in user && (user as any).banned && (
+                      <p className="text-destructive mt-1 text-sm">Account Banned</p>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="lg:border-neutral-200 lg:bg-white">
-              <CardHeader>
-                <CardTitle className="mb-1">Syarat & Ketentuan</CardTitle>
-                <CardDescription>Baca ketentuan penggunaan layanan kami</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push('/terms-and-conditions')}
-                >
-                  <IconFileText className="mr-2 size-4" />
-                  Lihat Syarat & Ketentuan
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="hidden space-y-4 lg:block">
+              <Card className="lg:border-neutral-200 lg:bg-white">
+                <CardHeader>
+                  <CardTitle className="mb-1">Kata Sandi</CardTitle>
+                  <CardDescription>Mengelola Kata Sandi</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setPasswordModalOpen(true)}
+                  >
+                    Ganti Kata Sandi
+                  </Button>
+                </CardContent>
+              </Card>
 
-            <Button
-              variant="destructive"
-              className="w-full"
-              size="lg"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              loading={isLoggingOut}
-            >
-              <IconLogout className="size-5" />
-              Keluar
-            </Button>
-          </div>
+              <Card className="lg:border-neutral-200 lg:bg-white">
+                <CardHeader>
+                  <CardTitle className="mb-1">Syarat & Ketentuan</CardTitle>
+                  <CardDescription>Baca ketentuan penggunaan layanan kami</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => router.push('/terms-and-conditions')}
+                  >
+                    <IconFileText className="mr-2 size-4" />
+                    Lihat Syarat & Ketentuan
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Button
+                variant="destructive"
+                className="w-full"
+                size="lg"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                loading={isLoggingOut}
+              >
+                <IconLogout className="size-5" />
+                Keluar
+              </Button>
+            </div>
           </aside>
 
           <section className="space-y-4">
@@ -270,233 +274,255 @@ export default function ProfilePage() {
               </p>
             </div>
 
-          {/* Profile Details Card */}
-          <Card className="lg:border-neutral-200 lg:bg-white">
-            <CardHeader>
-              <CardTitle className="mb-1">Informasi Akun</CardTitle>
-              <CardDescription>Detail akun dan status akun</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Email */}
-              <div className="flex items-center gap-3">
-                <IconMail className="bg-primary size-4 h-10 w-10 rounded-md p-2 text-white" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Email</p>
-                  <button
-                    type="button"
-                    className="text-muted-foreground text-sm underline-offset-2 hover:underline"
-                    onClick={() => {
-                      setEditEmail(user.email || '');
-                      setEmailModalOpen(true);
-                    }}
-                  >
-                    {user.email || 'Not provided'}
-                  </button>
-                  {user.email && 'emailVerified' in user && (
-                    <Badge
-                      variant={(user as any).emailVerified ? 'lightSuccess' : 'lightDestructive'}
-                      className={cn('ml-2 select-none', user.emailVerified ? '' : 'cursor-pointer')}
-                      onClick={() => handleStartVerification('email')}
-                      aria-disabled={isSendingVerification}
-                    >
-                      {(user as any).emailVerified ? 'Email Terverifikasi' : 'Verifikasi Email'}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Phone */}
-              <div className="flex items-center gap-3">
-                <IconPhone className="bg-primary size-4 h-10 w-10 rounded-md p-2 text-white" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Nomor WhatsApp</p>
-
-                  <div className="flex">
+            {/* Profile Details Card */}
+            <Card className="lg:border-neutral-200 lg:bg-white">
+              <CardHeader>
+                <CardTitle className="mb-1">Informasi Akun</CardTitle>
+                <CardDescription>Detail akun dan status akun</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Email */}
+                <div className="flex items-center gap-3">
+                  <IconMail className="bg-primary size-4 h-10 w-10 rounded-md p-2 text-white" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Email</p>
                     <button
                       type="button"
-                      className="text-muted-foreground me-2 text-sm underline-offset-2 hover:underline"
+                      className="text-muted-foreground text-sm underline-offset-2 hover:underline"
                       onClick={() => {
-                        setEditPhone(user.phone || '');
-                        setPhoneModalOpen(true);
+                        setEditEmail(user.email || '');
+                        setEmailModalOpen(true);
                       }}
                     >
-                      {user.phone || 'Not provided'}
+                      {user.email || 'Not provided'}
                     </button>
-
-                    {'phoneVerified' in user && (
+                    {user.email && 'emailVerified' in user && (
                       <Badge
-                        variant={
-                          (user as UserProfile).phoneVerified ? 'lightSuccess' : 'lightDestructive'
-                        }
-                        className={cn('select-none', user.phoneVerified ? '' : 'cursor-pointer')}
-                        onClick={() => handleStartVerification('phone')}
+                        variant={(user as any).emailVerified ? 'lightSuccess' : 'lightDestructive'}
+                        className={cn(
+                          'ml-2 select-none',
+                          user.emailVerified ? '' : 'cursor-pointer'
+                        )}
+                        onClick={() => handleStartVerification('email')}
                         aria-disabled={isSendingVerification}
                       >
-                        {(user as UserProfile).phoneVerified
-                          ? 'Nomor Terverifikasi'
-                          : 'Verifikasi Nomor'}
+                        {(user as any).emailVerified ? 'Email Terverifikasi' : 'Verifikasi Email'}
                       </Badge>
                     )}
                   </div>
                 </div>
-              </div>
 
-              <Separator />
+                <Separator />
 
-              {/* Member Since */}
-              <div className="flex items-center gap-3">
-                <IconCalendar className="bg-primary size-4 h-10 w-10 rounded-md p-2 text-white" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Membership sejak</p>
-                  <p className="text-muted-foreground text-sm">
-                    {dayjs(user.createdAt).format('DD MMMM YYYY')}
-                  </p>
-                </div>
-              </div>
+                {/* Phone */}
+                <div className="flex items-center gap-3">
+                  <IconPhone className="bg-primary size-4 h-10 w-10 rounded-md p-2 text-white" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Nomor WhatsApp</p>
 
-              {'banned' in user && (user as any).banned && 'banReason' in user && (
-                <>
-                  <Separator />
-                  <div className="bg-destructive/10 rounded-lg p-3">
-                    <p className="text-destructive text-sm font-medium">Ban Reason</p>
-                    <p className="text-destructive/80 text-sm">{(user as any).banReason}</p>
-                    {'banExpires' in user && (user as any).banExpires && (
-                      <p className="text-destructive/70 mt-1 text-xs">
-                        Expires: {dayjs((user as any).banExpires).format('DD MMMM YYYY HH:mm')}
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                    <div className="flex">
+                      <button
+                        type="button"
+                        className="text-muted-foreground me-2 text-sm underline-offset-2 hover:underline"
+                        onClick={() => {
+                          setEditPhone(user.phone || '');
+                          setPhoneModalOpen(true);
+                        }}
+                      >
+                        {user.phone || 'Not provided'}
+                      </button>
 
-          {/* Active Membership Card */}
-          {!isMembershipsLoading && myMemberships && myMemberships.active.length > 0 && (
-            <Card className="lg:border-neutral-200 lg:bg-white">
-              <CardHeader>
-                <CardTitle className="mb-1">Membership Aktif</CardTitle>
-                <CardDescription>Informasi membership yang sedang aktif</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {myMemberships.active.map((userMembership) => (
-                  <div key={userMembership.id} className="rounded-lg border p-4">
-                    <div className="mb-3 flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold">{userMembership.membership.name}</h3>
-                        {userMembership.membership.description && (
-                          <p className="text-muted-foreground text-sm">
-                            {userMembership.membership.description}
-                          </p>
-                        )}
-                      </div>
-                      <span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-medium">
-                        Aktif
-                      </span>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="bg-muted rounded-md p-3">
-                        <p className="text-muted-foreground mb-1 text-xs">Berlaku Hingga</p>
-                        <p className="font-semibold">
-                          {dayjs(userMembership.endDate).format('DD MMMM YYYY')}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {userMembership.remainingDuration} hari tersisa
-                        </p>
-                      </div>
-
-                      <div className="bg-muted rounded-md p-3">
-                        <p className="text-muted-foreground mb-1 text-xs">Sisa Jam</p>
-                        <p className="font-semibold">
-                          {userMembership.remainingSessions} dari{' '}
-                          {userMembership.membership.sessions} jam
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {Math.round(
-                            (userMembership.remainingSessions /
-                              userMembership.membership.sessions) *
-                              100
-                          )}
-                          % tersisa
-                        </p>
-                      </div>
-                    </div>
-
-                    {userMembership.membership.benefits &&
-                      userMembership.membership.benefits.length > 0 && (
-                        <div className="mt-3">
-                          <p className="mb-2 text-sm font-medium">Benefit:</p>
-                          <ul className="space-y-1">
-                            {userMembership.membership.benefits.map((benefit) => (
-                              <li key={benefit.id} className="flex items-start gap-2 text-sm">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="text-primary mt-0.5 h-4 w-4 shrink-0"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                                <span className="text-muted-foreground">{benefit.benefit}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                      {'phoneVerified' in user && (
+                        <Badge
+                          variant={
+                            (user as UserProfile).phoneVerified
+                              ? 'lightSuccess'
+                              : 'lightDestructive'
+                          }
+                          className={cn('select-none', user.phoneVerified ? '' : 'cursor-pointer')}
+                          onClick={() => handleStartVerification('phone')}
+                          aria-disabled={isSendingVerification}
+                        >
+                          {(user as UserProfile).phoneVerified
+                            ? 'Nomor Terverifikasi'
+                            : 'Verifikasi Nomor'}
+                        </Badge>
                       )}
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                <Separator />
+
+                {/* Member Since */}
+                <div className="flex items-center gap-3">
+                  <IconCalendar className="bg-primary size-4 h-10 w-10 rounded-md p-2 text-white" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Membership sejak</p>
+                    <p className="text-muted-foreground text-sm">
+                      {dayjs(user.createdAt).format('DD MMMM YYYY')}
+                    </p>
+                  </div>
+                </div>
+
+                {'banned' in user && (user as any).banned && 'banReason' in user && (
+                  <>
+                    <Separator />
+                    <div className="bg-destructive/10 rounded-lg p-3">
+                      <p className="text-destructive text-sm font-medium">Ban Reason</p>
+                      <p className="text-destructive/80 text-sm">{(user as any).banReason}</p>
+                      {'banExpires' in user && (user as any).banExpires && (
+                        <p className="text-destructive/70 mt-1 text-xs">
+                          Expires: {dayjs((user as any).banExpires).format('DD MMMM YYYY HH:mm')}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
-          )}
 
-          {/* Change Password (trigger) */}
-          <Card className="lg:hidden">
-            <CardHeader>
-              <CardTitle className="mb-1">Kata Sandi</CardTitle>
-              <CardDescription>Mengelola Kata Sandi</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" onClick={() => setPasswordModalOpen(true)}>
-                Ganti Kata Sandi
+            {/* Active Membership Card */}
+            {!isMembershipsLoading && myMemberships && myMemberships.active.length > 0 && (
+              <Card className="lg:border-neutral-200 lg:bg-white">
+                <CardHeader>
+                  <CardTitle className="mb-1">Membership Aktif</CardTitle>
+                  <CardDescription>Informasi membership yang sedang aktif</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {myMemberships.active.map((userMembership) => {
+                    const allocatedHours =
+                      userMembership.incomingTransfer?.transferredHours ??
+                      userMembership.membership.sessions;
+
+                    return (
+                      <div key={userMembership.id} className="rounded-lg border p-4">
+                        <div className="mb-3 flex items-start justify-between">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-lg font-bold">
+                                {userMembership.membership.name}
+                              </h3>
+                              {userMembership.acquisitionType === 'TRANSFER' && (
+                                <Badge variant="lightInfo">Saldo Transfer</Badge>
+                              )}
+                            </div>
+                            {userMembership.incomingTransfer && (
+                              <p className="text-muted-foreground text-xs">
+                                Diterima dari {userMembership.incomingTransfer.fromUser.name} ·{' '}
+                                {userMembership.incomingTransfer.transferredHours} jam
+                              </p>
+                            )}
+                            {userMembership.membership.description && (
+                              <p className="text-muted-foreground text-sm">
+                                {userMembership.membership.description}
+                              </p>
+                            )}
+                          </div>
+                          <span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-medium">
+                            Aktif
+                          </span>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="bg-muted rounded-md p-3">
+                            <p className="text-muted-foreground mb-1 text-xs">Berlaku Hingga</p>
+                            <p className="font-semibold">
+                              {dayjs(userMembership.endDate).format('DD MMMM YYYY')}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {userMembership.remainingDuration} hari tersisa
+                            </p>
+                          </div>
+
+                          <div className="bg-muted rounded-md p-3">
+                            <p className="text-muted-foreground mb-1 text-xs">Sisa Jam</p>
+                            <p className="font-semibold">
+                              {userMembership.remainingSessions} dari {allocatedHours} jam
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {Math.round(
+                                (userMembership.remainingSessions / Math.max(1, allocatedHours)) *
+                                  100
+                              )}
+                              % tersisa
+                            </p>
+                          </div>
+                        </div>
+
+                        {userMembership.membership.benefits &&
+                          userMembership.membership.benefits.length > 0 && (
+                            <div className="mt-3">
+                              <p className="mb-2 text-sm font-medium">Benefit:</p>
+                              <ul className="space-y-1">
+                                {userMembership.membership.benefits.map((benefit) => (
+                                  <li key={benefit.id} className="flex items-start gap-2 text-sm">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      className="text-primary mt-0.5 h-4 w-4 shrink-0"
+                                      viewBox="0 0 20 20"
+                                      fill="currentColor"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                    <span className="text-muted-foreground">{benefit.benefit}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Change Password (trigger) */}
+            <Card className="lg:hidden">
+              <CardHeader>
+                <CardTitle className="mb-1">Kata Sandi</CardTitle>
+                <CardDescription>Mengelola Kata Sandi</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" onClick={() => setPasswordModalOpen(true)}>
+                  Ganti Kata Sandi
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Terms & Conditions */}
+            <Card className="lg:hidden">
+              <CardHeader>
+                <CardTitle className="mb-1">Syarat & Ketentuan</CardTitle>
+                <CardDescription>Baca ketentuan penggunaan layanan kami</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" onClick={() => router.push('/terms-and-conditions')}>
+                  <IconFileText className="mr-2 size-4" />
+                  Lihat Syarat & Ketentuan
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Logout Button */}
+            <footer className="mb-6 lg:hidden">
+              <Button
+                variant="destructive"
+                className="w-full"
+                size="lg"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                loading={isLoggingOut}
+              >
+                <IconLogout className="size-5" />
+                Keluar
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Terms & Conditions */}
-          <Card className="lg:hidden">
-            <CardHeader>
-              <CardTitle className="mb-1">Syarat & Ketentuan</CardTitle>
-              <CardDescription>Baca ketentuan penggunaan layanan kami</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" onClick={() => router.push('/terms-and-conditions')}>
-                <IconFileText className="mr-2 size-4" />
-                Lihat Syarat & Ketentuan
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Logout Button */}
-          <footer className="mb-6 lg:hidden">
-            <Button
-              variant="destructive"
-              className="w-full"
-              size="lg"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              loading={isLoggingOut}
-            >
-              <IconLogout className="size-5" />
-              Keluar
-            </Button>
-          </footer>
+            </footer>
           </section>
         </div>
       </main>

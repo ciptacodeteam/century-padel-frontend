@@ -995,6 +995,11 @@ export default function CheckoutPage() {
                                         <span className="max-w-full truncate text-sm font-semibold">
                                           {membership.membership.name}
                                         </span>
+                                        {membership.acquisitionType === 'TRANSFER' && (
+                                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                                            Saldo transfer
+                                          </span>
+                                        )}
                                         <span className="text-muted-foreground text-[11px] font-normal data-[state=on]:text-green-700">
                                           {MEMBERSHIP_TYPE_LABEL[membership.membership.type]} · sisa{' '}
                                           {membership.remainingSessions} jam
@@ -1270,7 +1275,14 @@ export default function CheckoutPage() {
                       className="flex items-center justify-between gap-3 rounded-md bg-white/80 px-3 py-2.5"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-semibold">{membership.membership.name}</p>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <p className="truncate font-semibold">{membership.membership.name}</p>
+                          {membership.acquisitionType === 'TRANSFER' && (
+                            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                              Saldo transfer
+                            </span>
+                          )}
+                        </div>
                         <p className="text-muted-foreground">
                           {MEMBERSHIP_TYPE_LABEL[membership.membership.type]}
                         </p>

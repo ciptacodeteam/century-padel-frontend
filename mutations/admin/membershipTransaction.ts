@@ -3,6 +3,7 @@ import {
   rejectAdminMembershipTransactionApi,
   suspendAdminMembershipTransactionApi,
   terminateAndRefundAdminMembershipTransactionApi,
+  transferAdminMembershipBalanceApi,
   unsuspendAdminMembershipTransactionApi,
   exportAdminMembershipTransactionsExcelApi
 } from '@/api/admin/membershipTransaction';
@@ -106,6 +107,28 @@ export const useTerminateAndRefundMembershipMutation = () => {
       toast.success('Membership dihentikan dan refund berhasil dicatat');
     },
     onError: () => toast.error('Gagal menghentikan membership dan mencatat refund')
+  });
+};
+
+export const useTransferMembershipBalanceMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { id: string; toUserId: string; hours: number; reason: string }) =>
+      transferAdminMembershipBalanceApi(vars.id, {
+        toUserId: vars.toUserId,
+        hours: vars.hours,
+        reason: vars.reason
+      }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin', 'membership-transactions'] }),
+        qc.invalidateQueries({ queryKey: ['admin', 'customers'] }),
+        qc.invalidateQueries({ queryKey: ['memberships', 'my'] })
+      ]);
+      toast.success('Saldo membership berhasil ditransfer');
+    },
+    onError: (error: any) =>
+      toast.error(error?.message || error?.msg || 'Gagal mentransfer saldo membership')
   });
 };
 

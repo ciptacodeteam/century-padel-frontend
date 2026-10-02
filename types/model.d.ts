@@ -260,6 +260,7 @@ export type MembershipUser = {
   endDate: Date | null;
   remainingSessions: number;
   remainingDuration: number; // in days
+  acquisitionType: 'PURCHASE' | 'TRANSFER';
   isExpired: boolean;
   isSuspended: boolean;
   suspensionReason: string | null;
@@ -270,6 +271,23 @@ export type MembershipUser = {
   user?: UserProfile;
   membership?: Membership;
   invoice?: MembershipInvoice;
+  incomingTransfer?: MembershipTransfer | null;
+  outgoingTransfers?: MembershipTransfer[];
+};
+
+export type MembershipTransfer = {
+  id: string;
+  sourceMembershipUserId: string;
+  destinationMembershipUserId: string;
+  fromUserId: string;
+  toUserId: string;
+  transferredHours: number;
+  reason: string;
+  transferredByAdminId: string;
+  createdAt: Date;
+  fromUser?: Pick<UserProfile, 'id' | 'name' | 'phone'>;
+  toUser?: Pick<UserProfile, 'id' | 'name' | 'phone'>;
+  transferredByAdmin?: Pick<AdminProfile, 'id' | 'name'>;
 };
 
 export type MembershipInvoice = {

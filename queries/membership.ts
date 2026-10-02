@@ -36,6 +36,13 @@ export const myMembershipsQueryOptions = queryOptions({
         remainingDuration: number;
         isExpired: boolean;
         isSuspended: boolean;
+        acquisitionType: 'PURCHASE' | 'TRANSFER';
+        incomingTransfer?: {
+          id: string;
+          transferredHours: number;
+          createdAt: string;
+          fromUser: { name: string };
+        } | null;
         membership: Membership;
       }>;
       expired: Array<any>;
@@ -52,6 +59,13 @@ export type UserActiveMembership = {
   remainingDuration: number;
   isExpired: boolean;
   isSuspended: boolean;
+  acquisitionType: 'PURCHASE' | 'TRANSFER';
+  transfer?: {
+    id: string;
+    transferredHours: number;
+    createdAt: string;
+    fromUser: { name: string };
+  } | null;
   membership: {
     id: string;
     name: string;

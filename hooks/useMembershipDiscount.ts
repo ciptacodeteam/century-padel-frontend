@@ -18,6 +18,7 @@ export interface ActiveMembership {
   remainingDuration: number;
   isExpired: boolean;
   isSuspended: boolean;
+  acquisitionType?: 'PURCHASE' | 'TRANSFER';
   membership: {
     id: string;
     name: string;

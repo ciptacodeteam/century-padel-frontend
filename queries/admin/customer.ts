@@ -5,7 +5,7 @@ import {
   searchCustomersApi,
   getCustomerComplimentaryCreditsApi
 } from '@/api/admin/customer';
-import type { Customer } from '@/types/model';
+import type { Customer, MembershipType } from '@/types/model';
 import { queryOptions } from '@tanstack/react-query';
 
 export const adminCustomersQueryOptions = queryOptions({
@@ -31,11 +31,12 @@ export type CustomerMembershipResponse = {
     remainingDuration: number;
     isExpired: boolean;
     isSuspended: boolean;
+    acquisitionType?: 'PURCHASE' | 'TRANSFER';
     membership: {
       id: string;
       name: string;
       price: number;
-      type: import('@/types/model').MembershipType;
+      type: MembershipType;
     };
   } | null;
 };
@@ -94,11 +95,12 @@ export type CustomerSearchResult = {
     remainingDuration: number;
     isExpired: boolean;
     isSuspended: boolean;
+    acquisitionType?: 'PURCHASE' | 'TRANSFER';
     membership: {
       id: string;
       name: string;
       price: number;
-      type: import('@/types/model').MembershipType;
+      type: MembershipType;
     };
   } | null;
 };

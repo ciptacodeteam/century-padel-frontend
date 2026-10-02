@@ -17,7 +17,7 @@ import {
   DialogTrigger,
   ManagedDialog
 } from '@/components/ui/dialog';
-import { PAYMENT_STATUS_BADGE_VARIANT, PAYMENT_STATUS_MAP } from '@/lib/constants';
+import { PAYMENT_STATUS_BADGE_VARIANT, PAYMENT_STATUS_MAP, ROLE } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import { adminMembershipTransactionsQueryOptions } from '@/queries/admin/membershipTransaction';
 import type { MembershipUser } from '@/types/model';
@@ -40,6 +40,9 @@ import {
 } from '@/mutations/admin/membershipTransaction';
 import { Input } from '@/components/ui/input';
 import DatePickerInput from '@/components/ui/date-picker-input';
+import { adminProfileQueryOptions } from '@/queries/admin/auth';
+import { TransferMembershipBalanceDialog } from './TransferMembershipBalanceDialog';
+import { useTransferMembershipBalanceMutation } from '@/mutations/admin/membershipTransaction';
 
 const columnHelper = createColumnHelper<MembershipUser>();
 
@@ -52,6 +55,7 @@ const getMembershipRefund = (transaction: MembershipUser) =>
 
 const MembershipTransactionTable = () => {
   const [source, setSource] = useState<string>('');
+  const { data: me } = useQuery(adminProfileQueryOptions);
   const { data: transactions = [], isLoading } = useQuery(
     adminMembershipTransactionsQueryOptions(source && source !== 'all' ? { source } : {})
   );
@@ -61,6 +65,7 @@ const MembershipTransactionTable = () => {
   const { mutate: suspendTx } = useSuspendMembershipTransactionMutation();
   const { confirmAndMutate: unsuspendTx } = useUnsuspendMembershipTransactionMutation();
   const { mutate: terminateAndRefundTx } = useTerminateAndRefundMembershipMutation();
+  const { mutateAsync: transferBalance } = useTransferMembershipBalanceMutation();
   const { mutate: exportExcel, isPending: exporting } = useExportMembershipTransactionsExcel();
 
   const columns = useMemo(
@@ -106,6 +111,11 @@ const MembershipTransactionTable = () => {
               <p className="text-muted-foreground text-xs">
                 {membership.sessions} jam · {membership.duration} hari
               </p>
+              {info.row.original.acquisitionType === 'TRANSFER' && (
+                <Badge variant="lightInfo" className="mt-1 w-fit">
+                  Saldo Transfer
+                </Badge>
+              )}
             </div>
           );
         },
@@ -115,6 +125,9 @@ const MembershipTransactionTable = () => {
         header: 'Invoice',
         cell: (info) => {
           const invoice = info.getValue();
+          if (!invoice && info.row.original.acquisitionType === 'TRANSFER') {
+            return <Badge variant="lightInfo">Transfer</Badge>;
+          }
           if (!invoice) return '-';
 
           return (
@@ -130,17 +143,12 @@ const MembershipTransactionTable = () => {
         header: 'Periode',
         cell: (info) => {
           const row = info.row.original;
-          // Calculate end date based on start date + remaining duration
-          const calculatedEndDate =
-            row.remainingDuration > 0
-              ? dayjs(row.startDate).add(row.remainingDuration, 'day').toDate()
-              : null;
 
           return (
             <div className="text-sm">
               <p className="font-medium">{formatDate(row.startDate)}</p>
               <p className="text-muted-foreground text-xs">
-                s.d. {calculatedEndDate ? formatDate(calculatedEndDate) : '-'}
+                s.d. {row.endDate ? formatDate(row.endDate) : '-'}
               </p>
             </div>
           );
@@ -174,6 +182,11 @@ const MembershipTransactionTable = () => {
                   Dihentikan & Refund
                 </Badge>
               )}
+              {row.acquisitionType === 'TRANSFER' && (
+                <Badge variant="lightInfo" className="w-fit">
+                  Saldo Transfer
+                </Badge>
+              )}
               {!refund && row.isSuspended && (
                 <Badge variant="destructive" className="w-fit">
                   Ditangguhkan
@@ -204,6 +217,9 @@ const MembershipTransactionTable = () => {
         header: 'Nominal',
         cell: (info) => {
           const invoice = info.row.original.invoice;
+          if (!invoice && info.row.original.acquisitionType === 'TRANSFER') {
+            return <span className="text-muted-foreground text-xs">Tidak menambah revenue</span>;
+          }
           if (!invoice) return '-';
 
           return (
@@ -230,7 +246,20 @@ const MembershipTransactionTable = () => {
           const canApproveOrReject = transaction.invoice?.status === 'PENDING';
           const refund = getMembershipRefund(transaction);
           const canTerminateAndRefund =
-            transaction.invoice?.status === 'PAID' && !transaction.isExpired && !refund;
+            transaction.acquisitionType === 'PURCHASE' &&
+            transaction.invoice?.status === 'PAID' &&
+            !transaction.isExpired &&
+            !refund &&
+            !transaction.outgoingTransfers?.length;
+          const canTransfer =
+            me?.role === ROLE.ADMIN &&
+            transaction.acquisitionType === 'PURCHASE' &&
+            transaction.invoice?.status === 'PAID' &&
+            !transaction.isExpired &&
+            !transaction.isSuspended &&
+            transaction.remainingSessions > 0 &&
+            !refund &&
+            dayjs(transaction.endDate).isAfter(dayjs());
 
           return (
             <div className="flex gap-2">
@@ -287,13 +316,19 @@ const MembershipTransactionTable = () => {
                   onSubmit={(payload) => terminateAndRefundTx({ id: transaction.id, ...payload })}
                 />
               )}
+              {canTransfer && (
+                <TransferMembershipBalanceDialog
+                  membership={transaction}
+                  onTransfer={(payload) => transferBalance({ id: transaction.id, ...payload })}
+                />
+              )}
             </div>
           );
         },
         size: 100
       })
     ],
-    [approveTx, rejectTx, suspendTx, terminateAndRefundTx, unsuspendTx]
+    [approveTx, me?.role, rejectTx, suspendTx, terminateAndRefundTx, transferBalance, unsuspendTx]
   );
 
   return (
@@ -366,7 +401,12 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
         <div className="space-y-3">
           <div>
             <p className="text-muted-foreground text-sm">Paket</p>
-            <p className="text-lg font-semibold">{membership?.name || '-'}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-semibold">{membership?.name || '-'}</p>
+              {transaction.acquisitionType === 'TRANSFER' && (
+                <Badge variant="lightInfo">Saldo Transfer</Badge>
+              )}
+            </div>
             <p className="text-muted-foreground text-sm">{membership?.description || ''}</p>
           </div>
           <div className="grid gap-3 md:grid-cols-3">
@@ -409,11 +449,7 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
           <div>
             <p className="text-muted-foreground text-sm">Tanggal Berakhir</p>
             <p className="font-medium">
-              {transaction.remainingDuration > 0
-                ? formatDate(
-                    dayjs(transaction.startDate).add(transaction.remainingDuration, 'day').toDate()
-                  )
-                : '-'}
+              {transaction.endDate ? formatDate(transaction.endDate) : '-'}
             </p>
           </div>
           <div>
@@ -423,6 +459,12 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
           <div>
             <p className="text-muted-foreground text-sm">Sisa Durasi</p>
             <p className="font-medium">{transaction.remainingDuration} hari</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-sm">Sumber Saldo</p>
+            <p className="font-medium">
+              {transaction.acquisitionType === 'TRANSFER' ? 'Transfer member' : 'Pembelian'}
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Status</p>
@@ -455,6 +497,62 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
           )}
         </div>
       </div>
+
+      {transaction.incomingTransfer && (
+        <div className="border-info/30 bg-info/5 rounded-lg border p-4">
+          <h3 className="font-semibold">Transfer Masuk</h3>
+          <div className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+            <div>
+              <p className="text-muted-foreground">Dari</p>
+              <p className="font-medium">{transaction.incomingTransfer.fromUser?.name || '-'}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Jumlah</p>
+              <p className="font-medium">{transaction.incomingTransfer.transferredHours} jam</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Diproses oleh</p>
+              <p className="font-medium">
+                {transaction.incomingTransfer.transferredByAdmin?.name || '-'}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Tanggal</p>
+              <p className="font-medium">
+                {dayjs(transaction.incomingTransfer.createdAt).format('DD MMM YYYY HH:mm')}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-muted-foreground">Alasan</p>
+              <p className="font-medium">{transaction.incomingTransfer.reason}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!!transaction.outgoingTransfers?.length && (
+        <div className="rounded-lg border p-4">
+          <h3 className="font-semibold">Riwayat Transfer Keluar</h3>
+          <div className="mt-3 space-y-3">
+            {transaction.outgoingTransfers.map((transfer) => (
+              <div key={transfer.id} className="bg-muted/50 rounded-md p-3 text-sm">
+                <div className="flex flex-wrap justify-between gap-2">
+                  <p className="font-medium">
+                    {transfer.transferredHours} jam → {transfer.toUser?.name || '-'}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {dayjs(transfer.createdAt).format('DD MMM YYYY HH:mm')}
+                  </p>
+                </div>
+                <p className="text-muted-foreground mt-1">Alasan: {transfer.reason}</p>
+                <p className="text-muted-foreground text-xs">
+                  Oleh {transfer.transferredByAdmin?.name || '-'}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Invoice Info */}
       {invoice && (
