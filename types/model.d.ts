@@ -403,6 +403,7 @@ export type Payment = {
   amount: number;
   fees: number;
   externalRef: string | null;
+  meta?: unknown;
   dueDate: Date | null;
   paidAt: Date | null;
   cancelledAt: Date | null;
@@ -491,6 +492,10 @@ export type BookingDetail = {
   discountPrice?: number | null;
   membershipUserId: string | null;
   complimentaryCreditMinutes: number;
+  cancelledAt: Date | null;
+  cancellationReason: string | null;
+  refundAmount: number;
+  cancelledByAdminId: string | null;
   createdAt: Date;
   updatedAt: Date;
 

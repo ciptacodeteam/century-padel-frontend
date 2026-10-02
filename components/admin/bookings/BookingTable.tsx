@@ -11,6 +11,7 @@ import {
   type BookingDetailWithSlot
 } from '@/components/admin/bookings/RescheduleCourtDialog';
 import { BookingPaymentSources } from '@/components/admin/bookings/BookingPaymentSources';
+import { CancelBookedCourtDialog } from '@/components/admin/bookings/CancelBookedCourtDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/clipboard-copy';
@@ -34,7 +35,7 @@ import { useConfirmMutation } from '@/hooks/useConfirmDialog';
 import { BOOKING_STATUS_BADGE_VARIANT, BOOKING_STATUS_MAP, BookingStatus } from '@/lib/constants';
 import { canCustomerReschedule } from '@/lib/reschedule-policy';
 import { formatSlotTime } from '@/lib/time-utils';
-import { formatPhone, getTwoWordName } from '@/lib/utils';
+import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
 import type { Booking } from '@/types/model';
 import { IconEye, IconFileExcel, IconPencil, IconPlus, IconX } from '@tabler/icons-react';
@@ -147,6 +148,15 @@ const getBookingStatus = (status: number | BookingStatus): BookingStatus => {
     2: BookingStatus.CANCELLED
   };
   return statusMap[status] || BookingStatus.HOLD;
+};
+
+const getRecordedRefundAmount = (meta: unknown): number => {
+  if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return 0;
+  const refund = (meta as Record<string, unknown>).refund;
+  if (!refund || typeof refund !== 'object' || Array.isArray(refund)) return 0;
+  if ((refund as Record<string, unknown>).status !== 'COMPLETED') return 0;
+  const amount = Number((refund as Record<string, unknown>).amount);
+  return Number.isFinite(amount) && amount > 0 ? amount : 0;
 };
 
 const BookingTable = () => {
@@ -403,7 +413,15 @@ const BookingTable = () => {
                         <div className="space-y-2">
                           {booking.details.map((detail) => {
                             const slotStart = detail.slot?.startAt;
-                            const canReschedule = !!slotStart && canCustomerReschedule(slotStart);
+                            const canReschedule =
+                              !detail.cancelledAt &&
+                              !!slotStart &&
+                              canCustomerReschedule(slotStart);
+                            const maximumRefund = Math.max(
+                              0,
+                              (booking.invoice?.total || 0) -
+                                getRecordedRefundAmount(booking.invoice?.payment?.meta)
+                            );
 
                             return (
                               <div key={detail.id} className="bg-muted/50 rounded-lg border p-3">
@@ -424,19 +442,50 @@ const BookingTable = () => {
                                     <p className="text-base font-medium">
                                       Rp {new Intl.NumberFormat('id-ID').format(detail.price)}
                                     </p>
-                                    {detail.slot && status !== BookingStatus.CANCELLED && (
-                                      <RescheduleCourtDialog
-                                        detail={detail as BookingDetailWithSlot}
-                                        canReschedule={canReschedule}
-                                        onSuccess={() =>
-                                          queryClient.invalidateQueries({
-                                            queryKey: ['admin', 'bookings']
-                                          })
-                                        }
-                                      />
-                                    )}
+                                    {detail.slot &&
+                                      !detail.cancelledAt &&
+                                      status !== BookingStatus.CANCELLED && (
+                                        <RescheduleCourtDialog
+                                          detail={detail as BookingDetailWithSlot}
+                                          canReschedule={canReschedule}
+                                          onSuccess={() =>
+                                            queryClient.invalidateQueries({
+                                              queryKey: ['admin', 'bookings']
+                                            })
+                                          }
+                                        />
+                                      )}
+                                    {status !== BookingStatus.CANCELLED &&
+                                      booking.invoice?.status === 'PAID' && (
+                                        <CancelBookedCourtDialog
+                                          detail={detail}
+                                          maximumRefund={maximumRefund}
+                                          onSuccess={() => {
+                                            queryClient.invalidateQueries({
+                                              queryKey: ['admin', 'bookings']
+                                            });
+                                            queryClient.invalidateQueries({
+                                              queryKey: ['admin', 'schedule']
+                                            });
+                                            queryClient.invalidateQueries({
+                                              queryKey: ['admin', 'analytics']
+                                            });
+                                          }}
+                                        />
+                                      )}
                                   </div>
                                 </div>
+                                {detail.cancelledAt && detail.cancellationReason && (
+                                  <div className="border-destructive/20 mt-3 border-t pt-3 text-xs">
+                                    <p>
+                                      <span className="font-medium">Alasan:</span>{' '}
+                                      {detail.cancellationReason}
+                                    </p>
+                                    <p className="text-muted-foreground mt-1">
+                                      Refund: {formatCurrency(detail.refundAmount || 0)}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
