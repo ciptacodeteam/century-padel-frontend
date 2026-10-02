@@ -11,11 +11,11 @@ export default function AddOnsCard({ coaches = [], ballboys = [], inventories = 
   if ((coaches.length || ballboys.length || inventories.length) === 0) return null;
 
   return (
-    <Card className="mb-6">
-      <CardHeader>
+    <Card className="gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
+      <CardHeader className="border-b border-gray-100 px-5 py-5 sm:px-6">
         <CardTitle className="flex items-center gap-2">Layanan Tambahan</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
         {coaches.length > 0 && (
           <div>
             <h4 className="mb-2 font-semibold">Pelatih</h4>

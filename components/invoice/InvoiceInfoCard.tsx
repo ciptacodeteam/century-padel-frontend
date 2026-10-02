@@ -16,22 +16,26 @@ export default function InvoiceInfoCard({ invoiceNumber, dueDate, paidAt, invoic
   const transactionDateLabel = paidAt ? 'Dibayar' : 'Batas bayar';
 
   return (
-    <Card className="h-full gap-1.5 py-2.5 sm:gap-2 sm:py-3">
-      <CardHeader className="flex-row items-center justify-between px-4">
-        <CardTitle>Invoice</CardTitle>
+    <Card className="h-full gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
+      <CardHeader className="flex-row items-center justify-between gap-3 px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
+        <CardTitle className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+          Invoice
+        </CardTitle>
         {invoiceStatus && (
-          <Badge className={getStatusColor(invoiceStatus)} variant="outline">
+          <Badge className={`${getStatusColor(invoiceStatus)} shrink-0`} variant="outline">
             {getStatusLabel(invoiceStatus)}
           </Badge>
         )}
       </CardHeader>
-      <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4">
-        <div className="flex min-w-0 items-center">
-          <p className="truncate font-semibold">{invoiceNumber}</p>
-          <CopyButton variant="ghost" content={invoiceNumber || ''} className="ml-1 h-7 w-7" />
+      <CardContent className="space-y-2 px-5 pb-5 sm:px-6 sm:pb-6">
+        <div className="flex min-w-0 items-center gap-1">
+          <p className="truncate text-lg font-semibold tracking-tight text-gray-950">
+            {invoiceNumber}
+          </p>
+          <CopyButton variant="ghost" content={invoiceNumber || ''} className="h-8 w-8 shrink-0" />
         </div>
         {transactionDate && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm leading-6 text-gray-500">
             {transactionDateLabel}: {dayjs(transactionDate).format('DD MMM YYYY, HH:mm')}
           </p>
         )}

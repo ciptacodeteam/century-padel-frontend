@@ -8,13 +8,15 @@ type User = {
 export default function CustomerInfoCard({ user }: { user: User }) {
   if (!user) return null;
   return (
-    <Card className="h-full gap-1.5 py-2.5 sm:gap-2 sm:py-3">
-      <CardHeader className="px-4">
-        <CardTitle>Pelanggan</CardTitle>
+    <Card className="h-full gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
+      <CardHeader className="px-5 pt-5 pb-4 sm:px-6 sm:pt-6">
+        <CardTitle className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+          Pelanggan
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4">
-        <p className="font-semibold">{user.name || '-'}</p>
-        <p className="text-sm text-gray-600">{user.phone || '-'}</p>
+      <CardContent className="space-y-2 px-5 pb-5 sm:px-6 sm:pb-6">
+        <p className="text-lg font-semibold tracking-tight text-gray-950">{user.name || '-'}</p>
+        <p className="text-sm leading-6 text-gray-500">{user.phone || '-'}</p>
       </CardContent>
     </Card>
   );

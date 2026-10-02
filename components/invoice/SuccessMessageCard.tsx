@@ -2,8 +2,8 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function SuccessMessageCard() {
   return (
-    <Card className="border-green-200 bg-green-50">
-      <CardContent className="py-6">
+    <Card className="gap-0 overflow-hidden rounded-xl border-green-200 bg-green-50 py-0 shadow-sm">
+      <CardContent className="px-5 py-6 sm:px-6 sm:py-8">
         <div className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <svg

@@ -337,8 +337,18 @@ export default function InvoiceDetailPage() {
     <div className="min-h-screen">
       <MainHeader title="Detail Transaksi" withLogo={false} backHref="/invoice" />
 
-      <div className="container mx-auto mt-20 pb-6 lg:mt-28 lg:pb-10">
-        <div className="mx-auto w-11/12 max-w-7xl">
+      <main className="mx-auto w-full max-w-5xl px-4 pt-24 pb-10 sm:px-6 sm:pt-28 lg:px-8 lg:pt-32 lg:pb-16">
+        <div className="hidden lg:mb-8 lg:block">
+          <p className="text-primary mb-2 text-sm font-semibold tracking-wide uppercase">
+            Riwayat booking
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-950">Detail Transaksi</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Informasi invoice, jadwal booking, dan rincian pembayaran Anda.
+          </p>
+        </div>
+
+        <div className="space-y-5 sm:space-y-6">
           {/* Payment Action */}
           <PaymentActionCard
             invoice={invoice as any}
@@ -360,7 +370,7 @@ export default function InvoiceDetailPage() {
           )} */}
 
           {/* Essential transaction information */}
-          <div className="my-3 grid gap-2 md:my-4 md:grid-cols-2 md:gap-3">
+          <div className="grid gap-5 md:grid-cols-2 md:gap-6">
             <InvoiceInfoCard
               invoiceNumber={invoice.number}
               dueDate={invoice.dueDate}
@@ -406,7 +416,7 @@ export default function InvoiceDetailPage() {
             }
           />
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -112,9 +112,7 @@ export default function PaymentActionCard({
     paymentMeta?.channel_code || paymentMethod?.channel || ''
   ).toUpperCase();
   const actions: PaymentAction[] = Array.isArray(paymentMeta?.actions) ? paymentMeta.actions : [];
-  const paymentRequestId = String(
-    paymentMeta?.payment_request_id || payment?.externalRef || ''
-  );
+  const paymentRequestId = String(paymentMeta?.payment_request_id || payment?.externalRef || '');
   const isMockPayment =
     paymentMeta?.mock === true ||
     paymentRequestId.startsWith('mock_') ||
@@ -184,8 +182,8 @@ export default function PaymentActionCard({
   };
 
   return (
-    <Card className="bg-primary/5 border-primary/20">
-      <CardContent className="pt-6">
+    <Card className="bg-primary/5 border-primary/20 gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
+      <CardContent className="px-5 py-6 sm:px-6 sm:py-8">
         <div className="text-center">
           {paymentMethod && (
             <div className="mb-3 flex flex-col items-center justify-center gap-2">

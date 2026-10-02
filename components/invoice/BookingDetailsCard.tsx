@@ -108,30 +108,39 @@ export default function BookingDetailsCard({ details }: { details: Detail[] }) {
   const totalSlots = (details || []).length;
 
   return (
-    <Card className="mb-4 gap-2 py-3">
-      <CardHeader className="flex-row items-center justify-between px-4">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-gray-600" />
+    <Card className="gap-0 overflow-hidden rounded-xl py-0 shadow-sm">
+      <CardHeader className="flex-row items-center justify-between gap-3 border-b border-gray-100 px-5 py-5 sm:px-6">
+        <CardTitle className="flex items-center gap-2.5 text-base sm:text-lg">
+          <span className="bg-primary/10 flex size-9 items-center justify-center rounded-lg">
+            <Calendar className="text-primary h-4 w-4" />
+          </span>
           <span>Jadwal Booking</span>
         </CardTitle>
-        <span className="text-sm text-gray-500">{totalSlots} slot</span>
+        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 sm:text-sm">
+          {totalSlots} slot
+        </span>
       </CardHeader>
-      <CardContent className="space-y-2 px-4">
+      <CardContent className="space-y-4 px-5 py-5 sm:px-6 sm:py-6">
         {Object.entries(grouped).map(([date, courts]) => (
-          <div key={date} className="rounded-md border px-3 py-2">
-            <p className="mb-2 text-sm font-semibold">{formatDateDisplay(date)}</p>
-            <div className="space-y-2">
+          <div key={date} className="rounded-xl border border-gray-200 bg-gray-50/50 p-4 sm:p-5">
+            <p className="mb-4 text-sm font-semibold text-gray-950 sm:text-base">
+              {formatDateDisplay(date)}
+            </p>
+            <div className="space-y-4">
               {Object.entries(courts as Record<string, Detail[]>).map(([courtName, items]) => (
-                <div key={courtName} className="flex items-center gap-2">
-                  <div className="flex min-w-32 items-center gap-1.5 text-sm font-medium">
-                    <MapPin className="h-4 w-4 shrink-0 text-gray-500" />
-                    <span>{courtName}</span>
+                <div
+                  key={courtName}
+                  className="grid gap-3 sm:grid-cols-[minmax(8rem,0.45fr)_1fr] sm:items-start"
+                >
+                  <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-gray-700">
+                    <MapPin className="text-primary h-4 w-4 shrink-0" />
+                    <span className="break-words">{courtName}</span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2 pl-6 sm:pl-0">
                     {mergeConsecutiveSlots(items).map((range, idx) => (
                       <span
                         key={`${String(range.startAt)}-${idx}`}
-                        className="flex items-center gap-1 rounded bg-gray-50 px-2 py-1 text-sm"
+                        className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700"
                       >
                         <Clock className="h-3.5 w-3.5 text-gray-500" />
                         {formatSlotTime(range.startAt, 'HH:mm')}–

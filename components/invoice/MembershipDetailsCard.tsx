@@ -38,14 +38,14 @@ export default function MembershipDetailsCard({
     totalSessions > 0 ? Math.min(100, Math.max(0, (sessionsUsed / totalSessions) * 100)) : 0;
 
   return (
-    <Card className="mb-6 border-amber-200 bg-linear-to-br from-amber-50 to-white">
-      <CardHeader className="border-b border-amber-100">
+    <Card className="gap-0 overflow-hidden rounded-xl border-amber-200 bg-linear-to-br from-amber-50 to-white py-0 shadow-sm">
+      <CardHeader className="border-b border-amber-100 px-5 py-5 sm:px-6">
         <CardTitle className="flex items-center gap-2">
           <Crown className="h-5 w-5 text-amber-600" />
           <span className="text-amber-900">Detail Membership</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6 pt-2">
+      <CardContent className="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
         {/* Membership Name & Status */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
