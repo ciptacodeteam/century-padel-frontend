@@ -55,6 +55,20 @@ const timeSlots = [
   '23:00'
 ];
 
+const formatBookingTablePrice = (value: number) => {
+  if (value >= 1_000_000) {
+    return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(
+      value / 1_000_000
+    )}jt`;
+  }
+
+  if (value >= 1_000) {
+    return `${new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(value / 1_000)}k`;
+  }
+
+  return new Intl.NumberFormat('id-ID').format(value);
+};
+
 type BookingPageContentProps = {
   embedded?: boolean;
 };
@@ -395,11 +409,11 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                               ? 'text-muted-foreground cursor-not-allowed bg-gray-100'
                               : isOnHold
                                 ? 'cursor-not-allowed bg-amber-50 text-amber-700'
-                              : !isAvailable
-                                ? 'cursor-not-allowed bg-gray-200 text-gray-400'
-                                : selected
-                                  ? 'bg-primary text-white shadow-lg'
-                                  : 'bg-white hover:bg-orange-100'
+                                : !isAvailable
+                                  ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                                  : selected
+                                    ? 'bg-primary text-white shadow-lg'
+                                    : 'bg-white hover:bg-orange-100'
                           )}
                           onClick={() => {
                             if (!slot || !isAvailable) return;
@@ -447,7 +461,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                               {discountPrice > 0 && discountPrice < normalPrice ? (
                                 <span className="flex flex-col items-start text-xs">
                                   <span className="text-[10px] text-gray-400 line-through">
-                                    Rp{normalPrice.toLocaleString('id-ID')}
+                                    {formatBookingTablePrice(normalPrice)}
                                   </span>
                                   <span
                                     className={cn(
@@ -455,12 +469,12 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                                       selected ? 'text-white' : 'text-primary'
                                     )}
                                   >
-                                    Rp{effectivePrice.toLocaleString('id-ID')}
+                                    {formatBookingTablePrice(effectivePrice)}
                                   </span>
                                 </span>
                               ) : (
                                 <span className="text-sm">
-                                  Rp{effectivePrice.toLocaleString('id-ID')}
+                                  {formatBookingTablePrice(effectivePrice)}
                                 </span>
                               )}
                               {!isAvailable && <span className="text-xs">Booked</span>}

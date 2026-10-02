@@ -179,6 +179,7 @@ import MembershipDetailsCard from '@/components/invoice/MembershipDetailsCard';
 import PaymentActionCard from '@/components/invoice/PaymentActionCard';
 import PaymentSummaryCard from '@/components/invoice/PaymentSummaryCard';
 import { getStatusColor, getStatusLabel } from '@/components/invoice/status';
+import InvoiceShareButton from '@/components/invoice/InvoiceShareButton';
 
 dayjs.locale('id');
 
@@ -494,6 +495,13 @@ export default function InvoiceDetailPage() {
 
           <div className="invoice-receipt-edge" aria-hidden="true" />
         </article>
+
+        <InvoiceShareButton
+          invoiceNumber={invoice.number}
+          total={invoice.total}
+          size="lg"
+          className="mt-7 w-full bg-white shadow-sm"
+        />
 
         {canPay && (
           <div className="mt-8">
