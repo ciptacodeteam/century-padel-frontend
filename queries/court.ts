@@ -18,9 +18,9 @@ export const courtQueryOptions = (id: string) =>
     select: (res) => res.data as Court
   });
 
-export const courtsSlotsQueryOptions = (queryParams: SearchParamsData) =>
+export const courtsSlotsQueryOptions = (queryParams: SearchParamsData, userId?: string) =>
   queryOptions({
-    queryKey: ['courts', 'slots', queryParams],
+    queryKey: ['courts', 'slots', userId ?? 'guest', queryParams],
     queryFn: () => getCourtsSlotsApi(queryParams),
     select: (res) => res.data as (Slot & { court?: Court })[]
   });

@@ -148,7 +148,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   );
 
   const { data: slotsData, isLoading: isSlotsLoading } = useQuery(
-    courtsSlotsQueryOptions(slotQueryParams)
+    courtsSlotsQueryOptions(slotQueryParams, user?.id)
   );
 
   const slots = useMemo(
@@ -391,6 +391,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                     const slot = slotMap.get(`${court.id}-${time}`);
                     const hasSlot = !!slot;
                     const isOnHold = slot?.bookingStatus === 'HOLD';
+                    const isMyBooking = !!slot?.isMyBooking;
                     const isAvailable = !!slot?.isAvailable && !isOnHold;
                     const selected = selectedCells.some(
                       (cell) => cell.courtId === court.id && cell.time === time
@@ -407,13 +408,15 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                             'flex h-14 w-full flex-col items-start justify-between rounded px-2 py-1 text-base font-semibold transition-all',
                             !hasSlot
                               ? 'text-muted-foreground cursor-not-allowed bg-gray-100'
-                              : isOnHold
-                                ? 'cursor-not-allowed bg-amber-50 text-amber-700'
-                                : !isAvailable
-                                  ? 'cursor-not-allowed bg-gray-200 text-gray-400'
-                                  : selected
-                                    ? 'bg-primary text-white shadow-lg'
-                                    : 'bg-white hover:bg-orange-100'
+                              : isMyBooking
+                                ? 'cursor-not-allowed bg-emerald-100 text-emerald-800'
+                                : isOnHold
+                                  ? 'cursor-not-allowed bg-amber-50 text-amber-700'
+                                  : !isAvailable
+                                    ? 'cursor-not-allowed bg-gray-200 text-gray-400'
+                                    : selected
+                                      ? 'bg-primary text-white shadow-lg'
+                                      : 'bg-white hover:bg-orange-100'
                           )}
                           onClick={() => {
                             if (!slot || !isAvailable) return;
@@ -466,7 +469,11 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                                   <span
                                     className={cn(
                                       'text-sm font-semibold',
-                                      selected ? 'text-white' : 'text-primary'
+                                      isMyBooking
+                                        ? 'text-emerald-800'
+                                        : selected
+                                          ? 'text-white'
+                                          : 'text-primary'
                                     )}
                                   >
                                     {formatBookingTablePrice(effectivePrice)}
@@ -477,7 +484,11 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                                   {formatBookingTablePrice(effectivePrice)}
                                 </span>
                               )}
-                              {!isAvailable && <span className="text-xs">Booked</span>}
+                              {!isAvailable && (
+                                <span className="text-xs">
+                                  {isMyBooking ? 'Booking Saya' : 'Booked'}
+                                </span>
+                              )}
                             </>
                           ) : (
                             <span className="text-xs">Booked</span>
