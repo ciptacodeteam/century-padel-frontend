@@ -5,6 +5,14 @@ export type BookingPaymentSource = {
   label: string;
 };
 
+export const isMembershipBooking = (booking: Booking): boolean => {
+  const details = booking.details ?? [];
+  return (
+    details.some((detail) => Boolean(detail.membershipUserId)) ||
+    (details.length > 0 && booking.courtNormalPrice === 0)
+  );
+};
+
 const formatCreditDuration = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
@@ -54,7 +62,7 @@ export const getBookingPaymentSources = (booking: Booking): BookingPaymentSource
     });
   }
 
-  if (booking.details?.some((detail) => Boolean(detail.membershipUserId))) {
+  if (isMembershipBooking(booking)) {
     sources.push({ id: 'membership', label: 'Membership' });
   }
 

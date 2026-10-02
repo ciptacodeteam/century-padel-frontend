@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { formatGatewayPaymentMethod, getBookingPaymentSources } from './booking-payment';
+import {
+  formatGatewayPaymentMethod,
+  getBookingPaymentSources,
+  isMembershipBooking
+} from './booking-payment';
 import type { Booking } from '@/types/model';
 
 const booking = (overrides: Partial<Booking> = {}) =>
@@ -47,5 +51,32 @@ describe('booking payment sources', () => {
       'Belum dipilih'
     );
     expect(getBookingPaymentSources(booking())[0].label).toBe('Gratis / Tanpa pembayaran');
+  });
+
+  it('detects explicit and legacy membership bookings without marking regular bookings', () => {
+    expect(
+      isMembershipBooking(
+        booking({
+          courtNormalPrice: 300_000,
+          details: [{ membershipUserId: 'membership-1' }] as Booking['details']
+        })
+      )
+    ).toBe(true);
+    expect(
+      isMembershipBooking(
+        booking({
+          courtNormalPrice: 0,
+          details: [{ membershipUserId: null }] as Booking['details']
+        })
+      )
+    ).toBe(true);
+    expect(
+      isMembershipBooking(
+        booking({
+          courtNormalPrice: 300_000,
+          details: [{ membershipUserId: null }] as Booking['details']
+        })
+      )
+    ).toBe(false);
   });
 });

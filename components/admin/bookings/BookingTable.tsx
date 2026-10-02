@@ -34,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useConfirmMutation } from '@/hooks/useConfirmDialog';
 import { BOOKING_STATUS_BADGE_VARIANT, BOOKING_STATUS_MAP, BookingStatus } from '@/lib/constants';
 import { canCustomerReschedule } from '@/lib/reschedule-policy';
+import { isMembershipBooking } from '@/lib/booking-payment';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
@@ -162,6 +163,7 @@ const getRecordedRefundAmount = (meta: unknown): number => {
 const BookingTable = () => {
   const queryClient = useQueryClient();
   const [source, setSource] = useState<string>('');
+  const [paymentType, setPaymentType] = useState<string>('');
   const [range, setRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 30),
     to: new Date()
@@ -276,6 +278,16 @@ const BookingTable = () => {
             </Badge>
           );
         }
+      }),
+      colHelper.display({
+        id: 'paymentType',
+        header: 'Jenis Pesanan',
+        cell: ({ row }) =>
+          isMembershipBooking(row.original) ? (
+            <Badge variant="lightInfo">Membership</Badge>
+          ) : (
+            <Badge variant="outline">Reguler</Badge>
+          )
       }),
       colHelper.accessor('totalPrice', {
         header: 'Total Harga',
@@ -640,9 +652,11 @@ const BookingTable = () => {
     [colHelper, updateStatus, approveBooking, cancelBooking, queryClient]
   );
 
-  const { data, isPending } = useQuery(
-    adminBookingsQueryOptions(source && source !== 'all' ? { source } : {})
-  );
+  const bookingFilters = {
+    ...(source && source !== 'all' ? { source } : {}),
+    ...(paymentType && paymentType !== 'all' ? { paymentType } : {})
+  };
+  const { data, isPending } = useQuery(adminBookingsQueryOptions(bookingFilters));
 
   return (
     <div className="space-y-4">
@@ -669,6 +683,22 @@ const BookingTable = () => {
               </Select>
             </div>
 
+            <div className="flex items-center gap-2">
+              <label htmlFor="payment-type-filter" className="text-sm font-medium">
+                Jenis Pesanan:
+              </label>
+              <Select value={paymentType || 'all'} onValueChange={setPaymentType}>
+                <SelectTrigger id="payment-type-filter" className="w-[180px]">
+                  <SelectValue placeholder="Semua" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua</SelectItem>
+                  <SelectItem value="membership">Membership</SelectItem>
+                  <SelectItem value="regular">Reguler</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* <DateRangeInput value={range} onValueChange={(r) => setRange(r ?? undefined)} /> */}
 
             <Button
@@ -685,6 +715,7 @@ const BookingTable = () => {
 
                   const params: any = {};
                   if (source && source !== 'all') params.source = source;
+                  if (paymentType && paymentType !== 'all') params.paymentType = paymentType;
                   if (startDate) params.startDate = startDate;
                   if (endDate) params.endDate = endDate;
 
