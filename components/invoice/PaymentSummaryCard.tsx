@@ -55,6 +55,7 @@ export default function PaymentSummaryCard({
                   <div className="flex h-8 w-12 shrink-0 items-center justify-center rounded-md bg-white p-1 ring-1 ring-gray-200">
                     <Image
                       src={resolveMediaUrl(method.logo) || ''}
+                      unoptimized
                       alt={method.name || 'Payment Method'}
                       width={48}
                       height={24}

@@ -24,8 +24,10 @@ export async function applyPromoApi(payload: any) {
   return data;
 }
 
-export async function getInvoiceApi(invoiceId: string) {
-  const { data } = await api.get(`/invoices/${invoiceId}`);
+export async function getInvoiceApi(invoiceId: string, shareToken?: string | null) {
+  const { data } = await api.get(`/invoices/${invoiceId}`, {
+    params: shareToken ? { share: shareToken } : undefined
+  });
   return data;
 }
 

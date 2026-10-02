@@ -1,6 +1,6 @@
 'use client';
 
-import CenturyLogo from '@/assets/img/logocentury.svg';
+import logo from '@/assets/img/logo.webp';
 import MainHeader from '@/components/headers/MainHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,13 @@ import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import 'dayjs/locale/id';
 import { ArrowLeft, CheckCircle2, Clock3, FileText } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useRef } from 'react';
+import Image from 'next/image';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 // Local typed view-models for the invoice detail API response
 type ApiUser = {
-  id: string;
+  id?: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string | null;
 };
 
@@ -164,6 +164,7 @@ type InvoiceDetail = {
   paymentMeta?: ApiPaymentMeta | null;
   paymentInstructions?: any | null;
   paymentUrl?: string | null;
+  shareToken?: string;
 };
 
 type InvoiceDetailApiResponse = {
@@ -194,8 +195,9 @@ const formatCurrency = (value: number) => currencyFormatter.format(value).replac
 export default function InvoiceDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const invoiceNumber = params.invoiceNumber as string;
-  const invoiceReceiptRef = useRef<HTMLElement>(null);
+  const publicShareToken = searchParams.get('share');
 
   const {
     data: response,
@@ -204,7 +206,7 @@ export default function InvoiceDetailPage() {
     isLoading,
     refetch
   } = useQuery({
-    ...invoiceQueryOptions(invoiceNumber),
+    ...invoiceQueryOptions(invoiceNumber, publicShareToken),
     // Poll every 3 seconds when status is PENDING or HOLD
     refetchInterval: (query) => {
       const typedData = query.state.data as InvoiceDetailApiResponse | undefined;
@@ -352,6 +354,7 @@ export default function InvoiceDetailPage() {
   const bookingBallboys = booking?.ballboys || [];
   const subtotalForDisplay = invoice.subtotal + (invoice.promoDiscountAmount || 0);
   const canPay =
+    !publicShareToken &&
     ['PENDING', 'HOLD'].includes(invoice.status) &&
     (!invoice.dueDate || dayjs().isBefore(dayjs(invoice.dueDate)));
   const isPaid = invoice.status === 'PAID';
@@ -379,14 +382,12 @@ export default function InvoiceDetailPage() {
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Invoice Transaksi</h1>
         </div>
 
-        <article
-          ref={invoiceReceiptRef}
-          className="relative overflow-visible rounded-t-2xl bg-white shadow-[0_18px_50px_rgba(51,32,26,0.16)]"
-        >
+        <article className="relative overflow-visible rounded-t-2xl bg-white shadow-[0_18px_50px_rgba(51,32,26,0.16)]">
           <header className="px-5 pt-8 pb-6 text-center sm:px-8 sm:pt-10 sm:pb-8">
-            <CenturyLogo
-              role="img"
-              aria-label="Century Padel"
+            <Image
+              src={logo}
+              alt="Century Padel"
+              priority
               className="mx-auto h-auto w-48 sm:w-56"
             />
             <p className="text-primary mt-4 text-xs font-bold tracking-[0.22em] uppercase">
@@ -501,10 +502,10 @@ export default function InvoiceDetailPage() {
 
         <InvoiceShareButton
           invoiceNumber={invoice.number}
-          captureRef={invoiceReceiptRef}
-          captureKey={`${invoice.status}:${invoice.paidAt || ''}:${invoice.total}`}
+          total={invoice.total}
+          shareToken={invoice.shareToken}
           size="lg"
-          className="mt-7 w-full bg-white shadow-none"
+          className="mt-7 w-full bg-white shadow-sm"
         />
 
         {canPay && (
