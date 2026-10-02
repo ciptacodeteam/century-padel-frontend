@@ -1,4 +1,5 @@
 import dayjs, { type ConfigType } from 'dayjs';
+import { getVenueDateKey } from './venue-date';
 
 export const DEFAULT_SCHEDULE_VISIBILITY_MONTHS = 1;
 
@@ -12,5 +13,5 @@ export function getScheduleVisibilityHorizonDate(
 ): dayjs.Dayjs {
   const visibilityMonths = Math.max(DEFAULT_SCHEDULE_VISIBILITY_MONTHS, months);
 
-  return dayjs(now).add(visibilityMonths, 'month').endOf('day');
+  return dayjs(getVenueDateKey(now)).add(visibilityMonths, 'month').endOf('day');
 }

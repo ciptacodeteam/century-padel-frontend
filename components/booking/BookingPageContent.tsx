@@ -14,6 +14,7 @@ import {
 } from '@/lib/booking';
 import { isHourlyBookingTimeVisible } from '@/lib/booking-slot-cutoff';
 import { formatSlotTime } from '@/lib/time-utils';
+import { dateKeyToLocalDate, getVenueDateKey } from '@/lib/venue-date';
 import {
   DEFAULT_SCHEDULE_VISIBILITY_MONTHS,
   getScheduleVisibilityHorizonDate
@@ -83,7 +84,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
     [scheduleVisibilityMonths]
   );
 
-  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const [selectedDate, setSelectedDate] = useState(() => getVenueDateKey());
   const [dateList, setDateList] = useState<
     { label: string; date: string; fullDate: string; active?: boolean }[]
   >([]);
@@ -97,7 +98,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   const didSkipInitialStoreSync = useRef(false);
 
   useEffect(() => {
-    const today = dayjs().startOf('day');
+    const today = dayjs(getVenueDateKey()).startOf('day');
     const endDate = scheduleHorizon.endOf('day');
     const updatedDates: { label: string; date: string; fullDate: string; active?: boolean }[] = [];
 
@@ -147,7 +148,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
   );
 
   const availableTimeSlots = useMemo(() => {
-    const isToday = dayjs(selectedFullDate).isSame(bookingClock, 'day');
+    const isToday = selectedFullDate === getVenueDateKey(bookingClock);
     if (!isToday) return timeSlots;
 
     return timeSlots.filter((time) =>
@@ -225,10 +226,6 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
 
     const persistedSelections = bookingItemsToSelectionsByDate(bookingItems);
 
-    if (bookingItems[0]?.date) {
-      setSelectedDate(bookingItems[0].date);
-    }
-
     setSelectionsByDate(persistedSelections);
     didInitializeSelections.current = true;
   }, [bookingItems]);
@@ -291,6 +288,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
           <div className="flex items-center gap-2">
             <div className="flex items-center px-2 pl-4">
               <DatePickerModal
+                value={dateKeyToLocalDate(selectedDate)}
                 onChange={handleSelectDate}
                 label="Select Booking Date"
                 maxDate={scheduleHorizon.toDate()}

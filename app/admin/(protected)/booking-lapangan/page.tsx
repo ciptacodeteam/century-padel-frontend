@@ -10,6 +10,7 @@ import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
 import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
 import { isHourlyBookingTimeVisible, isSlotBeforeBookingCutoff } from '@/lib/booking-slot-cutoff';
 import { formatSlotTime } from '@/lib/time-utils';
+import { getVenueTodayLocalDate } from '@/lib/venue-date';
 import { cn, getPlaceholderImageUrl } from '@/lib/utils';
 import { adminCourtCostingQueryOptions } from '@/queries/admin/court';
 import type { CustomerSearchResult } from '@/queries/admin/customer';
@@ -93,7 +94,6 @@ export default function BookingLapangan() {
   const queryClient = useQueryClient();
   const {
     bookingItems,
-    selectedDate,
     selectedCustomerId,
     selectedCustomerName: storeCustomerName,
     selectedCustomerPhone: storeCustomerPhone,
@@ -107,7 +107,7 @@ export default function BookingLapangan() {
     walkInPhone: storeWalkInPhone
   } = useBookingStore();
 
-  const [localSelectedDate, setLocalSelectedDate] = useState<Date>(selectedDate);
+  const [localSelectedDate, setLocalSelectedDate] = useState<Date>(() => getVenueTodayLocalDate());
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<string[]>([]);
   const [selectedCourt, setSelectedCourt] = useState<string | null>(null);
   const [localCustomerId, setLocalCustomerId] = useState<string>(selectedCustomerId ?? '');
@@ -324,17 +324,18 @@ export default function BookingLapangan() {
     });
   }, [availableTimeSlots]);
 
-  // Sync with store when component mounts
+  // A new visit always starts from today at the venue. Do not restore an old
+  // persisted selection, which can point the page at a past date.
   useEffect(() => {
-    setLocalSelectedDate(selectedDate);
-  }, [selectedDate]);
+    setStoreDate(getVenueTodayLocalDate());
+  }, [setStoreDate]);
 
   // Get current week for horizontal scroll
   const getWeekDates = () => {
     const start = startOfWeek(localSelectedDate);
     return Array.from({ length: 14 }, (_, i) => {
       const date = addDays(start, i);
-      const today = new Date();
+      const today = getVenueTodayLocalDate();
       return {
         date: date,
         day: formatDate(date, 'ddd'),
@@ -687,7 +688,7 @@ export default function BookingLapangan() {
                     setCalendarOpen(false);
                   }
                 }}
-                disabled={(date) => date < new Date()}
+                disabled={(date) => isBefore(date, getVenueTodayLocalDate(), 'day')}
                 initialFocus
               />
             </PopoverContent>
@@ -715,7 +716,7 @@ export default function BookingLapangan() {
                     !dateInfo.isCurrentMonth && 'opacity-50'
                   )}
                   onClick={() => setLocalSelectedDate(dateInfo.date)}
-                  disabled={isBefore(dateInfo.date, new Date(), 'day')}
+                  disabled={isBefore(dateInfo.date, getVenueTodayLocalDate(), 'day')}
                 >
                   <span className="text-xs leading-tight font-medium">{dateInfo.day}</span>
                   <span className="text-lg leading-none font-bold">{dateInfo.dayNumber}</span>

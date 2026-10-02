@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { getVenueTodayLocalDate } from '@/lib/venue-date';
+import { useEffect, useState } from 'react';
 import { Calendar } from './calendar';
 import {
   Dialog,
@@ -39,6 +40,10 @@ function DatePickerModal({
   const [open, setOpen] = useState(false);
   const [internalValue, setInternalValue] = useState<Date | null>(value ?? null);
 
+  useEffect(() => {
+    setInternalValue(value ?? null);
+  }, [value]);
+
   const handleSelect = (date: Date | undefined) => {
     setInternalValue(date ?? null);
     if (onChange) onChange(date ?? null);
@@ -56,8 +61,7 @@ function DatePickerModal({
           <Calendar
             mode="single"
             disabled={(date) => {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
+              const today = getVenueTodayLocalDate();
               if (date < today) return true;
               if (maxDate) {
                 const max = new Date(maxDate);
@@ -69,8 +73,8 @@ function DatePickerModal({
             classNames={{
               root: 'w-full'
             }}
-            fromYear={new Date().getFullYear()}
-            toYear={maxDate ? maxDate.getFullYear() : new Date().getFullYear() + 5}
+            fromYear={getVenueTodayLocalDate().getFullYear()}
+            toYear={maxDate ? maxDate.getFullYear() : getVenueTodayLocalDate().getFullYear() + 5}
             captionLayout="dropdown"
             selected={internalValue ?? undefined}
             onSelect={handleSelect}
