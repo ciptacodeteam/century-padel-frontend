@@ -75,7 +75,7 @@ export default function PaymentSummaryCard({
               <span className="text-gray-500">Subtotal</span>
               <span className="font-semibold text-gray-900">{formatCurrency(subtotal)}</span>
             </div>
-            {promoDiscountAmount && promoDiscountAmount > 0 && (
+            {typeof promoDiscountAmount === 'number' && promoDiscountAmount > 0 && (
               <div className="flex items-center justify-between gap-6 py-2 text-sm text-green-600">
                 <span>Diskon</span>
                 <span className="font-semibold">-{formatCurrency(promoDiscountAmount)}</span>
