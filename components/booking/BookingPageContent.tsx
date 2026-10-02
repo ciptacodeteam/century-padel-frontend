@@ -484,11 +484,7 @@ export default function BookingPageContent({ embedded = false }: BookingPageCont
                                   {formatBookingTablePrice(effectivePrice)}
                                 </span>
                               )}
-                              {!isAvailable && (
-                                <span className="text-xs">
-                                  {isMyBooking ? 'Booking Saya' : 'Booked'}
-                                </span>
-                              )}
+                              {!isAvailable && <span className="text-xs">Booked</span>}
                             </>
                           ) : (
                             <span className="text-xs">Booked</span>
