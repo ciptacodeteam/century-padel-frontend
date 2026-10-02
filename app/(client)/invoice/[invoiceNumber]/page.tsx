@@ -503,8 +503,8 @@ export default function InvoiceDetailPage() {
 
         <InvoiceShareButton
           invoiceNumber={invoice.number}
-          total={invoice.total}
           captureRef={invoiceReceiptRef}
+          captureKey={`${invoice.status}:${invoice.paidAt || ''}:${invoice.total}`}
           size="lg"
           className="mt-7 w-full bg-white shadow-none"
         />
