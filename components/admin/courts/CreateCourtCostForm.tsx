@@ -192,6 +192,10 @@ const CreateCourtCostForm = ({ courtId }: Props) => {
               <FieldError>{form.formState.errors.peakHourDiscountPrice?.message}</FieldError>
             </Field>
           </div>
+          <p className="text-muted-foreground text-xs">
+            Harga Happy Hour berlaku pukul 06:00–15:59 pada hari kerja dan semua jam operasional
+            pada Sabtu–Minggu.
+          </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field>
               <FieldLabel htmlFor="fromDate">Mulai Dari</FieldLabel>

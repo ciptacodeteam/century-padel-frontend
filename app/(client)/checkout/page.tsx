@@ -886,7 +886,11 @@ export default function CheckoutPage() {
                         const startTime = slot.timeSlot.split(' - ')[0]?.trim() ?? '';
                         const eligibleMembershipsForSlot =
                           membershipDiscount.activeMemberships.filter((membership) =>
-                            isMembershipEligibleForStartTime(membership.membership.type, startTime)
+                            isMembershipEligibleForStartTime(
+                              membership.membership.type,
+                              slot.date,
+                              startTime
+                            )
                           );
                         const selectedMembershipUserId = selectedMembershipByBookingKey[bookingKey];
                         const selectedMembership = membershipDiscount.activeMemberships.find(

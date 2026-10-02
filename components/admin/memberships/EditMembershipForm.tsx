@@ -178,7 +178,8 @@ const EditMembershipForm = ({ membershipId }: Props) => {
                   )}
                 />
                 <p className="text-muted-foreground text-xs">
-                  Happy Hour berlaku pukul 06:00–15:59. Peak Hour dapat dipakai di semua jam.
+                  Happy Hour berlaku pukul 06:00–15:59 pada hari kerja dan semua jam operasional
+                  pada Sabtu–Minggu. Peak Hour dapat dipakai di semua jam.
                 </p>
               </Field>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -242,9 +243,7 @@ const EditMembershipForm = ({ membershipId }: Props) => {
                   <p className="text-muted-foreground mt-1 text-xs">
                     Pembeli membership dapat melihat dan booking jadwal tepat N bulan ke depan.
                   </p>
-                  <FieldError>
-                    {form.formState.errors.scheduleVisibilityMonths?.message}
-                  </FieldError>
+                  <FieldError>{form.formState.errors.scheduleVisibilityMonths?.message}</FieldError>
                 </Field>
               </div>
               <Field>

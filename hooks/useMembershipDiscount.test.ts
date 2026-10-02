@@ -106,4 +106,22 @@ describe('selected membership slots', () => {
       'membership-user-1'
     ]);
   });
+
+  it('covers an evening weekend slot with a happy-hour membership', () => {
+    const weekendBooking: BookingItem = {
+      ...bookings[1],
+      slotId: 'saturday-slot-16',
+      date: '2026-09-26'
+    };
+
+    const result = calculateMembershipDiscount(
+      { activeMembership: happyHourMembership },
+      [weekendBooking],
+      true
+    );
+
+    expect(result.coveredBookingKeys).toEqual(['saturday-slot-16']);
+    expect(result.membershipAllocations[0]?.membershipUserId).toBe('membership-user-happy');
+    expect(result.discountedTotal).toBe(0);
+  });
 });

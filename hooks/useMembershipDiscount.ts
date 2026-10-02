@@ -119,7 +119,7 @@ export function calculateMembershipDiscount(
     const membershipToUse = membershipCandidates.find((membership) => {
       const usedHours = usedHoursByMembershipId.get(membership.id) ?? 0;
       return (
-        isMembershipEligibleForStartTime(membership.membership.type, startTime) &&
+        isMembershipEligibleForStartTime(membership.membership.type, booking.date, startTime) &&
         usedHours + bookingHours <= membership.remainingSessions
       );
     });
