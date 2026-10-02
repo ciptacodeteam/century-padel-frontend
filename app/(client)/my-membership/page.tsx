@@ -68,12 +68,14 @@ export default function MyMembershipPage() {
 
           {!isPending && !isError && activeMemberships.length > 0 && (
             <>
-              <div className="flex items-end justify-between gap-4">
-                <div>
+              <div className="flex min-w-0 items-end justify-between gap-3 sm:gap-4">
+                <div className="min-w-0">
                   <p className="text-muted-foreground text-sm">Paket yang dapat digunakan</p>
-                  <h2 className="text-xl font-bold">{activeMemberships.length} Membership Aktif</h2>
+                  <h2 className="text-xl font-bold break-words">
+                    {activeMemberships.length} Membership Aktif
+                  </h2>
                 </div>
-                <Button variant="outline" size="sm" asChild>
+                <Button className="shrink-0" variant="outline" size="sm" asChild>
                   <Link href="/membership">Lihat Paket</Link>
                 </Button>
               </div>
@@ -97,25 +99,27 @@ export default function MyMembershipPage() {
                       key={userMembership.id}
                       className="overflow-hidden border-neutral-200 bg-white py-0 shadow-sm"
                     >
-                      <CardHeader className="from-primary to-primary/80 gap-4 bg-gradient-to-br p-5 text-white sm:p-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex min-w-0 items-center gap-3">
+                      <CardHeader className="from-primary to-primary/80 min-w-0 gap-4 bg-gradient-to-br p-5 text-white sm:p-6">
+                        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
                             <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15">
                               <Crown className="size-6" />
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-medium text-white/75">Membership aktif</p>
-                              <h2 className="truncate text-xl font-bold">{membership.name}</h2>
+                              <h2 className="text-lg leading-tight font-bold break-words sm:text-xl">
+                                {membership.name}
+                              </h2>
                             </div>
                           </div>
-                          <Badge className="border-white/30 bg-white/15 text-white hover:bg-white/15">
+                          <Badge className="shrink-0 border-white/30 bg-white/15 text-white hover:bg-white/15">
                             Aktif
                           </Badge>
                         </div>
 
-                        <div>
-                          <div className="flex items-end justify-between gap-4">
-                            <div>
+                        <div className="min-w-0">
+                          <div className="flex min-w-0 items-end justify-between gap-3 sm:gap-4">
+                            <div className="shrink-0">
                               <p className="text-xs text-white/75">Sisa jam bermain</p>
                               <p className="mt-1 text-3xl font-bold">
                                 {userMembership.remainingSessions}
@@ -124,7 +128,7 @@ export default function MyMembershipPage() {
                                 </span>
                               </p>
                             </div>
-                            <p className="text-right text-xs text-white/75">
+                            <p className="min-w-0 text-right text-xs leading-5 text-white/75">
                               {usedHours} dari {allocatedHours} jam terpakai
                             </p>
                           </div>
@@ -150,26 +154,26 @@ export default function MyMembershipPage() {
                           </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-muted/70 rounded-lg p-3">
+                        <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
+                          <div className="bg-muted/70 min-w-0 rounded-lg p-3">
                             <Clock3 className="text-primary mb-2 size-5" />
                             <p className="text-muted-foreground text-xs">Masa aktif</p>
-                            <p className="mt-0.5 font-semibold">
+                            <p className="mt-0.5 text-sm font-semibold break-words sm:text-base">
                               {userMembership.remainingDuration} hari lagi
                             </p>
                           </div>
-                          <div className="bg-muted/70 rounded-lg p-3">
+                          <div className="bg-muted/70 min-w-0 rounded-lg p-3">
                             <CalendarDays className="text-primary mb-2 size-5" />
                             <p className="text-muted-foreground text-xs">Berlaku hingga</p>
-                            <p className="mt-0.5 font-semibold">
+                            <p className="mt-0.5 text-sm font-semibold break-words sm:text-base">
                               {dayjs(userMembership.endDate).format('DD MMM YYYY')}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 border-y py-3 text-sm">
+                        <div className="flex min-w-0 items-center justify-between gap-3 border-y py-3 text-sm">
                           <span className="text-muted-foreground">Tipe penggunaan</span>
-                          <span className="font-semibold">
+                          <span className="min-w-0 text-right font-semibold break-words">
                             {MEMBERSHIP_TYPE_LABEL[membership.type ?? 'ALL_HOUR']}
                           </span>
                         </div>
