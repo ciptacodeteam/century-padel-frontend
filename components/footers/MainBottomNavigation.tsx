@@ -1,7 +1,7 @@
 'use client';
 
 import { featureFlags } from '@/lib/feature-flags';
-import { IconBallTennis, IconUser } from '@tabler/icons-react';
+import { IconBallTennis, IconCrown, IconUser } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback } from 'react';
@@ -23,6 +23,12 @@ const navigationItems = [
         }
       ]
     : []),
+  {
+    title: 'Membership',
+    icon: <IconCrown size={28} />,
+    path: '/my-membership',
+    requiresAuth: true
+  },
   { title: 'Invoice', icon: <CalendarCheckIcon size={28} />, path: '/invoice', requiresAuth: true },
   { title: 'Profil', icon: <IconUser size={28} />, path: '/profile', requiresAuth: true }
 ];
@@ -33,7 +39,13 @@ const MainBottomNavigation = () => {
   const isAuthenticated = !!user?.id;
   const openAuthModal = useAuthModalStore((state) => state.open);
 
-  const isActive = useCallback((path: string) => pathname === path, [pathname]);
+  const isActive = useCallback(
+    (path: string) =>
+      pathname === path ||
+      (path === '/my-membership' &&
+        (pathname === '/membership' || pathname.startsWith('/membership/'))),
+    [pathname]
+  );
 
   return (
     <BottomNavigationWrapper>

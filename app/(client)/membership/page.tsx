@@ -1,6 +1,7 @@
 'use client';
 
 import MainHeader from '@/components/headers/MainHeader';
+import MainBottomNavigation from '@/components/footers/MainBottomNavigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,17 +20,12 @@ import { CheckCircle2, Clock, Eye, PackageCheck } from 'lucide-react';
 export default function MembershipPage() {
   const { data, isLoading, isError } = useQuery(membershipsQueryOptions());
   const memberships = (data ?? []).filter((membership) => membership.isActive);
-  const totalSessions = memberships.reduce((total, membership) => total + membership.sessions, 0);
-  const longestDuration = memberships.reduce(
-    (duration, membership) => Math.max(duration, membership.duration),
-    0
-  );
 
   return (
     <>
       <MainHeader backHref="/" title="Value Pack" withLogo={false} withBorder />
 
-      <main className="mx-auto flex w-11/12 max-w-7xl flex-col gap-4 pb-12 lg:relative lg:left-1/2 lg:w-screen lg:max-w-none lg:-translate-x-1/2 lg:bg-neutral-50">
+      <main className="mx-auto flex w-11/12 max-w-7xl flex-col gap-4 pb-28 lg:relative lg:left-1/2 lg:w-screen lg:max-w-none lg:-translate-x-1/2 lg:bg-neutral-50 lg:pb-12">
         <section className="mx-auto hidden w-11/12 max-w-7xl items-end justify-between gap-8 pt-32 pb-8 lg:flex">
           <div className="max-w-2xl">
             <p className="text-primary text-sm font-semibold">Century Padel Value Pack</p>
@@ -149,6 +145,7 @@ export default function MembershipPage() {
           </section>
         )}
       </main>
+      <MainBottomNavigation />
     </>
   );
 }
