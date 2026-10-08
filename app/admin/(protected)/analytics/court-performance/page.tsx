@@ -249,7 +249,10 @@ export default function CourtPerformancePage() {
                   setDraft({ ...draft, courtId: value === 'all' ? '' : value })
                 }
               >
-                <SelectTrigger id="report-court" className="w-full data-[size=default]:h-10">
+                <SelectTrigger
+                  id="report-court"
+                  className="w-full rounded-none px-3 font-normal data-[size=default]:h-10"
+                >
                   <SelectValue placeholder="Semua lapangan" />
                 </SelectTrigger>
                 <SelectContent
