@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
+import { revenueDateBoundary } from '@/lib/revenue-date';
 import type { DateRange } from 'react-day-picker';
 
 import AppSectionHeader from '@/components/ui/app-section-header';
@@ -26,8 +27,8 @@ export default function BusinessInsightsPage() {
     to: new Date()
   });
 
-  const startDate = date?.from ? format(date.from, "yyyy-MM-dd'T'00:00:00'Z'") : undefined;
-  const endDate = date?.to ? format(date.to, "yyyy-MM-dd'T'23:59:59'Z'") : undefined;
+  const startDate = revenueDateBoundary(date?.from);
+  const endDate = revenueDateBoundary(date?.to, true);
 
   const { data: businessData, isLoading } = useQuery({
     ...businessInsightsQueryOptions(startDate, endDate),

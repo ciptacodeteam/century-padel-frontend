@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatCurrency } from '@/lib/utils';
 import { IconCreditCard, IconReceiptTax, IconTrendingUp, IconUsers } from '@tabler/icons-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface PaymentMethodsSectionProps {
   data: any;
@@ -73,7 +74,20 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
 
   return (
     <div className="space-y-6">
+      <p className="text-muted-foreground text-sm">
+        Seluruh invoice lunas, termasuk membership kasir, dihitung satu kali berdasarkan tanggal
+        pelunasan WIB. Refund selesai mengurangi revenue; refund penuh menghasilkan net Rp0. Biaya
+        proses tidak termasuk revenue. Untuk invoice lama tanpa tanggal pelunasan, digunakan tanggal
+        terbit. Lapangan yang dibatalkan juga mengurangi revenue. Pengurang pembatalan belum
+        tercakup refund, sehingga tidak dipotong dua kali.
+      </p>
       {/* Summary Stats */}
+      <p className="text-sm">
+        Pengurang pembatalan di luar refund:{' '}
+        <span className="text-destructive font-semibold">
+          {formatCurrency(summary.totalCancellations || 0)}
+        </span>
+      </p>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -106,7 +120,7 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatCurrency(netRevenue)}</div>
-            <p className="text-muted-foreground text-xs">Setelah biaya dan refund</p>
+            <p className="text-muted-foreground text-xs">Setelah biaya, refund, dan pembatalan</p>
           </CardContent>
         </Card>
 
@@ -145,7 +159,11 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
             {sortedMethods.map((method) => {
               const avgPerTransaction = method.count > 0 ? method.total / method.count : 0;
               const netAmount =
-                (method.total || 0) - (method.processingFee || 0) - (method.refunds || 0);
+                method.netAmount ??
+                Math.max(
+                  0,
+                  (method.total || 0) - (method.processingFee || 0) - (method.refunds || 0)
+                );
               const methodFeePercentage =
                 method.total > 0 ? ((method.processingFee || 0) / method.total) * 100 : 0;
 
@@ -185,7 +203,7 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
                     <Progress value={method.percentage || 0} className="h-2.5" />
 
                     {/* Metrics Grid */}
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
                       <div className="space-y-1">
                         <p className="text-muted-foreground text-xs">Gross Amount</p>
                         <p className="font-semibold">{formatCurrency(method.total)}</p>
@@ -200,6 +218,12 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
                         <p className="text-muted-foreground text-xs">Refund</p>
                         <p className="text-destructive font-semibold">
                           {formatCurrency(method.refunds || 0)}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">Pembatalan di luar refund</p>
+                        <p className="text-destructive font-semibold">
+                          {formatCurrency(method.cancellations || 0)}
                         </p>
                       </div>
                       <div className="space-y-1">
@@ -222,50 +246,79 @@ export default function PaymentMethodsSection({ data, isLoading }: PaymentMethod
                       </div>
                     )}
 
-                    {/* Transactions Button */}
-                    {/* {method.transactions && method.transactions.length > 0 && (
-                      <ManagedDialog id={`payment-method-${method.method?.id}`}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-center text-xs"
-                          >
-                            <IconEye className="mr-1.5 h-3.5 w-3.5" />
-                            View {method.transactions.length} Transaction
-                            {method.transactions.length !== 1 ? 's' : ''}
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>{method.method?.name} Transactions</DialogTitle>
-                          </DialogHeader>
-                          <div className="max-h-96 space-y-3 overflow-y-auto">
-                            {method.transactions.map((tx: any) => (
-                              <div
-                                key={tx.id}
-                                className="flex items-center justify-between rounded-lg border p-3"
-                              >
-                                <div>
-                                  <p className="text-muted-foreground font-mono text-sm">{tx.id}</p>
-                                  <p className="text-muted-foreground text-xs">
-                                    {new Date(tx.date).toLocaleString()}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <p className="font-semibold">{formatCurrency(tx.amount)}</p>
-                                  {tx.processingFee > 0 && (
-                                    <p className="text-destructive text-xs">
-                                      -{formatCurrency(tx.processingFee)}
+                    {method.transactions?.length > 0 && (
+                      <details className="border-t pt-3">
+                        <summary className="text-primary cursor-pointer text-sm font-medium">
+                          Lihat {method.count} transaksi
+                        </summary>
+                        <div className="mt-3 max-h-96 overflow-auto">
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="border-b">
+                                {[
+                                  'Invoice / customer',
+                                  'Jenis / sumber',
+                                  'Tanggal pelunasan (WIB)',
+                                  'Gross',
+                                  'Refund',
+                                  'Pembatalan di luar refund',
+                                  'Net'
+                                ].map((label) => (
+                                  <th key={label} className="p-2 font-medium whitespace-nowrap">
+                                    {label}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {method.transactions.map((tx: any) => (
+                                <tr key={tx.id} className="border-b">
+                                  <td className="p-2">
+                                    <Link
+                                      className="text-primary hover:underline"
+                                      href={`/admin/kelola-transaksi/${tx.id}`}
+                                    >
+                                      {tx.invoiceNumber}
+                                    </Link>
+                                    <p className="text-muted-foreground text-xs">
+                                      {tx.customerName}
                                     </p>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </DialogContent>
-                      </ManagedDialog>
-                    )} */}
+                                  </td>
+                                  <td className="p-2">
+                                    {tx.type}
+                                    <p className="text-muted-foreground text-xs">
+                                      {tx.source === 'cashier'
+                                        ? 'Kasir'
+                                        : tx.source === 'online'
+                                          ? 'Online'
+                                          : 'Belum teridentifikasi'}
+                                      {tx.legacyPayment ? ' · invoice tanpa payment' : ''}
+                                    </p>
+                                  </td>
+                                  <td className="p-2 whitespace-nowrap">
+                                    {new Date(tx.date).toLocaleString('id-ID', {
+                                      timeZone: 'Asia/Jakarta'
+                                    })}
+                                  </td>
+                                  <td className="p-2 whitespace-nowrap">
+                                    {formatCurrency(tx.amount)}
+                                  </td>
+                                  <td className="p-2 whitespace-nowrap">
+                                    {formatCurrency(tx.refundAmount)}
+                                  </td>
+                                  <td className="p-2 whitespace-nowrap">
+                                    {formatCurrency(tx.cancellationAmount || 0)}
+                                  </td>
+                                  <td className="p-2 whitespace-nowrap">
+                                    {formatCurrency(tx.netAmount)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </div>
               );

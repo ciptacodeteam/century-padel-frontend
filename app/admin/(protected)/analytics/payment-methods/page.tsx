@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, subDays } from 'date-fns';
+import { subDays } from 'date-fns';
+import { revenueDateBoundary } from '@/lib/revenue-date';
 import AppSectionHeader from '@/components/ui/app-section-header';
 import DateRangeInput from '@/components/ui/date-range-input';
 import { paymentMethodsAnalyticsQueryOptions } from '@/queries/admin/analytics';
@@ -21,8 +22,8 @@ export default function PaymentMethodsPage() {
     to: new Date()
   });
 
-  const startDate = range?.from ? format(range.from, "yyyy-MM-dd'T'00:00:00'Z'") : undefined;
-  const endDate = range?.to ? format(range.to, "yyyy-MM-dd'T'23:59:59'Z'") : undefined;
+  const startDate = revenueDateBoundary(range?.from);
+  const endDate = revenueDateBoundary(range?.to, true);
 
   const { data: paymentData, isLoading } = useQuery({
     ...paymentMethodsAnalyticsQueryOptions(startDate, endDate),

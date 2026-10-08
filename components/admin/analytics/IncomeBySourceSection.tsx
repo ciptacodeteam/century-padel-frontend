@@ -47,10 +47,22 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
     Online: Number(summary.onlineBookingIncome || 0),
     Cashier: Number(summary.cashierBookingIncome || 0),
     'Class Bookings': Number(summary.classBookingIncome || 0),
-    Membership: Number(summary.membershipIncome || 0)
+    Membership: Number(summary.membershipIncome || 0),
+    Unknown: Number(summary.otherIncome || 0)
   };
 
   const sourceConfigs = [
+    ...(bySource.Unknown
+      ? [
+          {
+            key: 'Unknown',
+            title: 'Sumber belum teridentifikasi',
+            icon: IconCreditCard,
+            color: 'text-amber-500',
+            bgColor: 'bg-amber-500/10'
+          }
+        ]
+      : []),
     {
       key: 'Online',
       title: 'Online Booking',
@@ -83,6 +95,25 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
 
   return (
     <div className="space-y-4">
+      <p className="text-muted-foreground text-sm">
+        Membership ditampilkan terpisah dalam rincian jenis pembelian di bawah, termasuk yang dibeli
+        lewat kasir. Semua nilai berdasarkan invoice lunas dan tanggal pelunasan WIB, setelah biaya
+        proses, refund selesai, dan pembatalan lapangan tanpa potongan ganda.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          ['Seluruh pembelian kasir', summary.cashierIncome],
+          ['Seluruh pembelian online', summary.onlineIncome],
+          ['Sumber belum teridentifikasi', summary.unknownIncome]
+        ].map(([label, value]) => (
+          <Card key={String(label)}>
+            <CardContent className="pt-4">
+              <p className="text-muted-foreground text-sm">{label}</p>
+              <p className="mt-2 text-xl font-semibold">{formatCurrency(Number(value || 0))}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
       {/* Summary Card */}
       <Card>
         <CardHeader>
@@ -123,6 +154,12 @@ export default function IncomeBySourceSection({ data, isLoading }: IncomeBySourc
               <div className="flex items-center justify-between text-red-600">
                 <span>Total Refund</span>
                 <span className="font-medium">-{formatCurrency(summary.totalRefunds || 0)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>Pembatalan di luar refund</span>
+                <span className="font-medium">
+                  -{formatCurrency(summary.totalCancellations || 0)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Pendapatan Bersih</span>
