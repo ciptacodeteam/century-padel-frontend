@@ -37,7 +37,7 @@ export default function ReportDatePicker({
           type="button"
           variant="outline"
           aria-label={label}
-          className="mt-2 h-10 w-full justify-between px-3 font-normal"
+          className="h-10 w-full justify-between px-3 font-normal"
         >
           {selected
             ? format(selected, mode === 'month' ? 'MMMM yyyy' : 'dd MMM yyyy', { locale: localeId })

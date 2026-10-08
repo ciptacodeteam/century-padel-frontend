@@ -207,8 +207,8 @@ export default function CourtPerformancePage() {
             }}
             className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr_auto]"
           >
-            <div className="space-y-2 text-xs font-medium">
-              Pilih bulan
+            <div className="flex flex-col gap-2 text-xs font-medium">
+              <span>Pilih bulan</span>
               <ReportDatePicker
                 label="Pilih bulan"
                 mode="month"
@@ -219,8 +219,8 @@ export default function CourtPerformancePage() {
                 }}
               />
             </div>
-            <div className="space-y-2 text-xs font-medium">
-              Dari tanggal
+            <div className="flex flex-col gap-2 text-xs font-medium">
+              <span>Dari tanggal</span>
               <ReportDatePicker
                 label="Dari tanggal"
                 value={draft.startDate}
@@ -230,8 +230,8 @@ export default function CourtPerformancePage() {
                 }}
               />
             </div>
-            <div className="space-y-2 text-xs font-medium">
-              Sampai tanggal
+            <div className="flex flex-col gap-2 text-xs font-medium">
+              <span>Sampai tanggal</span>
               <ReportDatePicker
                 label="Sampai tanggal"
                 value={draft.endDate}
@@ -241,7 +241,7 @@ export default function CourtPerformancePage() {
                 }}
               />
             </div>
-            <div className="space-y-2 text-xs font-medium">
+            <div className="flex flex-col gap-2 text-xs font-medium">
               <label htmlFor="report-court">Lapangan</label>
               <Select
                 value={draft.courtId || 'all'}
@@ -249,7 +249,7 @@ export default function CourtPerformancePage() {
                   setDraft({ ...draft, courtId: value === 'all' ? '' : value })
                 }
               >
-                <SelectTrigger id="report-court" className="mt-2 w-full data-[size=default]:h-10">
+                <SelectTrigger id="report-court" className="w-full data-[size=default]:h-10">
                   <SelectValue placeholder="Semua lapangan" />
                 </SelectTrigger>
                 <SelectContent
