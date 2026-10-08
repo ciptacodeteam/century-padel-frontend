@@ -158,7 +158,7 @@ export default function CourtPerformancePage() {
   if (accessLoading || !hasAccess) return null;
 
   return (
-    <main className="mx-auto max-w-[1500px] space-y-6 pb-8">
+    <main className="min-w-0 w-full space-y-6 pb-8">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-primary mb-2 text-xs font-semibold tracking-[0.18em] uppercase">

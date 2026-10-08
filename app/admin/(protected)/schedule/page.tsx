@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { BookingPaymentSources } from '@/components/admin/bookings/BookingPaymentSources';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import ScheduleDateFilter from '@/components/admin/booking/ScheduleDateFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DialogContent,
@@ -12,7 +12,6 @@ import {
   DialogTrigger,
   ManagedDialog
 } from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Section,
   SectionContent,
@@ -33,13 +32,7 @@ import type {
   Staff,
   Inventory
 } from '@/types/model';
-import {
-  IconCalendar,
-  IconUser,
-  IconShoppingCart,
-  IconMaximize,
-  IconMinimize
-} from '@tabler/icons-react';
+import { IconUser, IconShoppingCart, IconMaximize, IconMinimize } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { useMemo, useState, useEffect } from 'react';
@@ -221,7 +214,6 @@ export default function SchedulePage() {
   today.setHours(0, 0, 0, 0);
 
   const [selectedDate, setSelectedDate] = useState<Date>(today);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   const selectedDateString = formatDateString(selectedDate);
@@ -484,34 +476,7 @@ export default function SchedulePage() {
         <SectionContent>
           <div className="space-y-6">
             {/* Date Filter */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Filter Tanggal</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full gap-2 sm:w-auto">
-                      <IconCalendar className="h-4 w-4" />
-                      <span>{formatDate(selectedDate, 'DD MMM YYYY')}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={(date) => {
-                        if (date) {
-                          setSelectedDate(date);
-                          setCalendarOpen(false);
-                        }
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </CardContent>
-            </Card>
+            <ScheduleDateFilter selectedDate={selectedDate} onSelect={setSelectedDate} />
 
             {/* Schedule Table */}
             <Card
