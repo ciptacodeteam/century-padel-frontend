@@ -50,6 +50,10 @@ const data: { navMain: AppSidebarItem[]; navSecondary: AppSidebarItem[] } = {
       icon: IconChartBar,
       items: [
         {
+          title: 'Court Performance',
+          url: '/admin/analytics/court-performance'
+        },
+        {
           title: 'Income by Source',
           url: '/admin/analytics/income-by-source'
         },
@@ -325,6 +329,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 items: item.items?.filter(
                   (subItem) =>
                     subItem.url !== '/admin/analytics/income-by-source' &&
+                    subItem.url !== '/admin/analytics/court-performance' &&
                     subItem.url !== '/admin/analytics/payment-methods'
                 )
               }
