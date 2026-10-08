@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
   adminGrantComplimentaryCreditMutationOptions,
   adminRevokeComplimentaryCreditMutationOptions
 } from '@/mutations/admin/customer';
@@ -115,18 +122,21 @@ export default function ComplimentaryCreditCard({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="credit-purpose">Tujuan</Label>
-            <select
-              id="credit-purpose"
-              className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+            <Select
               value={purpose}
-              onChange={(event) => setPurpose(event.target.value as keyof typeof PURPOSE_LABEL)}
+              onValueChange={(value) => setPurpose(value as keyof typeof PURPOSE_LABEL)}
             >
-              {Object.entries(PURPOSE_LABEL).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="credit-purpose" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" side="bottom" align="start">
+                {Object.entries(PURPOSE_LABEL).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="credit-expiry">Berlaku sampai (opsional)</Label>

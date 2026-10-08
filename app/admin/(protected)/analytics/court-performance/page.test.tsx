@@ -110,13 +110,55 @@ function mount() {
   );
 }
 beforeEach(() => {
+  vi.spyOn(Date, 'now').mockReturnValue(Date.UTC(2026, 9, 8));
   get.mockReset();
   get.mockResolvedValue({ data: { data: fixture } });
   Element.prototype.scrollIntoView = vi.fn();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+async function selectOption(label: string, option: string) {
+  fireEvent.keyDown(screen.getByRole('combobox', { name: label }), { key: 'ArrowDown' });
+  fireEvent.click(await screen.findByRole('option', { name: option }));
+}
+
+async function chooseDate(label: string, value: string) {
+  fireEvent.click(screen.getByRole('button', { name: label }));
+  const dialog = await screen.findByRole('dialog', { name: label });
+  expect(dialog).toHaveAttribute('data-side', 'bottom');
+  const date = new Date(`${value}T00:00:00`).toLocaleDateString();
+  const button = within(dialog)
+    .getAllByRole('button')
+    .find((b) => b.getAttribute('data-day') === date);
+  expect(button).toBeDefined();
+  fireEvent.click(button!);
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog', { name: label })).not.toBeInTheDocument()
+  );
+}
 
 describe('Court Performance UI', () => {
+  it('selects a month in Indonesian and applies its full date range', async () => {
+    mount();
+    await screen.findByText('Andi');
+    fireEvent.click(screen.getByRole('button', { name: 'Pilih bulan' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Pilih bulan' });
+    expect(dialog).toHaveAttribute('data-side', 'bottom');
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Tahun berikutnya' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Februari 2027' }));
+    expect(screen.getByRole('button', { name: 'Dari tanggal' })).toHaveTextContent('01 Feb 2027');
+    expect(screen.getByRole('button', { name: 'Sampai tanggal' })).toHaveTextContent('28 Feb 2027');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tampilkan' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Tampilkan' }));
+    await waitFor(() =>
+      expect(get).toHaveBeenLastCalledWith('/analytics/court-performance', {
+        params: { startDate: '2027-02-01', endDate: '2027-02-28', courtId: undefined }
+      })
+    );
+  });
   it('opens package details including zero-use packages, and resets to all bookings', async () => {
     mount();
     await screen.findByText('Andi');
@@ -142,22 +184,23 @@ describe('Court Performance UI', () => {
     );
     expect(screen.queryByText('Andi')).not.toBeInTheDocument();
     expect(screen.getByText('Budi')).toBeInTheDocument();
-    fireEvent.change(screen.getByRole('combobox', { name: 'Filter peak dan non-peak' }), {
-      target: { value: 'Peak' }
-    });
+    await selectOption('Filter peak dan non-peak', 'Peak saja');
     expect(screen.getByText('Belum ada booking yang sesuai')).toBeInTheDocument();
     expect(screen.getByText('Total seluruh kategori')).toBeInTheDocument();
   });
   it('applies custom dates and court only on submit, and rejects reversed dates', async () => {
     mount();
     await screen.findByText('Andi');
-    fireEvent.change(screen.getByLabelText('Dari tanggal'), { target: { value: '2026-10-10' } });
-    fireEvent.change(screen.getByLabelText('Sampai tanggal'), { target: { value: '2026-10-09' } });
+    await chooseDate('Dari tanggal', '2026-10-10');
+    await chooseDate('Sampai tanggal', '2026-10-09');
+    expect(screen.getByRole('button', { name: 'Dari tanggal' })).toHaveTextContent('10 Okt 2026');
+    expect(screen.getByRole('button', { name: 'Sampai tanggal' })).toHaveTextContent('09 Okt 2026');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Tampilkan' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Tampilkan' }));
     expect(screen.getByRole('alert')).toHaveTextContent('maksimal 366 hari');
     expect(get).toHaveBeenCalledTimes(1);
-    fireEvent.change(screen.getByLabelText('Sampai tanggal'), { target: { value: '2026-10-12' } });
-    fireEvent.change(screen.getByLabelText('Lapangan'), { target: { value: 'c1' } });
+    await chooseDate('Sampai tanggal', '2026-10-12');
+    await selectOption('Lapangan', 'Court 1');
     fireEvent.click(screen.getByRole('button', { name: 'Tampilkan' }));
     await waitFor(() =>
       expect(get).toHaveBeenLastCalledWith('/analytics/court-performance', {

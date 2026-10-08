@@ -31,12 +31,18 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
+import ReportDatePicker from '@/components/admin/analytics/ReportDatePicker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 const number = (value: number) =>
   new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(value);
 const money = (value: number) => `Rp ${number(Math.round(value))}`;
-const selectClass =
-  'border-input bg-background h-10 w-full rounded-md border px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
 function monthRange(month: string) {
   const [year, m] = month.split('-').map(Number);
   return {
@@ -158,7 +164,7 @@ export default function CourtPerformancePage() {
   if (accessLoading || !hasAccess) return null;
 
   return (
-    <main className="min-w-0 w-full space-y-6 pb-8">
+    <main className="w-full min-w-0 space-y-6 pb-8">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-primary mb-2 text-xs font-semibold tracking-[0.18em] uppercase">
@@ -201,59 +207,67 @@ export default function CourtPerformancePage() {
             }}
             className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr_auto]"
           >
-            <label className="space-y-2 text-xs font-medium">
+            <div className="space-y-2 text-xs font-medium">
               Pilih bulan
-              <Input
-                type="month"
+              <ReportDatePicker
+                label="Pilih bulan"
+                mode="month"
                 value={month}
-                onChange={(e) => {
-                  setMonth(e.target.value);
-                  if (e.target.value) setDraft({ ...draft, ...monthRange(e.target.value) });
+                onChange={(value) => {
+                  setMonth(value);
+                  setDraft({ ...draft, ...monthRange(value) });
                 }}
-                className="mt-2 h-10"
               />
-            </label>
-            <label className="space-y-2 text-xs font-medium">
+            </div>
+            <div className="space-y-2 text-xs font-medium">
               Dari tanggal
-              <Input
-                type="date"
+              <ReportDatePicker
+                label="Dari tanggal"
                 value={draft.startDate}
-                onChange={(e) => {
+                onChange={(value) => {
                   setMonth('');
-                  setDraft({ ...draft, startDate: e.target.value });
+                  setDraft({ ...draft, startDate: value });
                 }}
-                className="mt-2 h-10"
-                required
               />
-            </label>
-            <label className="space-y-2 text-xs font-medium">
+            </div>
+            <div className="space-y-2 text-xs font-medium">
               Sampai tanggal
-              <Input
-                type="date"
+              <ReportDatePicker
+                label="Sampai tanggal"
                 value={draft.endDate}
-                onChange={(e) => {
+                onChange={(value) => {
                   setMonth('');
-                  setDraft({ ...draft, endDate: e.target.value });
+                  setDraft({ ...draft, endDate: value });
                 }}
-                className="mt-2 h-10"
-                required
               />
-            </label>
-            <label className="space-y-2 text-xs font-medium">
-              Lapangan
-              <select
-                className={`${selectClass} mt-2`}
-                value={draft.courtId}
-                onChange={(e) => setDraft({ ...draft, courtId: e.target.value })}
+            </div>
+            <div className="space-y-2 text-xs font-medium">
+              <label htmlFor="report-court">Lapangan</label>
+              <Select
+                value={draft.courtId || 'all'}
+                onValueChange={(value) =>
+                  setDraft({ ...draft, courtId: value === 'all' ? '' : value })
+                }
               >
-                <option value="">Semua lapangan</option>
-                {data?.courts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger id="report-court" className="mt-2 w-full data-[size=default]:h-10">
+                  <SelectValue placeholder="Semua lapangan" />
+                </SelectTrigger>
+                <SelectContent
+                  position="popper"
+                  side="bottom"
+                  align="start"
+                  avoidCollisions={false}
+                  className="max-h-64"
+                >
+                  <SelectItem value="all">Semua lapangan</SelectItem>
+                  {data?.courts.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button type="submit" className="h-10" disabled={isFetching}>
               Tampilkan
             </Button>
@@ -490,19 +504,30 @@ export default function CourtPerformancePage() {
                       }}
                     />
                   </div>
-                  <select
-                    aria-label="Filter peak dan non-peak"
-                    className={`${selectClass} sm:w-48`}
+                  <Select
                     value={band}
-                    onChange={(e) => {
-                      setBand(e.target.value);
+                    onValueChange={(value) => {
+                      setBand(value);
                       setPage(1);
                     }}
                   >
-                    <option value="all">Peak & Non-Peak</option>
-                    <option value="Peak">Peak saja</option>
-                    <option value="Non-Peak">Non-Peak saja</option>
-                  </select>
+                    <SelectTrigger
+                      aria-label="Filter peak dan non-peak"
+                      className="w-full data-[size=default]:h-10 sm:w-48"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      position="popper"
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={false}
+                    >
+                      <SelectItem value="all">Peak & Non-Peak</SelectItem>
+                      <SelectItem value="Peak">Peak saja</SelectItem>
+                      <SelectItem value="Non-Peak">Non-Peak saja</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <Table>

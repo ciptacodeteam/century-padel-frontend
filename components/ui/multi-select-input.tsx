@@ -439,7 +439,7 @@ const MultiSelectInput = React.forwardRef<MultiSelectInputRef, MultiSelectInputP
       >
         <div
           className={cn(
-            'border-input ring-offset-background focus-within:ring-ring flex items-start justify-between rounded-md border px-3 py-2 text-base focus-within:ring-2 focus-within:ring-offset-2 md:text-sm',
+            'border-input ring-offset-background focus-within:ring-ring flex items-center justify-between gap-3 rounded-md border px-4 py-2 text-base focus-within:ring-2 focus-within:ring-offset-2 md:text-sm',
             {
               'cursor-text': !disabled && selected.length !== 0
             },
@@ -450,7 +450,7 @@ const MultiSelectInput = React.forwardRef<MultiSelectInputRef, MultiSelectInputP
             inputRef?.current?.focus();
           }}
         >
-          <div className="relative flex flex-wrap gap-1">
+          <div className="relative flex min-w-0 flex-1 flex-wrap gap-1">
             {selected.map((option) => {
               return (
                 <Badge
@@ -508,7 +508,7 @@ const MultiSelectInput = React.forwardRef<MultiSelectInputRef, MultiSelectInputP
               }}
               placeholder={hidePlaceholderWhenSelected && selected.length !== 0 ? '' : placeholder}
               className={cn(
-                'placeholder:text-muted-foreground flex-1 self-baseline bg-transparent outline-none',
+                'placeholder:text-muted-foreground min-w-0 flex-1 self-baseline bg-transparent outline-none',
                 {
                   'w-full': hidePlaceholderWhenSelected,
                   'ml-1': selected.length !== 0
@@ -524,7 +524,7 @@ const MultiSelectInput = React.forwardRef<MultiSelectInputRef, MultiSelectInputP
               onChange?.(selected.filter((s) => s.fixed));
             }}
             className={cn(
-              'size-5',
+              'size-5 shrink-0',
               (hideClearAllButton ||
                 disabled ||
                 selected.length < 1 ||
@@ -536,7 +536,7 @@ const MultiSelectInput = React.forwardRef<MultiSelectInputRef, MultiSelectInputP
           </button>
           <ChevronDownIcon
             className={cn(
-              'text-muted-foreground/50 size-5',
+              'text-muted-foreground/50 ml-1 size-4 shrink-0',
               (hideClearAllButton ||
                 disabled ||
                 selected.length >= 1 ||
