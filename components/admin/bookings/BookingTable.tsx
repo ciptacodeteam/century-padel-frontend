@@ -11,6 +11,7 @@ import {
   type BookingDetailWithSlot
 } from '@/components/admin/bookings/RescheduleCourtDialog';
 import { BookingPaymentSources } from '@/components/admin/bookings/BookingPaymentSources';
+import { CorrectComplimentaryPaymentDialog } from '@/components/admin/bookings/CorrectComplimentaryPaymentDialog';
 import { CancelBookedCourtDialog } from '@/components/admin/bookings/CancelBookedCourtDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,12 +33,18 @@ import {
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useConfirmMutation } from '@/hooks/useConfirmDialog';
-import { BOOKING_STATUS_BADGE_VARIANT, BOOKING_STATUS_MAP, BookingStatus } from '@/lib/constants';
+import {
+  BOOKING_STATUS_BADGE_VARIANT,
+  BOOKING_STATUS_MAP,
+  BookingStatus,
+  ROLE
+} from '@/lib/constants';
 import { canCustomerReschedule } from '@/lib/reschedule-policy';
 import { isMembershipBooking } from '@/lib/booking-payment';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
+import { adminProfileQueryOptions } from '@/queries/admin/auth';
 import type { Booking } from '@/types/model';
 import { IconEye, IconFileExcel, IconPencil, IconPlus, IconX } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -162,6 +169,7 @@ const getRecordedRefundAmount = (meta: unknown): number => {
 
 const BookingTable = () => {
   const queryClient = useQueryClient();
+  const { data: me } = useQuery(adminProfileQueryOptions);
   const [source, setSource] = useState<string>('');
   const [paymentType, setPaymentType] = useState<string>('');
   const [range, setRange] = useState<DateRange | undefined>({
@@ -409,7 +417,18 @@ const BookingTable = () => {
                           {formatDate(booking.createdAt, 'DD/MM/YYYY HH:mm')}
                         </p>
                       </div>
-                      <BookingPaymentSources booking={booking} />
+                      <div>
+                        <BookingPaymentSources booking={booking} />
+                        {me?.role === ROLE.ADMIN && status === BookingStatus.CONFIRMED && (
+                          <CorrectComplimentaryPaymentDialog
+                            booking={booking}
+                            onSuccess={() => {
+                              queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] });
+                              queryClient.invalidateQueries({ queryKey: ['admin', 'analytics'] });
+                            }}
+                          />
+                        )}
+                      </div>
                       {booking.holdExpiresAt && (
                         <div>
                           <p className="text-muted-foreground text-sm">Kedaluwarsa</p>
@@ -649,7 +668,7 @@ const BookingTable = () => {
         }
       })
     ],
-    [colHelper, updateStatus, approveBooking, cancelBooking, queryClient]
+    [colHelper, updateStatus, approveBooking, cancelBooking, queryClient, me?.role]
   );
 
   const bookingFilters = {

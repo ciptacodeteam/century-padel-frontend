@@ -46,6 +46,14 @@ export async function cancelBookingApi(id: string, reason?: string) {
   return data;
 }
 
+export async function correctComplimentaryPaymentApi(
+  id: string,
+  payload: { paymentDate: string; reason: string }
+) {
+  const { data } = await adminApi.put(`/bookings/${id}/correct-complimentary-payment`, payload);
+  return data;
+}
+
 export async function exportBookingsApi(queryParams: SearchParamsData = {}) {
   const url = '/bookings/export';
   const mergedUrl = mergedQueryParamUrl(url, queryParams);
