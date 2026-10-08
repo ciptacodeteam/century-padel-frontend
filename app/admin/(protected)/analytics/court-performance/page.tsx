@@ -205,7 +205,7 @@ export default function CourtPerformancePage() {
               e.preventDefault();
               apply();
             }}
-            className="grid items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr_auto]"
+            className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.2fr_auto]"
           >
             <div className="flex flex-col gap-2 text-xs font-medium">
               <span>Pilih bulan</span>
@@ -260,7 +260,7 @@ export default function CourtPerformancePage() {
                   side="bottom"
                   align="start"
                   avoidCollisions={false}
-                  className="max-h-64"
+                  className="max-h-64 rounded-none"
                 >
                   <SelectItem value="all">Semua lapangan</SelectItem>
                   {data?.courts.map((c) => (
@@ -271,7 +271,7 @@ export default function CourtPerformancePage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button type="submit" className="h-10" disabled={isFetching}>
+            <Button type="submit" className="h-10 self-end" disabled={isFetching}>
               Tampilkan
             </Button>
           </form>
