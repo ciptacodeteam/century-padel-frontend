@@ -81,6 +81,18 @@ export async function updateSlotAvailabilityApi(slotId: string, isAvailable: boo
   return data;
 }
 
+export async function bulkSlotAvailabilityApi(
+  courtId: string,
+  slotIds: string[],
+  isAvailable: boolean
+) {
+  const { data } = await adminApi.put(`/courts/${courtId}/slots/availability/bulk`, {
+    slotIds,
+    isAvailable
+  });
+  return data.data as { updated: number; skipped: number; unchanged: number };
+}
+
 export async function updateSlotPriceApi(
   slotId: string,
   payload: { price: number; discountPrice: number }
