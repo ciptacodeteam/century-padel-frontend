@@ -1,7 +1,6 @@
 'use client';
 
 import MainHeader from '@/components/headers/MainHeader';
-import BottomNavigationWrapper from '@/components/ui/BottomNavigationWrapper';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -161,7 +160,12 @@ export default function MembershipCheckoutPage() {
       return;
     }
 
-    if (!selectedPaymentMethod || !membershipId) {
+    if (isUserPending || checkoutMutation.isPending || !membershipId) {
+      return;
+    }
+
+    if (!selectedPaymentMethod) {
+      setPaymentModalOpen(true);
       return;
     }
 
@@ -186,7 +190,7 @@ export default function MembershipCheckoutPage() {
   return (
     <>
       <MainHeader title="Checkout Membership" backHref="/membership" withLogo={false} withBorder />
-      <main className="mx-auto flex w-11/12 max-w-4xl flex-col gap-6 pt-24 pb-32">
+      <main className="mx-auto flex w-11/12 max-w-4xl flex-col gap-6 pt-24 pb-12">
         {/* Membership Summary */}
         <div className="border-muted space-y-4 rounded-lg border bg-white p-4">
           <header className="space-y-1">
@@ -287,6 +291,22 @@ export default function MembershipCheckoutPage() {
               <span className="text-primary">{formatCurrency(totalWithPaymentFee)}</span>
             </div>
           </div>
+          <Button
+            size="lg"
+            className="mt-5 w-full"
+            onClick={handleCheckout}
+            disabled={isUserPending || checkoutMutation.isPending}
+          >
+            {isUserPending
+              ? 'Memuat...'
+              : !isAuthenticated
+                ? 'Login untuk Checkout'
+                : checkoutMutation.isPending
+                  ? 'Memproses...'
+                  : selectedPaymentMethod
+                    ? 'Bayar Sekarang'
+                    : 'Pilih Metode'}
+          </Button>
         </div>
 
         {/* Payment Modal */}
@@ -373,35 +393,6 @@ export default function MembershipCheckoutPage() {
           </DialogContent>
         </Dialog>
       </main>
-
-      <BottomNavigationWrapper className="pb-4">
-        <div className="mx-auto w-11/12 py-4 lg:max-w-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-muted-foreground text-xs">Total Pembayaran</p>
-              <p className="text-primary text-lg font-semibold">
-                {formatCurrency(totalWithPaymentFee)}
-              </p>
-            </div>
-            <Button
-              size="lg"
-              className="min-w-40"
-              onClick={handleCheckout}
-              disabled={(!selectedPaymentMethod || checkoutMutation.isPending) && isAuthenticated}
-            >
-              {isUserPending
-                ? 'Memuat...'
-                : !isAuthenticated
-                  ? 'Login untuk Checkout'
-                  : checkoutMutation.isPending
-                    ? 'Memproses...'
-                    : selectedPaymentMethod
-                      ? 'Bayar Sekarang'
-                      : 'Pilih Metode'}
-            </Button>
-          </div>
-        </div>
-      </BottomNavigationWrapper>
     </>
   );
 }
