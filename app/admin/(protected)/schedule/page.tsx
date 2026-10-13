@@ -262,8 +262,11 @@ export default function SchedulePage() {
   // Include both court bookings and coach-only bookings on the selected date.
   const bookings = useMemo(() => {
     return allBookings.filter((booking) => {
+      if (getBookingStatus(booking.status as number | BookingStatus) === BookingStatus.CANCELLED) {
+        return false;
+      }
       const hasCourtSlot = booking.details?.some((detail) => {
-        if (!detail.slot) return false;
+        if (detail.cancelledAt || !detail.slot) return false;
         const slotDate = getDateStringFromISO(detail.slot.startAt);
         return slotDate === selectedDateString;
       });
@@ -304,7 +307,7 @@ export default function SchedulePage() {
     // Also add time slots from bookings to ensure booked slots are visible even if not in slots API
     bookings.forEach((booking) => {
       booking.details?.forEach((detail) => {
-        if (detail.slot) {
+        if (!detail.cancelledAt && detail.slot) {
           const slotDate = getDateStringFromISO(detail.slot.startAt);
           if (slotDate === selectedDateString) {
             const startTime = formatSlotTime(detail.slot.startAt);
@@ -369,7 +372,7 @@ export default function SchedulePage() {
       if (!booking.details || booking.details.length === 0) return;
 
       booking.details.forEach((detail) => {
-        if (!detail.slot || !detail.court) return;
+        if (detail.cancelledAt || !detail.slot || !detail.court) return;
 
         const slotDate = getDateStringFromISO(detail.slot.startAt);
 
