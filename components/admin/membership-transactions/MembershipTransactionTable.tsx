@@ -1,5 +1,7 @@
 'use client';
 
+import { getMembershipTransactionStatus } from '@/lib/membership-transaction-status';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -173,33 +175,16 @@ const MembershipTransactionTable = () => {
         header: 'Status',
         cell: (info) => {
           const row = info.row.original;
-          const refund = getMembershipRefund(row);
+          const membershipStatus = getMembershipTransactionStatus(row);
 
           return (
             <div className="flex flex-col gap-1">
-              {refund && (
-                <Badge variant="destructive" className="w-fit">
-                  Dihentikan & Refund
-                </Badge>
-              )}
+              <Badge variant={membershipStatus.variant} className="w-fit">
+                {membershipStatus.label}
+              </Badge>
               {row.acquisitionType === 'TRANSFER' && (
                 <Badge variant="lightInfo" className="w-fit">
                   Saldo Transfer
-                </Badge>
-              )}
-              {!refund && row.isSuspended && (
-                <Badge variant="destructive" className="w-fit">
-                  Ditangguhkan
-                </Badge>
-              )}
-              {!refund && row.isExpired && (
-                <Badge variant="secondary" className="w-fit">
-                  Kedaluwarsa
-                </Badge>
-              )}
-              {!row.isSuspended && !row.isExpired && (
-                <Badge variant="success" className="w-fit">
-                  Aktif
                 </Badge>
               )}
               {row.invoice?.status && (
@@ -243,6 +228,8 @@ const MembershipTransactionTable = () => {
         header: 'Tindakan',
         cell: (info) => {
           const transaction = info.row.original;
+          const isFunded =
+            transaction.acquisitionType === 'TRANSFER' || transaction.invoice?.status === 'PAID';
           const canApproveOrReject = transaction.invoice?.status === 'PENDING';
           const refund = getMembershipRefund(transaction);
           const canTerminateAndRefund =
@@ -296,7 +283,7 @@ const MembershipTransactionTable = () => {
                 </div>
               )}
 
-              {!transaction.isSuspended && !transaction.isExpired && (
+              {isFunded && !transaction.isSuspended && !transaction.isExpired && (
                 <SuspendMembershipDialog
                   dialogId={transaction.id}
                   onSubmit={(reason, endDate) =>
@@ -304,7 +291,7 @@ const MembershipTransactionTable = () => {
                   }
                 />
               )}
-              {transaction.isSuspended && !transaction.isExpired && (
+              {isFunded && transaction.isSuspended && !transaction.isExpired && (
                 <Button size="sm" variant="outline" onClick={() => unsuspendTx(transaction.id)}>
                   Aktifkan Kembali
                 </Button>
@@ -469,21 +456,20 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
           <div>
             <p className="text-muted-foreground text-sm">Status</p>
             <div className="flex gap-2">
-              {refund && <Badge variant="destructive">Dihentikan & Refund</Badge>}
-              {!refund && transaction.isSuspended && (
-                <Badge variant="destructive">Ditangguhkan</Badge>
-              )}
-              {!refund && transaction.isExpired && <Badge variant="secondary">Kedaluwarsa</Badge>}
-              {!transaction.isSuspended && !transaction.isExpired && (
-                <Badge variant="success">Aktif</Badge>
-              )}
+              <Badge variant={getMembershipTransactionStatus(transaction).variant}>
+                {getMembershipTransactionStatus(transaction).label}
+              </Badge>
             </div>
           </div>
           {transaction.isSuspended && (
             <>
               <div>
                 <p className="text-muted-foreground text-sm">
-                  {refund ? 'Alasan Penghentian' : 'Alasan Penangguhan'}
+                  {refund
+                    ? 'Alasan Penghentian'
+                    : getMembershipTransactionStatus(transaction).label === 'Canceled'
+                      ? 'Alasan Pembatalan'
+                      : 'Alasan Penangguhan'}
                 </p>
                 <p className="font-medium">{transaction.suspensionReason || '-'}</p>
               </div>
