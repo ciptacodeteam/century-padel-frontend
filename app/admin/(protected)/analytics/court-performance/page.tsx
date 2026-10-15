@@ -344,7 +344,7 @@ export default function CourtPerformancePage() {
                   title: 'Occupancy periode',
                   value:
                     data.summary.occupancy === null ? '—' : `${number(data.summary.occupancy)}%`,
-                  note: `${number(data.summary.availableHours)} jam kapasitas slot tercatat`,
+                  note: `${number(data.summary.availableHours)} jam kapasitas operasional`,
                   icon: CalendarDays
                 }
               ].map((stat) => (
@@ -643,9 +643,10 @@ export default function CourtPerformancePage() {
                 non-peak dapat diperiksa.
               </p>
               <p>
-                Occupancy memakai kapasitas slot yang tercatat tersedia atau dipesan; slot diblokir
-                dikeluarkan. Perubahan jadwal dapat memengaruhi kapasitas historis. Export Excel
-                berisi seluruh rekap dan detail untuk periode serta lapangan terpilih.
+                Occupancy = jam dipesan ÷ kapasitas operasional. Kapasitas = jumlah lapangan dalam
+                laporan × 18 jam per hari (06.00–00.00 WIB) × jumlah hari, termasuk slot
+                23.00–00.00. Slot kosong atau diblokir tetap masuk kapasitas. Export Excel berisi
+                seluruh rekap dan detail untuk periode serta lapangan terpilih.
               </p>
             </aside>
           </>
