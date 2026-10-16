@@ -25,7 +25,7 @@ export const getMembershipLabel = (detail: MembershipDetail): string | null => {
   const typeLabel = { PEAK_HOUR: 'Peak Hour', HAPPY_HOUR: 'Happy Hour', ALL_HOUR: 'All Hour' }[
     membership.type || ''
   ];
-  return `Membership · ${membership.name}${typeLabel ? ` (${typeLabel})` : ''}`;
+  return typeLabel || 'Membership';
 };
 
 export const getBookingMembershipLabel = (booking: { details?: MembershipDetail[] }): string => {

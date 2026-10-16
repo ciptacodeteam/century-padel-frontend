@@ -82,7 +82,7 @@ describe('booking payment sources', () => {
   });
 });
 
-it('shows all membership packages actually used and deduplicates repeated slots', () => {
+it('shows only membership types and deduplicates repeated slots', () => {
   const peak = {
     membershipUserId: 'peak',
     membershipUser: { membership: { name: 'Paket Peak', type: 'PEAK_HOUR' } }
@@ -93,5 +93,26 @@ it('shows all membership packages actually used and deduplicates repeated slots'
   };
   expect(
     getBookingMembershipLabel({ details: [peak, happy, peak, { membershipUserId: null }] })
-  ).toBe('Membership · Paket Peak (Peak Hour) / Membership · Paket Happy (Happy Hour)');
+  ).toBe('Peak Hour / Happy Hour');
+});
+
+it('deduplicates different packages of the same type and supports All Hour', () => {
+  const details = [
+    {
+      membershipUserId: 'happy-1',
+      membershipUser: { membership: { name: '100-HOUR HAPPY PACKAGE', type: 'HAPPY_HOUR' } }
+    },
+    {
+      membershipUserId: 'happy-2',
+      membershipUser: { membership: { name: '50-HOUR HAPPY PACKAGE', type: 'HAPPY_HOUR' } }
+    },
+    {
+      membershipUserId: 'flex',
+      membershipUser: { membership: { name: '200-HOUR FLEX PACKAGE', type: 'ALL_HOUR' } }
+    }
+  ];
+  expect(getBookingMembershipLabel({ details })).toBe('Happy Hour / All Hour');
+  expect(
+    getBookingPaymentSources(booking({ details: details as Booking['details'] }))[0].label
+  ).toBe('Happy Hour / All Hour');
 });

@@ -40,11 +40,7 @@ import {
   ROLE
 } from '@/lib/constants';
 import { canCustomerReschedule } from '@/lib/reschedule-policy';
-import {
-  getBookingMembershipLabel,
-  getMembershipLabel,
-  isMembershipBooking
-} from '@/lib/booking-payment';
+import { getMembershipLabel, isMembershipBooking } from '@/lib/booking-payment';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
@@ -296,7 +292,7 @@ const BookingTable = () => {
         header: 'Jenis Pesanan',
         cell: ({ row }) =>
           isMembershipBooking(row.original) ? (
-            <Badge variant="lightInfo">{getBookingMembershipLabel(row.original)}</Badge>
+            <Badge variant="lightInfo">Membership</Badge>
           ) : (
             <Badge variant="outline">Reguler</Badge>
           )

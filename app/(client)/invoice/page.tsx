@@ -31,7 +31,7 @@ import useAuthModalStore from '@/stores/useAuthModalStore';
 import { toast } from 'sonner';
 import { summarizeBookingSlots } from '@/lib/booking-summary';
 import { formatSlotTime } from '@/lib/time-utils';
-import { getBookingMembershipLabel, isMembershipBooking } from '@/lib/booking-payment';
+import { isMembershipBooking } from '@/lib/booking-payment';
 
 dayjs.locale('id');
 dayjs.extend(relativeTime);
@@ -317,7 +317,7 @@ export default function InvoiceHistoryPage() {
                                   variant="outline"
                                   className="max-w-full text-left whitespace-normal"
                                 >
-                                  {getBookingMembershipLabel(booking)}
+                                  Membership
                                 </Badge>
                               )}
                             </>
