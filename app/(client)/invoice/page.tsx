@@ -29,6 +29,9 @@ import {
 import type { Invoice } from '@/types/model';
 import useAuthModalStore from '@/stores/useAuthModalStore';
 import { toast } from 'sonner';
+import { summarizeBookingSlots } from '@/lib/booking-summary';
+import { formatSlotTime } from '@/lib/time-utils';
+import { getBookingMembershipLabel, isMembershipBooking } from '@/lib/booking-payment';
 
 dayjs.locale('id');
 dayjs.extend(relativeTime);
@@ -263,6 +266,7 @@ export default function InvoiceHistoryPage() {
                 const booking = invoice.booking;
                 const membershipUser = invoice.membershipUser;
                 const membership = membershipUser?.membership;
+                const bookingRanges = summarizeBookingSlots(booking?.details || []);
                 const isPending = invoice.status === 'PENDING';
                 const isPaymentPeriodActive =
                   !invoice.dueDate || dayjs(invoice.dueDate).isAfter(dayjs());
@@ -296,7 +300,7 @@ export default function InvoiceHistoryPage() {
                             {getStatusLabel(invoice.status)}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
                           {membership ? (
                             <>
                               <Crown className="h-4 w-4 text-amber-500" />
@@ -308,6 +312,14 @@ export default function InvoiceHistoryPage() {
                             <>
                               <Calendar className="h-4 w-4" />
                               <span className="font-medium">Booking Lapangan</span>
+                              {isMembershipBooking(booking) && (
+                                <Badge
+                                  variant="outline"
+                                  className="max-w-full text-left whitespace-normal"
+                                >
+                                  {getBookingMembershipLabel(booking)}
+                                </Badge>
+                              )}
                             </>
                           ) : (
                             <>
@@ -387,23 +399,19 @@ export default function InvoiceHistoryPage() {
                         <div className="mb-4">
                           <div className="mb-2 text-sm text-gray-600">Pemesanan Lapangan:</div>
                           <div className="space-y-1">
-                            {booking.details.slice(0, 2).map((detail: any, idx: number) => (
-                              <div
-                                key={detail.id || idx}
-                                className="flex items-center gap-2 text-sm"
-                              >
+                            {bookingRanges.slice(0, 2).map((range, idx) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm">
                                 <div className="bg-primary h-2 w-2 rounded-full"></div>
-                                <span className="font-medium">
-                                  {detail.court?.name || detail.slot?.court?.name || 'Court'}
-                                </span>
+                                <span className="font-medium">{range.courtName}</span>
                                 <span className="text-gray-600">
-                                  - {dayjs(detail.slot?.startAt).tz('UTC').format('DD MMM HH:mm')}
+                                  - {formatSlotTime(range.startAt, 'DD MMM')}{' '}
+                                  {formatSlotTime(range.startAt)}–{formatSlotTime(range.endAt)}
                                 </span>
                               </div>
                             ))}
-                            {booking.details.length > 2 && (
+                            {bookingRanges.length > 2 && (
                               <div className="ml-4 text-sm text-gray-500">
-                                +{booking.details.length - 2} lapangan lainnya
+                                +{bookingRanges.length - 2} jadwal lainnya
                               </div>
                             )}
                           </div>

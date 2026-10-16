@@ -1,5 +1,9 @@
 'use client';
 
+import MembershipBookingBenefits from '@/components/invoice/MembershipBookingBenefits';
+import type { MembershipBenefitDetail } from '@/lib/membership-booking-benefit';
+import { getBookingMembershipLabel } from '@/lib/booking-payment';
+
 import logo from '@/assets/img/logo.webp';
 import MainHeader from '@/components/headers/MainHeader';
 import { Badge } from '@/components/ui/badge';
@@ -71,6 +75,9 @@ type ApiPayment = {
 };
 
 type ApiBookingDetail = {
+  membershipUserId?: string | null;
+  cancelledAt?: string | null;
+  membershipUser?: MembershipBenefitDetail['membershipUser'];
   id: string;
   price: number;
   discountPrice?: number | null;
@@ -352,6 +359,16 @@ export default function InvoiceDetailPage() {
   const bookingInventories = booking?.inventories || [];
   const bookingCoaches = booking?.coaches || [];
   const bookingBallboys = booking?.ballboys || [];
+  const membershipCovered = bookingDetails.some(
+    (detail) => detail.membershipUserId && !detail.cancelledAt
+  );
+  const fullyCoveredByMembership =
+    membershipCovered &&
+    invoice.total === 0 &&
+    bookingDetails
+      .filter((detail) => !detail.cancelledAt)
+      .every((detail) => detail.membershipUserId) &&
+    !['CANCELLED', 'FAILED', 'EXPIRED'].includes(invoice.status);
   const subtotalForDisplay = invoice.subtotal + (invoice.promoDiscountAmount || 0);
   const canPay =
     !publicShareToken &&
@@ -417,14 +434,22 @@ export default function InvoiceDetailPage() {
               </Badge>
             </div>
 
+            {booking && !['CANCELLED', 'FAILED', 'EXPIRED'].includes(invoice.status) && (
+              <MembershipBookingBenefits details={bookingDetails} />
+            )}
+
             <div className="bg-primary/10 mt-6 rounded-xl px-4 py-4 sm:px-5 sm:py-5">
               <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1">
-                <p className="text-sm font-medium text-gray-600">Total Bayar</p>
+                <p className="text-sm font-medium text-gray-600">Total Pembayaran</p>
                 <p className="text-primary text-2xl font-bold tracking-tight sm:text-3xl">
                   {formatCurrency(invoice.total)}
                 </p>
               </div>
             </div>
+
+            {fullyCoveredByMembership && (
+              <p className="mt-2 text-sm text-gray-600">Sudah termasuk dalam paket membership.</p>
+            )}
 
             <div className="mt-6">
               <h2 className="mb-4 text-base font-bold text-gray-950">Detail Transaksi</h2>
@@ -459,6 +484,19 @@ export default function InvoiceDetailPage() {
                     {dayjs(transactionDate).format('DD MMM YYYY, HH:mm')}
                   </dd>
                 </div>
+                {booking?.details?.some((detail) => detail.membershipUserId) && (
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
+                    <dt className="text-gray-500">Membership</dt>
+                    <dd className="max-w-52 text-right sm:max-w-sm">
+                      <Badge
+                        variant="outline"
+                        className="border-amber-200 bg-amber-50 whitespace-normal text-amber-800"
+                      >
+                        {getBookingMembershipLabel(booking)}
+                      </Badge>
+                    </dd>
+                  </div>
+                )}
               </dl>
             </div>
           </section>

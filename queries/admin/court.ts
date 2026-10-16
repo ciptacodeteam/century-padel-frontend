@@ -39,9 +39,13 @@ export const adminCourtCostingQueryOptionsById = (id: string, queryParams?: Sear
   });
 
 // Query to get courts with available slots for a specific date (admin)
-export const adminCourtsWithSlotsQueryOptions = (date: string, courtId?: string) =>
+export const adminCourtsWithSlotsQueryOptions = (
+  date: string,
+  courtId?: string,
+  includeUnavailable = false
+) =>
   queryOptions({
-    queryKey: ['admin', 'courts', 'slots', date, courtId],
+    queryKey: ['admin', 'courts', 'slots', date, courtId, includeUnavailable],
     queryFn: async () => {
       // Get slots for the entire day (06:00 to 23:00)
       // API expects ISO format: 2025-01-20T08:00:00
@@ -60,7 +64,11 @@ export const adminCourtsWithSlotsQueryOptions = (date: string, courtId?: string)
       // Use the /courts/slots endpoint to get all slots at once (avoids 404s from individual court endpoints)
       let allSlots: Slot[] = [];
       try {
-        const slotsResponse = await getCourtsSlotsApi({ startAt, endAt });
+        const slotsResponse = await getCourtsSlotsApi({
+          startAt,
+          endAt,
+          ...(includeUnavailable ? { includeUnavailable: 'true' } : {})
+        });
         allSlots = (slotsResponse.data || []) as Slot[];
       } catch (error) {
         // If the bulk endpoint fails, fall back to individual court endpoints

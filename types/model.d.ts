@@ -510,6 +510,7 @@ export type BookingDetail = {
   price: number;
   discountPrice?: number | null;
   membershipUserId: string | null;
+  membershipUser?: { membership?: Pick<Membership, 'name' | 'type'> | null } | null;
   complimentaryCreditMinutes: number;
   cancelledAt: Date | null;
   cancellationReason: string | null;

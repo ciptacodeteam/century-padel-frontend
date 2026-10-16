@@ -282,7 +282,7 @@ export default function SchedulePage() {
 
   // Fetch slots for the selected date to get all time slots (optional - for dynamic slots)
   const { data: slotsData, isLoading: isSlotsLoading } = useQuery(
-    adminCourtsWithSlotsQueryOptions(selectedDateString)
+    adminCourtsWithSlotsQueryOptions(selectedDateString, undefined, true)
   );
   const slots = slotsData?.slots || [];
 
@@ -567,6 +567,17 @@ export default function SchedulePage() {
                                 const bookingCell = bookingsMap.get(court.id)?.get(startTime);
                                 const status = bookingCell?.status || BookingStatus.HOLD;
                                 const isBooked = !!bookingCell;
+                                const isDisabled =
+                                  !isBooked &&
+                                  slots.some(
+                                    (slot) =>
+                                      slot.courtId === court.id &&
+                                      slot.isAvailable === false &&
+                                      getDateStringFromISO(slot.startAt) === selectedDateString &&
+                                      formatSlotTime(slot.startAt) <= startTime &&
+                                      (getDateStringFromISO(slot.endAt) > selectedDateString ||
+                                        formatSlotTime(slot.endAt) > startTime)
+                                  );
 
                                 // Get color classes based on status
                                 const statusClasses = {
@@ -585,7 +596,9 @@ export default function SchedulePage() {
                                       'border px-2 py-2 text-center transition-colors',
                                       isBooked
                                         ? cn('cursor-pointer', statusClasses[status])
-                                        : 'border-border bg-background'
+                                        : isDisabled
+                                          ? 'border-border bg-muted'
+                                          : 'border-border bg-background'
                                     )}
                                   >
                                     {bookingCell ? (
@@ -1112,7 +1125,9 @@ export default function SchedulePage() {
                                         </DialogContent>
                                       </ManagedDialog>
                                     ) : (
-                                      <span className="text-muted-foreground text-sm">-</span>
+                                      <span className="text-muted-foreground text-sm">
+                                        {isDisabled ? 'Dinonaktifkan' : '-'}
+                                      </span>
                                     )}
                                   </td>
                                 );

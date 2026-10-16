@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatGatewayPaymentMethod,
+  getBookingMembershipLabel,
   getBookingPaymentSources,
   isMembershipBooking
 } from './booking-payment';
@@ -79,4 +80,18 @@ describe('booking payment sources', () => {
       )
     ).toBe(false);
   });
+});
+
+it('shows all membership packages actually used and deduplicates repeated slots', () => {
+  const peak = {
+    membershipUserId: 'peak',
+    membershipUser: { membership: { name: 'Paket Peak', type: 'PEAK_HOUR' } }
+  };
+  const happy = {
+    membershipUserId: 'happy',
+    membershipUser: { membership: { name: 'Paket Happy', type: 'HAPPY_HOUR' } }
+  };
+  expect(
+    getBookingMembershipLabel({ details: [peak, happy, peak, { membershipUserId: null }] })
+  ).toBe('Membership · Paket Peak (Peak Hour) / Membership · Paket Happy (Happy Hour)');
 });

@@ -13,6 +13,30 @@ export const isMembershipBooking = (booking: Booking): boolean => {
   );
 };
 
+type MembershipDetail = {
+  membershipUserId?: string | null;
+  membershipUser?: { membership?: { name: string; type?: string } | null } | null;
+};
+
+export const getMembershipLabel = (detail: MembershipDetail): string | null => {
+  if (!detail.membershipUserId && !detail.membershipUser) return null;
+  const membership = detail.membershipUser?.membership;
+  if (!membership) return 'Membership';
+  const typeLabel = { PEAK_HOUR: 'Peak Hour', HAPPY_HOUR: 'Happy Hour', ALL_HOUR: 'All Hour' }[
+    membership.type || ''
+  ];
+  return `Membership · ${membership.name}${typeLabel ? ` (${typeLabel})` : ''}`;
+};
+
+export const getBookingMembershipLabel = (booking: { details?: MembershipDetail[] }): string => {
+  const labels = [
+    ...new Set(
+      (booking.details || []).map(getMembershipLabel).filter((label): label is string => !!label)
+    )
+  ];
+  return labels.join(' / ') || 'Membership';
+};
+
 const formatCreditDuration = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
@@ -63,7 +87,7 @@ export const getBookingPaymentSources = (booking: Booking): BookingPaymentSource
   }
 
   if (isMembershipBooking(booking)) {
-    sources.push({ id: 'membership', label: 'Membership' });
+    sources.push({ id: 'membership', label: getBookingMembershipLabel(booking) });
   }
 
   const detailCreditMinutes =

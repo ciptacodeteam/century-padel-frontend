@@ -40,7 +40,11 @@ import {
   ROLE
 } from '@/lib/constants';
 import { canCustomerReschedule } from '@/lib/reschedule-policy';
-import { isMembershipBooking } from '@/lib/booking-payment';
+import {
+  getBookingMembershipLabel,
+  getMembershipLabel,
+  isMembershipBooking
+} from '@/lib/booking-payment';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
@@ -292,7 +296,7 @@ const BookingTable = () => {
         header: 'Jenis Pesanan',
         cell: ({ row }) =>
           isMembershipBooking(row.original) ? (
-            <Badge variant="lightInfo">Membership</Badge>
+            <Badge variant="lightInfo">{getBookingMembershipLabel(row.original)}</Badge>
           ) : (
             <Badge variant="outline">Reguler</Badge>
           )
@@ -460,6 +464,11 @@ const BookingTable = () => {
                                   <div>
                                     <p className="text-sm font-medium">
                                       {detail.court?.name || '-'}
+                                      {getMembershipLabel(detail) && (
+                                        <Badge variant="outline" className="ml-2">
+                                          {getMembershipLabel(detail)}
+                                        </Badge>
+                                      )}
                                     </p>
                                     {detail.slot && (
                                       <p className="text-muted-foreground text-xs">
@@ -588,7 +597,14 @@ const BookingTable = () => {
                                   className="flex items-start justify-between text-sm"
                                 >
                                   <div>
-                                    <p className="font-medium">{detail.court?.name || '-'}</p>
+                                    <p className="font-medium">
+                                      {detail.court?.name || '-'}
+                                      {getMembershipLabel(detail) && (
+                                        <Badge variant="outline" className="ml-2">
+                                          {getMembershipLabel(detail)}
+                                        </Badge>
+                                      )}
+                                    </p>
                                     {detail.slot && (
                                       <p className="text-muted-foreground text-xs">
                                         {formatSlotDate(detail.slot.startAt, 'DD MMM, HH:mm')} -{' '}

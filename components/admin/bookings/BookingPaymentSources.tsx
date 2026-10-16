@@ -10,7 +10,11 @@ export function BookingPaymentSources({ booking }: { booking: Booking }) {
       <p className="text-muted-foreground text-sm">Metode Pembayaran</p>
       <div className="mt-1 flex flex-wrap gap-1.5">
         {sources.map((source) => (
-          <Badge key={source.id} variant="outline" className="font-medium">
+          <Badge
+            key={source.id}
+            variant="outline"
+            className="max-w-full font-medium whitespace-normal"
+          >
             {source.label}
           </Badge>
         ))}
