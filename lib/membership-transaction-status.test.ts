@@ -36,6 +36,18 @@ describe('membership transaction status', () => {
       ).label
     ).toBe('Aktif');
   });
+  it('labels cancelled transfer entitlements explicitly', () => {
+    expect(
+      getMembershipTransactionStatus(
+        transaction('', {
+          acquisitionType: 'TRANSFER',
+          invoice: null,
+          isExpired: true,
+          incomingTransfer: { cancelledAt: new Date() }
+        })
+      ).label
+    ).toBe('Transfer Dibatalkan');
+  });
   it('preserves refunded and expired membership labels', () => {
     expect(getMembershipTransactionStatus(transaction('PAID', { isExpired: true })).label).toBe(
       'Kedaluwarsa'

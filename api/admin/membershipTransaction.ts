@@ -68,3 +68,15 @@ export async function transferAdminMembershipBalanceApi(
   const { data } = await adminApi.post(`/membership-transactions/${id}/transfer`, payload);
   return data;
 }
+
+export async function cancelAdminMembershipTransferApi(
+  id: string,
+  transferId: string,
+  payload: { reason: string }
+) {
+  const { data } = await adminApi.post(
+    `/membership-transactions/${id}/transfers/${transferId}/cancel`,
+    payload
+  );
+  return data;
+}

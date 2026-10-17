@@ -1,5 +1,6 @@
 import {
   approveAdminMembershipTransactionApi,
+  cancelAdminMembershipTransferApi,
   rejectAdminMembershipTransactionApi,
   suspendAdminMembershipTransactionApi,
   terminateAndRefundAdminMembershipTransactionApi,
@@ -147,5 +148,23 @@ export const useExportMembershipTransactionsExcel = () => {
       toast.success('File ekspor berhasil dibuat');
     },
     onError: () => toast.error('Gagal mengekspor Excel')
+  });
+};
+
+export const useCancelMembershipTransferMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { id: string; transferId: string; reason: string }) =>
+      cancelAdminMembershipTransferApi(vars.id, vars.transferId, { reason: vars.reason }),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin', 'membership-transactions'] }),
+        qc.invalidateQueries({ queryKey: ['admin', 'customers'] }),
+        qc.invalidateQueries({ queryKey: ['memberships', 'my'] })
+      ]);
+      toast.success('Transfer dibatalkan dan jam dikembalikan ke pemilik asal');
+    },
+    onError: (error: any) =>
+      toast.error(error?.message || error?.msg || 'Gagal membatalkan transfer')
   });
 };

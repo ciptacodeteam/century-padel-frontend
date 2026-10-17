@@ -284,6 +284,10 @@ export type MembershipTransfer = {
   transferredHours: number;
   reason: string;
   transferredByAdminId: string;
+  cancelledAt: Date | null;
+  cancellationReason: string | null;
+  cancelledByAdminId: string | null;
+  cancelledByAdmin?: Pick<AdminProfile, 'id' | 'name'>;
   createdAt: Date;
   fromUser?: Pick<UserProfile, 'id' | 'name' | 'phone'>;
   toUser?: Pick<UserProfile, 'id' | 'name' | 'phone'>;

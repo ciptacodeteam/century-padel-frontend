@@ -43,6 +43,7 @@ import {
 import { Input } from '@/components/ui/input';
 import DatePickerInput from '@/components/ui/date-picker-input';
 import { adminProfileQueryOptions } from '@/queries/admin/auth';
+import { CancelMembershipTransferDialog } from './CancelMembershipTransferDialog';
 import { TransferMembershipBalanceDialog } from './TransferMembershipBalanceDialog';
 import { useTransferMembershipBalanceMutation } from '@/mutations/admin/membershipTransaction';
 
@@ -359,6 +360,7 @@ const MembershipTransactionTable = () => {
 
 const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipUser }) => {
   const { user, membership, invoice } = transaction;
+  const { data: me } = useQuery(adminProfileQueryOptions);
   const refund = getMembershipRefund(transaction);
 
   return (
@@ -513,6 +515,11 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
               <p className="font-medium">{transaction.incomingTransfer.reason}</p>
             </div>
           </div>
+          <CancelMembershipTransferDialog
+            transfer={transaction.incomingTransfer}
+            membershipUserId={transaction.id}
+            isSuperAdmin={me?.role === ROLE.ADMIN}
+          />
         </div>
       )}
 
@@ -534,6 +541,11 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
                 <p className="text-muted-foreground text-xs">
                   Oleh {transfer.transferredByAdmin?.name || '-'}
                 </p>
+                <CancelMembershipTransferDialog
+                  transfer={transfer}
+                  membershipUserId={transaction.id}
+                  isSuperAdmin={me?.role === ROLE.ADMIN}
+                />
               </div>
             ))}
           </div>

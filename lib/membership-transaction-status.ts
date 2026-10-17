@@ -1,6 +1,9 @@
 import type { MembershipUser } from '@/types/model';
 
 export function getMembershipTransactionStatus(transaction: MembershipUser) {
+  if (transaction.incomingTransfer?.cancelledAt) {
+    return { label: 'Transfer Dibatalkan', variant: 'destructive' } as const;
+  }
   if (transaction.invoice?.payment?.meta?.refund) {
     return { label: 'Dihentikan & Refund', variant: 'destructive' } as const;
   }
