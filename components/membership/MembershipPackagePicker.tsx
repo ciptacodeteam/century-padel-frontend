@@ -45,11 +45,17 @@ export default function MembershipPackagePicker({ memberships, value, onValueCha
   const [search, setSearch] = useState('');
   const selected = memberships.find((membership) => membership.id === value);
   const query = search.trim().toLocaleLowerCase('id-ID');
-  const results = memberships.filter((membership) =>
-    `${membership.name} ${date(membership.createdAt)} ${membership.id.slice(-6)} ${statuses[membership.status]}`
-      .toLocaleLowerCase('id-ID')
-      .includes(query)
-  );
+  const results = memberships
+    .filter((membership) =>
+      `${membership.name} ${date(membership.createdAt)} ${membership.id.slice(-6)} ${statuses[membership.status]}`
+        .toLocaleLowerCase('id-ID')
+        .includes(query)
+    )
+    .sort(
+      (a, b) =>
+        Number(b.status === 'ACTIVE') - Number(a.status === 'ACTIVE') ||
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
   const onOpenChange = (next: boolean) => {
     setOpen(next);
     if (!next) setSearch('');
