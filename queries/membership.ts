@@ -4,6 +4,7 @@ import {
   getMyMembershipsApi,
   getMyMembershipApi
 } from '@/api/membership';
+import type { MembershipActivity } from '@/types/membership-activity';
 import type { Membership, MembershipType } from '@/types/model';
 import { queryOptions } from '@tanstack/react-query';
 
@@ -48,6 +49,7 @@ export const myMembershipsQueryOptions = queryOptions({
       expired: Array<any>;
       suspended: Array<any>;
       total: number;
+      activity?: MembershipActivity;
     }
 });
 

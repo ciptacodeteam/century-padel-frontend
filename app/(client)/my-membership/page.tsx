@@ -1,5 +1,6 @@
 'use client';
 
+import MembershipActivitySection from '@/components/membership/MembershipActivity';
 import MainBottomNavigation from '@/components/footers/MainBottomNavigation';
 import MainHeader from '@/components/headers/MainHeader';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MEMBERSHIP_TYPE_LABEL } from '@/lib/membership-eligibility';
+import useAuthStore from '@/stores/useAuthStore';
+import useAuthModalStore from '@/stores/useAuthModalStore';
+import { profileQueryOptions } from '@/queries/profile';
 import { myMembershipsQueryOptions } from '@/queries/membership';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
@@ -23,9 +27,27 @@ import {
 import Link from 'next/link';
 
 export default function MyMembershipPage() {
-  const { data, isPending, isError, refetch } = useQuery(myMembershipsQueryOptions);
-  const activeMemberships = data?.active ?? [];
-  const hasMembershipHistory = (data?.expired?.length ?? 0) > 0;
+  const { isAuth, token } = useAuthStore();
+  const hasSession = isAuth || !!token;
+  const openLogin = useAuthModalStore((state) => state.open);
+  const profile = useQuery({ ...profileQueryOptions, enabled: hasSession });
+  const userId = profile.data?.id;
+  const memberships = useQuery({
+    ...myMembershipsQueryOptions,
+    queryKey: ['memberships', 'my', 'history', userId ?? 'anonymous'],
+    enabled: hasSession && !!userId
+  });
+  const data = hasSession ? memberships.data : undefined;
+  const isPending =
+    hasSession && (profile.isPending || (memberships.isPending && !profile.isError));
+  const isError = hasSession && (profile.isError || memberships.isError);
+  const refetch = () => (profile.isError ? profile.refetch() : memberships.refetch());
+  const activeMemberships = (data?.active ?? []).filter(
+    (membership) =>
+      !data?.activity || data.activity.memberships.some((item) => item.id === membership.id)
+  );
+  const hasMembershipHistory =
+    (data?.activity?.memberships.length ?? data?.expired?.length ?? 0) > 0;
 
   return (
     <>
@@ -41,6 +63,20 @@ export default function MyMembershipPage() {
             </p>
           </section>
 
+          {!hasSession && (
+            <Card className="border-neutral-200 bg-white">
+              <CardContent className="p-6 text-center sm:p-10">
+                <Crown className="text-primary mx-auto mb-3 size-8" />
+                <h2 className="text-xl font-bold">Lihat membership kamu</h2>
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Masuk untuk melihat sisa jam dan riwayat membership.
+                </p>
+                <Button className="mt-5" onClick={openLogin}>
+                  Masuk
+                </Button>
+              </CardContent>
+            </Card>
+          )}
           {isPending && <MembershipLoadingState />}
 
           {!isPending && isError && (
@@ -62,7 +98,7 @@ export default function MyMembershipPage() {
             </Card>
           )}
 
-          {!isPending && !isError && activeMemberships.length === 0 && (
+          {hasSession && !isPending && !isError && activeMemberships.length === 0 && (
             <MembershipEmptyState hasMembershipHistory={hasMembershipHistory} />
           )}
 
@@ -92,7 +128,9 @@ export default function MyMembershipPage() {
                       (userMembership.remainingSessions / Math.max(1, allocatedHours)) * 100
                     )
                   );
-                  const usedHours = Math.max(0, allocatedHours - userMembership.remainingSessions);
+                  const summary = data?.activity?.memberships.find(
+                    (item) => item.id === userMembership.id
+                  );
 
                   return (
                     <Card
@@ -129,7 +167,7 @@ export default function MyMembershipPage() {
                               </p>
                             </div>
                             <p className="min-w-0 text-right text-xs leading-5 text-white/75">
-                              {usedHours} dari {allocatedHours} jam terpakai
+                              Kuota awal {allocatedHours} jam
                             </p>
                           </div>
                           <Progress
@@ -141,6 +179,38 @@ export default function MyMembershipPage() {
                       </CardHeader>
 
                       <CardContent className="space-y-5 p-5 sm:p-6">
+                        {summary && (
+                          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg border border-neutral-200 p-4 text-sm">
+                            <div>
+                              <dt className="text-muted-foreground text-xs">Pemakaian booking</dt>
+                              <dd className="mt-1 font-semibold">{summary.bookingHours} jam</dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground text-xs">Transfer keluar</dt>
+                              <dd className="mt-1 font-semibold">
+                                {summary.transferredOutHours} jam
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground text-xs">Transfer masuk</dt>
+                              <dd className="mt-1 font-semibold">
+                                {summary.transferredInHours} jam
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-muted-foreground text-xs">Menunggu pembayaran</dt>
+                              <dd className="mt-1 font-semibold">{summary.heldHours} jam</dd>
+                            </div>
+                            {summary.untrackedHours > 0 && (
+                              <div className="col-span-2 border-t pt-3">
+                                <dt className="text-muted-foreground text-xs">
+                                  Perubahan lain / data lama
+                                </dt>
+                                <dd className="mt-1 font-semibold">{summary.untrackedHours} jam</dd>
+                              </div>
+                            )}
+                          </dl>
+                        )}
                         {userMembership.acquisitionType === 'TRANSFER' && (
                           <div className="flex items-start gap-3 rounded-lg bg-sky-50 p-3 text-sky-800">
                             <Sparkles className="mt-0.5 size-4 shrink-0" />
@@ -185,9 +255,11 @@ export default function MyMembershipPage() {
                         )}
 
                         {membership.benefits && membership.benefits.length > 0 && (
-                          <div>
-                            <p className="mb-3 text-sm font-semibold">Benefit membership</p>
-                            <ul className="space-y-2.5">
+                          <details>
+                            <summary className="cursor-pointer text-sm font-semibold">
+                              Benefit membership
+                            </summary>
+                            <ul className="mt-3 space-y-2.5">
                               {membership.benefits.map((benefit) => (
                                 <li key={benefit.id} className="flex items-start gap-2.5 text-sm">
                                   <CheckCircle2 className="text-primary mt-0.5 size-4 shrink-0" />
@@ -195,7 +267,7 @@ export default function MyMembershipPage() {
                                 </li>
                               ))}
                             </ul>
-                          </div>
+                          </details>
                         )}
 
                         <Button className="w-full" size="lg" asChild>
@@ -211,6 +283,9 @@ export default function MyMembershipPage() {
               </section>
             </>
           )}
+          {!isPending && !isError && data?.activity && (
+            <MembershipActivitySection activity={data.activity} />
+          )}
         </div>
       </main>
 
@@ -220,6 +295,25 @@ export default function MyMembershipPage() {
 }
 
 function MembershipEmptyState({ hasMembershipHistory }: { hasMembershipHistory: boolean }) {
+  if (hasMembershipHistory)
+    return (
+      <Card className="border-neutral-200 bg-white">
+        <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <History className="text-primary mt-1 size-5 shrink-0" />
+            <div>
+              <h2 className="font-bold">Belum ada membership aktif</h2>
+              <p className="text-muted-foreground mt-1 text-sm leading-6">
+                Riwayat jam dari paket sebelumnya tetap bisa kamu lihat di bawah.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" asChild>
+            <Link href="/membership">Lihat Paket</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
   return (
     <Card className="overflow-hidden border-neutral-200 bg-white shadow-sm">
       <CardContent className="relative flex min-h-[420px] flex-col items-center justify-center p-8 text-center">
@@ -228,15 +322,12 @@ function MembershipEmptyState({ hasMembershipHistory }: { hasMembershipHistory: 
 
         <div className="relative flex max-w-md flex-col items-center">
           <div className="bg-primary/10 text-primary flex size-20 items-center justify-center rounded-full">
-            {hasMembershipHistory ? <History className="size-9" /> : <Crown className="size-9" />}
+            <Crown className="size-9" />
           </div>
-          <h2 className="mt-6 text-2xl font-bold">
-            {hasMembershipHistory ? 'Membership kamu sudah berakhir' : 'Belum ada membership aktif'}
-          </h2>
+          <h2 className="mt-6 text-2xl font-bold">Belum ada membership aktif</h2>
           <p className="text-muted-foreground mt-3 text-sm leading-6">
-            {hasMembershipHistory
-              ? 'Aktifkan paket baru untuk kembali menikmati jam bermain dan benefit khusus member.'
-              : 'Pilih paket yang sesuai dengan rutinitas bermainmu dan nikmati harga serta benefit khusus member.'}
+            Pilih paket yang sesuai dengan rutinitas bermainmu dan nikmati harga serta benefit
+            khusus member.
           </p>
           <Button className="mt-7 w-full sm:w-auto" size="lg" asChild>
             <Link href="/membership">
