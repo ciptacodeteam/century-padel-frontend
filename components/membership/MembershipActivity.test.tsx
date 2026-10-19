@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import MembershipActivitySection from './MembershipActivity';
 import type { MembershipActivity } from '@/types/membership-activity';
+
+vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 
 afterEach(cleanup);
 const activity: MembershipActivity = {

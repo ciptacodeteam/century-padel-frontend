@@ -13,6 +13,8 @@ vi.mock('@/api/membership', () => ({ getMyMembershipsApi: getMemberships }));
 vi.mock('@/components/headers/MainHeader', () => ({ default: () => null }));
 vi.mock('@/components/footers/MainBottomNavigation', () => ({ default: () => null }));
 
+vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }));
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();

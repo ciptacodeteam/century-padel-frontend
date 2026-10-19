@@ -18,13 +18,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import MembershipPackagePicker from './MembershipPackagePicker';
 import { cn } from '@/lib/utils';
 import { formatSlotTime } from '@/lib/time-utils';
 import type { MembershipActivity, MembershipActivityEvent } from '@/types/membership-activity';
@@ -90,9 +84,9 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
             Telusuri pemakaian dan perpindahan jam, termasuk dari paket yang sudah berakhir.
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div
-            className="flex gap-1 rounded-lg bg-neutral-100 p-1"
+            className="flex min-w-0 gap-1 rounded-lg bg-neutral-100 p-1 md:shrink-0"
             role="group"
             aria-label="Jenis aktivitas"
           >
@@ -106,7 +100,7 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                   setLimit(10);
                 }}
                 className={cn(
-                  'focus-visible:outline-primary flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2',
+                  'focus-visible:outline-primary flex-1 rounded-md px-2 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-3',
                   filter === item.id
                     ? 'text-primary bg-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -116,32 +110,20 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
               </button>
             ))}
           </div>
-          <Select
+          <MembershipPackagePicker
+            memberships={activity.memberships}
             value={packageId}
             onValueChange={(value) => {
               setPackageId(value);
               setLimit(10);
             }}
-          >
-            <SelectTrigger className="w-full min-w-0 sm:w-72" aria-label="Filter paket membership">
-              <SelectValue placeholder="Semua membership" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Semua membership</SelectItem>
-              {activity.memberships.map((membership) => (
-                <SelectItem key={membership.id} value={membership.id}>
-                  {membership.name} · {date(membership.createdAt)} · #{membership.id.slice(-6)} ·{' '}
-                  {packageStatus[membership.status]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
       </div>
 
       {filteredPackage && (
         <div className="border-b bg-neutral-50/50 px-5 py-4 sm:px-6">
-          <p className="text-sm font-semibold">
+          <p className="text-sm font-semibold [overflow-wrap:anywhere]">
             {filteredPackage.name}{' '}
             <span className="text-muted-foreground text-xs font-normal">
               · {packageStatus[filteredPackage.status]}
