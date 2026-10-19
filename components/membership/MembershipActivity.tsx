@@ -21,7 +21,8 @@ import {
 import MembershipPackagePicker from './MembershipPackagePicker';
 import { cn } from '@/lib/utils';
 import { formatSlotTime } from '@/lib/time-utils';
-import type { MembershipActivity, MembershipActivityEvent } from '@/types/membership-activity';
+import { groupMembershipBookings, type MembershipActivityRow } from '@/lib/membership-activity';
+import type { MembershipActivity } from '@/types/membership-activity';
 
 const date = (value: string, time = false) =>
   new Intl.DateTimeFormat('id-ID', {
@@ -32,7 +33,12 @@ const date = (value: string, time = false) =>
     ...(time ? ({ hour: '2-digit', minute: '2-digit' } as const) : {})
   }).format(new Date(value));
 const hours = (value: number) => new Intl.NumberFormat('id-ID').format(value);
-const statusLabels = { COMPLETED: 'Selesai', HOLD: 'Menunggu pembayaran', CANCELLED: 'Dibatalkan' };
+const statusLabels = {
+  COMPLETED: 'Selesai',
+  HOLD: 'Menunggu pembayaran',
+  CANCELLED: 'Dibatalkan',
+  PARTIAL: 'Sebagian dibatalkan'
+};
 const packageStatus = {
   ACTIVE: 'Aktif',
   EXPIRED: 'Berakhir / habis',
@@ -50,17 +56,23 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
   const [filter, setFilter] = useState('ALL');
   const [packageId, setPackageId] = useState('ALL');
   const [limit, setLimit] = useState(10);
-  const [selected, setSelected] = useState<MembershipActivityEvent | null>(null);
+  const [selected, setSelected] = useState<MembershipActivityRow | null>(null);
   const packages = new Map(activity.memberships.map((membership) => [membership.id, membership]));
-  const selectedPackage = selected ? packages.get(selected.membershipUserId) : undefined;
+  const selectedMembershipIds = [
+    ...new Set(selected?.items.map((item) => item.membershipUserId) ?? [])
+  ];
+  const selectedPackage =
+    selectedMembershipIds.length === 1 ? packages.get(selectedMembershipIds[0]) : undefined;
   const filteredPackage = packages.get(packageId);
-  const events = activity.events.filter(
-    (event) =>
-      (packageId === 'ALL' || event.membershipUserId === packageId) &&
-      (filter === 'ALL' ||
-        (filter === 'TRANSFER'
-          ? event.type.startsWith('TRANSFER') || (event.type === 'RETURN' && !!event.counterpart)
-          : event.type === 'BOOKING' || (event.type === 'RETURN' && !!event.court)))
+  const events = groupMembershipBookings(
+    activity.events.filter(
+      (event) =>
+        (packageId === 'ALL' || event.membershipUserId === packageId) &&
+        (filter === 'ALL' ||
+          (filter === 'TRANSFER'
+            ? event.type.startsWith('TRANSFER') || (event.type === 'RETURN' && !!event.counterpart)
+            : event.type === 'BOOKING' || (event.type === 'RETURN' && !!event.court)))
+    )
   );
   const hasUntracked = activity.memberships.some((membership) => membership.untrackedHours > 0);
 
@@ -201,9 +213,15 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold break-words">{event.title}</p>
                       <p className="text-muted-foreground mt-1 text-xs leading-5 break-words">
-                        {packages.get(event.membershipUserId)?.name} · #
-                        {event.membershipUserId.slice(-6)}
+                        {new Set(event.items.map((item) => item.membershipUserId)).size > 1
+                          ? `${new Set(event.items.map((item) => item.membershipUserId)).size} paket membership`
+                          : `${packages.get(event.membershipUserId)?.name} · #${event.membershipUserId.slice(-6)}`}
                       </p>
+                      {event.type === 'BOOKING' && (
+                        <p className="text-muted-foreground text-xs leading-5 [overflow-wrap:anywhere]">
+                          {event.reference}
+                        </p>
+                      )}
                       <p className="text-muted-foreground text-xs leading-5">
                         {date(event.occurredAt, true)}
                       </p>
@@ -289,8 +307,14 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
               <dl className="divide-y text-sm">
                 {(
                   [
-                    ['Membership', selectedPackage?.name],
-                    ['ID paket', selected.membershipUserId],
+                    [
+                      'Membership',
+                      selectedPackage?.name ??
+                        (selectedMembershipIds.length > 1
+                          ? `${selectedMembershipIds.length} paket membership`
+                          : undefined)
+                    ],
+                    ['ID paket', selectedPackage ? selected.membershipUserId : undefined],
                     ['Waktu aktivitas', `${date(selected.occurredAt, true)} WIB`],
                     ['Status', statusLabels[selected.status]],
                     [
@@ -305,10 +329,10 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                           : 'Member terkait',
                       selected.counterpart
                     ],
-                    ['Lapangan', selected.court],
+                    ['Lapangan', selected.items.length === 1 ? selected.court : undefined],
                     [
                       'Jadwal terkini',
-                      selected.startAt && selected.endAt
+                      selected.items.length === 1 && selected.startAt && selected.endAt
                         ? `${formatSlotTime(selected.startAt, 'DD MMM YYYY')} · ${formatSlotTime(selected.startAt)}–${formatSlotTime(selected.endAt)} WIB`
                         : undefined
                     ],
@@ -326,6 +350,45 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                     </div>
                   ))}
               </dl>
+              {selected.type === 'BOOKING' && selected.items.length > 1 && (
+                <section aria-label="Rincian booking" className="min-w-0 border-t pt-4">
+                  <h3 className="text-sm font-semibold">
+                    Rincian booking · {selected.items.length} slot
+                  </h3>
+                  <ul className="mt-2 divide-y">
+                    {[...selected.items]
+                      .sort((a, b) => (a.startAt ?? '').localeCompare(b.startAt ?? ''))
+                      .map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm"
+                        >
+                          <div className="min-w-0 flex-1 space-y-1 [overflow-wrap:anywhere]">
+                            <p className="font-medium">{item.court ?? 'Lapangan'}</p>
+                            {item.startAt && item.endAt && (
+                              <p className="text-muted-foreground text-xs">
+                                {formatSlotTime(item.startAt, 'DD MMM YYYY')} ·{' '}
+                                {formatSlotTime(item.startAt)}–{formatSlotTime(item.endAt)} WIB
+                              </p>
+                            )}
+                            <p className="text-muted-foreground text-xs">
+                              {packages.get(item.membershipUserId)?.name} · #
+                              {item.membershipUserId.slice(-6)}
+                            </p>
+                            {item.status !== 'COMPLETED' && (
+                              <p className="text-muted-foreground text-xs">
+                                {statusLabels[item.status]}
+                              </p>
+                            )}
+                          </div>
+                          <span className="shrink-0 font-semibold tabular-nums">
+                            −{hours(Math.abs(item.hours))} jam
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                </section>
+              )}
               {selected.status === 'CANCELLED' && (
                 <p className="text-muted-foreground rounded-lg bg-neutral-50 p-3 text-xs leading-5">
                   Aktivitas ini dibatalkan. Pengembalian jam yang tercatat ditampilkan sebagai

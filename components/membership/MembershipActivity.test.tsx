@@ -90,6 +90,38 @@ describe('membership hour history', () => {
     expect(within(screen.getByRole('dialog')).getByText(/10:00–12:00 WIB/)).toBeInTheDocument();
   });
 
+  it('shows one invoice debit and preserves every court schedule in its detail', () => {
+    const original = activity.events[1];
+    render(
+      <MembershipActivitySection
+        activity={{
+          ...activity,
+          events: [
+            original,
+            {
+              ...original,
+              id: 'booking-2',
+              court: 'Court 2',
+              title: 'Booking Court 2',
+              hours: -3,
+              startAt: '2026-10-04T13:00:00Z',
+              endAt: '2026-10-04T16:00:00Z'
+            }
+          ]
+        }}
+      />
+    );
+    expect(screen.getByText('1 aktivitas')).toBeInTheDocument();
+    expect(screen.getByText('−5')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Booking lapangan/ }));
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.getByText('INV-BOOKING')).toBeInTheDocument();
+    expect(dialog.getByText('Court 1')).toBeInTheDocument();
+    expect(dialog.getByText('Court 2')).toBeInTheDocument();
+    expect(dialog.getByText(/10:00–12:00 WIB/)).toBeInTheDocument();
+    expect(dialog.getByText(/13:00–16:00 WIB/)).toBeInTheDocument();
+  });
+
   it('shows an empty state when no activity matches', () => {
     render(<MembershipActivitySection activity={{ ...activity, events: [activity.events[1]] }} />);
     fireEvent.click(screen.getByRole('button', { name: 'Transfer' }));
