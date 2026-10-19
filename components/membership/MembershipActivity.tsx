@@ -20,18 +20,30 @@ import {
 } from '@/components/ui/dialog';
 import MembershipPackagePicker from './MembershipPackagePicker';
 import { cn } from '@/lib/utils';
-import { formatSlotTime } from '@/lib/time-utils';
+import { formatSlotTime, toLocalSlotDate } from '@/lib/time-utils';
 import { groupMembershipBookings, type MembershipActivityRow } from '@/lib/membership-activity';
 import type { MembershipActivity } from '@/types/membership-activity';
 
 const date = (value: string, time = false) =>
   new Intl.DateTimeFormat('id-ID', {
     timeZone: 'Asia/Jakarta',
+    weekday: 'long',
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     ...(time ? ({ hour: '2-digit', minute: '2-digit' } as const) : {})
   }).format(new Date(value));
+const slotDate = (value: string) => {
+  const localDate = toLocalSlotDate(value);
+  return localDate
+    ? new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      }).format(localDate)
+    : '-';
+};
 const hours = (value: number) => new Intl.NumberFormat('id-ID').format(value);
 const statusLabels = {
   COMPLETED: 'Selesai',
@@ -333,7 +345,7 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                     [
                       'Jadwal terkini',
                       selected.items.length === 1 && selected.startAt && selected.endAt
-                        ? `${formatSlotTime(selected.startAt, 'DD MMM YYYY')} · ${formatSlotTime(selected.startAt)}–${formatSlotTime(selected.endAt)} WIB`
+                        ? `${slotDate(selected.startAt)} · ${formatSlotTime(selected.startAt)}–${formatSlotTime(selected.endAt)} WIB`
                         : undefined
                     ],
                     ['Berlaku hingga', selectedPackage ? date(selectedPackage.endDate) : undefined],
@@ -367,8 +379,8 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                             <p className="font-medium">{item.court ?? 'Lapangan'}</p>
                             {item.startAt && item.endAt && (
                               <p className="text-muted-foreground text-xs">
-                                {formatSlotTime(item.startAt, 'DD MMM YYYY')} ·{' '}
-                                {formatSlotTime(item.startAt)}–{formatSlotTime(item.endAt)} WIB
+                                {slotDate(item.startAt)} · {formatSlotTime(item.startAt)}–
+                                {formatSlotTime(item.endAt)} WIB
                               </p>
                             )}
                             <p className="text-muted-foreground text-xs">

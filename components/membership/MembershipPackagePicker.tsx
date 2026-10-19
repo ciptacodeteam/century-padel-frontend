@@ -27,6 +27,7 @@ const statuses = {
 const date = (value: string) =>
   new Intl.DateTimeFormat('id-ID', {
     timeZone: 'Asia/Jakarta',
+    weekday: 'long',
     day: 'numeric',
     month: 'short',
     year: 'numeric'
