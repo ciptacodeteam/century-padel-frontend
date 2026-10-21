@@ -128,6 +128,9 @@ interface DataTableProps<TData extends RowData> {
   /** Callback when pagination changes (page or pageSize) */
   onPaginationChange?: (page: number, pageSize: number) => void;
   rightActions?: React.ReactNode;
+  /** Render the same filtered, paginated rows as cards below the desktop breakpoint. */
+  renderMobileRow?: (row: TData) => React.ReactNode;
+  getSearchText?: (row: TData) => string;
 }
 
 export function DataTable<TData extends RowData>({
@@ -138,6 +141,8 @@ export function DataTable<TData extends RowData>({
   enableGlobalSearch = true,
   children,
   rightActions,
+  renderMobileRow,
+  getSearchText,
 
   enableRowSelection = true,
   getRowId,
@@ -191,11 +196,17 @@ export function DataTable<TData extends RowData>({
   const [expanded, setExpanded] = useState({});
   const isInitialMount = useRef(true);
 
-  const fuzzyFilter = useCallback<FilterFn<RowData>>((row, columnId, value, addMeta) => {
-    const itemRank = rankItem(row.getValue(columnId), value as string);
-    addMeta({ itemRank });
-    return itemRank.passed;
-  }, []);
+  const fuzzyFilter = useCallback<FilterFn<RowData>>(
+    (row, columnId, value, addMeta) => {
+      const itemRank = rankItem(
+        getSearchText ? getSearchText(row.original as TData) : row.getValue(columnId),
+        value as string
+      );
+      addMeta({ itemRank });
+      return itemRank.passed;
+    },
+    [getSearchText]
+  );
 
   const fallbackData = useMemo(() => data || [], [data]);
 
@@ -277,7 +288,8 @@ export function DataTable<TData extends RowData>({
   const table = useReactTable({
     data,
     columns: columnsWithSelection,
-    pageCount,
+    pageCount: serverSide || !renderMobileRow ? pageCount : undefined,
+    getColumnCanGlobalFilter: getSearchText ? () => true : undefined,
     getRowId,
     getSubRows,
     onSortingChange: setSorting,
@@ -341,29 +353,49 @@ export function DataTable<TData extends RowData>({
   const hasSelection = selectedRowIds.length > 0;
 
   return (
-    <div className="min-w-0">
-      <div className="flex flex-wrap items-center gap-3 py-4">
+    <div className="max-w-full min-w-0">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-3 py-4',
+          renderMobileRow && 'flex-col items-stretch md:flex-row md:items-center'
+        )}
+      >
         {enableGlobalSearch && (
           <Input
-            placeholder="Search..."
+            placeholder={renderMobileRow ? 'Cari nama, paket, atau invoice…' : 'Search...'}
             value={table.getState().globalFilter || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="max-w-60 text-sm"
+            className={cn('max-w-60 text-sm', renderMobileRow && 'w-full max-w-none md:max-w-72')}
+            aria-label="Cari transaksi"
             disabled={loading}
           />
         )}
 
-        <div className="flex items-center gap-2">{addButton}</div>
+        {addButton && <div className="flex items-center gap-2">{addButton}</div>}
 
         {/* Right-side actions */}
         {(enableColumnVisibility || rightActions) && (
-          <div className="flex-center ml-auto gap-2">
-            {rightActions && <div>{rightActions}</div>}
+          <div
+            className={cn(
+              'flex-center ml-auto gap-2',
+              renderMobileRow && 'w-full min-w-0 flex-wrap justify-start md:w-auto md:justify-end'
+            )}
+          >
+            {rightActions && (
+              <div className={cn(renderMobileRow && 'min-w-0 flex-1 md:flex-none')}>
+                {rightActions}
+              </div>
+            )}
 
             {enableColumnVisibility && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2" disabled={loading}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn('gap-2', renderMobileRow && 'hidden md:inline-flex')}
+                    disabled={loading}
+                  >
                     <Settings2 className="h-4 w-4" />
                     View
                   </Button>
@@ -419,7 +451,26 @@ export function DataTable<TData extends RowData>({
 
       {children && <div className="py-2">{children}</div>}
 
-      <div className="mt-1 min-w-0 rounded-md border">
+      {renderMobileRow && (
+        <div className="space-y-3 md:hidden" aria-label="Daftar membership">
+          {loading ? (
+            <div
+              role="status"
+              className="text-muted-foreground flex items-center justify-center gap-2 rounded-xl border p-8 text-sm"
+            >
+              <Loader2 className="size-4 animate-spin" />
+              Memuat membership…
+            </div>
+          ) : rowModel.rows.length ? (
+            rowModel.rows.map((row) => <div key={row.id}>{renderMobileRow(row.original)}</div>)
+          ) : (
+            <div className="text-muted-foreground rounded-xl border p-8 text-center text-sm">
+              Tidak ada membership ditemukan.
+            </div>
+          )}
+        </div>
+      )}
+      <div className={cn('mt-1 min-w-0 rounded-md border', renderMobileRow && 'hidden md:block')}>
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -547,7 +598,12 @@ export function DataTable<TData extends RowData>({
         {enablePagination && (
           <div className="mt-4 flex w-full items-center justify-center space-x-2 lg:mt-0 lg:w-fit lg:justify-end">
             <Pagination>
-              <PaginationContent className="mx-auto lg:mx-0 lg:ml-auto lg:w-fit">
+              <PaginationContent
+                className={cn(
+                  'mx-auto lg:mx-0 lg:ml-auto lg:w-fit',
+                  renderMobileRow && 'flex-wrap justify-center'
+                )}
+              >
                 <PaginationItem
                   className={cn(
                     'cursor-pointer',

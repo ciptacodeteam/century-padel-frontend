@@ -18,12 +18,20 @@ import dayjs from 'dayjs';
 type Payload = { hours: number; reason: string; requestId: string };
 export function GrantMembershipComplimentaryDialog({
   membership,
-  onGrant
+  onGrant,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false
 }: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
   membership: MembershipUser;
   onGrant: (payload: Payload) => Promise<unknown>;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const [localOpen, setLocalOpen] = React.useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   const [hours, setHours] = React.useState('');
   const [reason, setReason] = React.useState('');
   const [pending, setPending] = React.useState(false);
@@ -73,12 +81,14 @@ export function GrantMembershipComplimentaryDialog({
         if (!submitting.current) setOpen(value);
       }}
     >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
-          Tambah Kuota Complimentary
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="secondary">
+            Tambah Kuota Complimentary
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tambah Kuota Complimentary</DialogTitle>
           <DialogDescription>

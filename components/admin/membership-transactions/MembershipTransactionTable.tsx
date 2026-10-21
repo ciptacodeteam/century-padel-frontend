@@ -23,11 +23,16 @@ import { PAYMENT_STATUS_BADGE_VARIANT, PAYMENT_STATUS_MAP, ROLE } from '@/lib/co
 import { formatCurrency } from '@/lib/utils';
 import { adminMembershipTransactionsQueryOptions } from '@/queries/admin/membershipTransaction';
 import type { MembershipUser } from '@/types/model';
-import { IconEye, IconFileExcel } from '@tabler/icons-react';
+import { IconFileExcel } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import dayjs from 'dayjs';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import {
+  MembershipTransactionActions,
+  type MembershipAction
+} from './MembershipTransactionActions';
+import { MembershipTransactionCard } from './MembershipTransactionCard';
 import * as React from 'react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -60,6 +65,7 @@ const getMembershipRefund = (transaction: MembershipUser) =>
 
 const MembershipTransactionTable = () => {
   const [source, setSource] = useState<string>('');
+  const [selection, setSelection] = useState<{ id: string; action: MembershipAction } | null>(null);
   const { data: me } = useQuery(adminProfileQueryOptions);
   const { data: transactions = [], isLoading } = useQuery(
     adminMembershipTransactionsQueryOptions(source && source !== 'all' ? { source } : {})
@@ -73,6 +79,29 @@ const MembershipTransactionTable = () => {
   const { mutateAsync: grantComplimentary } = useGrantMembershipComplimentaryMutation();
   const { mutateAsync: transferBalance } = useTransferMembershipBalanceMutation();
   const { mutate: exportExcel, isPending: exporting } = useExportMembershipTransactionsExcel();
+
+  const onAction = useCallback(
+    (action: MembershipAction, transaction: MembershipUser) => {
+      if (action === 'approve') {
+        approveTx(transaction.id);
+        return;
+      }
+      if (action === 'reject') {
+        rejectTx({ id: transaction.id });
+        return;
+      }
+      if (action === 'unsuspend') {
+        unsuspendTx(transaction.id);
+        return;
+      }
+      setSelection({ id: transaction.id, action });
+    },
+    [approveTx, rejectTx, unsuspendTx]
+  );
+  const selected = transactions.find((transaction) => transaction.id === selection?.id);
+  const closeDialog = (open: boolean) => {
+    if (!open) setSelection(null);
+  };
 
   const columns = useMemo(
     () => [
@@ -235,135 +264,56 @@ const MembershipTransactionTable = () => {
       columnHelper.display({
         id: 'actions',
         header: 'Tindakan',
-        cell: (info) => {
-          const transaction = info.row.original;
-          const isFunded =
-            transaction.acquisitionType === 'TRANSFER' || transaction.invoice?.status === 'PAID';
-          const canApproveOrReject = transaction.invoice?.status === 'PENDING';
-          const refund = getMembershipRefund(transaction);
-          const canTerminateAndRefund =
-            transaction.acquisitionType === 'PURCHASE' &&
-            transaction.invoice?.status === 'PAID' &&
-            !transaction.isExpired &&
-            !refund &&
-            !transaction.outgoingTransfers?.length;
-          const canTransfer =
-            me?.role === ROLE.ADMIN &&
-            transaction.acquisitionType === 'PURCHASE' &&
-            transaction.invoice?.status === 'PAID' &&
-            !transaction.isExpired &&
-            !transaction.isSuspended &&
-            transaction.remainingSessions - (transaction.remainingComplimentarySessions ?? 0) > 0 &&
-            !refund &&
-            dayjs(transaction.endDate).isAfter(dayjs());
-
-          const canGrant =
-            me?.role === ROLE.ADMIN &&
-            isFunded &&
-            !transaction.isSuspended &&
-            !refund &&
-            (!transaction.isExpired || transaction.remainingSessions === 0) &&
-            dayjs(transaction.startDate).valueOf() <= Date.now() &&
-            dayjs(transaction.endDate).isAfter(dayjs());
-          return (
-            <div className="flex flex-wrap gap-2">
-              <ManagedDialog id={`membership-detail-${transaction.id}`}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <IconEye className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Detail Transaksi Membership</DialogTitle>
-                  </DialogHeader>
-                  <MembershipTransactionDetail transaction={transaction} />
-                </DialogContent>
-              </ManagedDialog>
-
-              {canApproveOrReject && (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondarySuccess"
-                    onClick={() => approveTx(transaction.id)}
-                  >
-                    Setujui
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondaryDanger"
-                    onClick={() => rejectTx({ id: transaction.id })}
-                  >
-                    Tolak
-                  </Button>
-                </div>
-              )}
-
-              {isFunded && !transaction.isSuspended && !transaction.isExpired && (
-                <SuspendMembershipDialog
-                  dialogId={transaction.id}
-                  onSubmit={(reason, endDate) =>
-                    suspendTx({ id: transaction.id, reason, endDate: endDate ?? undefined })
-                  }
-                />
-              )}
-              {isFunded && transaction.isSuspended && !transaction.isExpired && (
-                <Button size="sm" variant="outline" onClick={() => unsuspendTx(transaction.id)}>
-                  Aktifkan Kembali
-                </Button>
-              )}
-              {canTerminateAndRefund && (
-                <TerminateAndRefundMembershipDialog
-                  dialogId={transaction.id}
-                  invoiceTotal={transaction.invoice?.total || 0}
-                  onSubmit={(payload) => terminateAndRefundTx({ id: transaction.id, ...payload })}
-                />
-              )}
-              {canGrant && (
-                <GrantMembershipComplimentaryDialog
-                  membership={transaction}
-                  onGrant={(payload) => grantComplimentary({ id: transaction.id, ...payload })}
-                />
-              )}
-              {canTransfer && (
-                <TransferMembershipBalanceDialog
-                  membership={transaction}
-                  onTransfer={(payload) => transferBalance({ id: transaction.id, ...payload })}
-                />
-              )}
-            </div>
-          );
-        },
-        size: 100
+        enableHiding: false,
+        cell: (info) => (
+          <MembershipTransactionActions
+            transaction={info.row.original}
+            role={me?.role}
+            onAction={onAction}
+          />
+        ),
+        size: 140
       })
     ],
-    [
-      approveTx,
-      grantComplimentary,
-      me?.role,
-      rejectTx,
-      suspendTx,
-      terminateAndRefundTx,
-      transferBalance,
-      unsuspendTx
-    ]
+    [me?.role, onAction]
   );
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-full min-w-0 space-y-4">
       <DataTable
         columns={columns}
         data={transactions}
         loading={isLoading}
+        enableRowSelection={false}
+        getSearchText={(transaction) =>
+          [
+            transaction.user?.name,
+            transaction.user?.phone,
+            transaction.membership?.name,
+            transaction.invoice?.number
+          ]
+            .filter(Boolean)
+            .join(' ')
+        }
+        getRowId={(transaction) => transaction.id}
+        renderMobileRow={(transaction) => (
+          <MembershipTransactionCard
+            transaction={transaction}
+            role={me?.role}
+            onAction={onAction}
+          />
+        )}
         rightActions={
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2">
-              <label htmlFor="source-filter" className="text-sm font-medium">
-                Filter Sumber:
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-2 md:flex md:items-center">
+            <div className="min-w-0 space-y-1.5 md:flex md:items-center md:gap-2 md:space-y-0">
+              <label
+                htmlFor="source-filter"
+                className="text-muted-foreground block text-xs font-medium md:text-sm"
+              >
+                Sumber:
               </label>
               <Select value={source || 'all'} onValueChange={setSource}>
-                <SelectTrigger id="source-filter" className="w-[180px]">
+                <SelectTrigger id="source-filter" className="h-10 w-full md:w-36">
                   <SelectValue placeholder="Semua" />
                 </SelectTrigger>
                 <SelectContent>
@@ -376,7 +326,8 @@ const MembershipTransactionTable = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportExcel({})}
+              onClick={() => exportExcel(source && source !== 'all' ? { source } : {})}
+              className="h-10 shrink-0"
               disabled={exporting}
             >
               <IconFileExcel />
@@ -385,6 +336,59 @@ const MembershipTransactionTable = () => {
           </div>
         }
       />
+      <ManagedDialog
+        id="membership-transaction-detail"
+        open={selection?.action === 'detail' && !!selected}
+        onOpenChange={closeDialog}
+      >
+        <DialogContent className="max-h-[85dvh] min-w-0 overflow-x-hidden overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Detail Membership</DialogTitle>
+          </DialogHeader>
+          {selected && <MembershipTransactionDetail transaction={selected} />}
+        </DialogContent>
+      </ManagedDialog>
+      {transactions.map((transaction) => (
+        <GrantMembershipComplimentaryDialog
+          key={transaction.id}
+          hideTrigger
+          membership={transaction}
+          open={selection?.id === transaction.id && selection.action === 'complimentary'}
+          onOpenChange={closeDialog}
+          onGrant={(payload) => grantComplimentary({ id: transaction.id, ...payload })}
+        />
+      ))}
+      {selected && (
+        <>
+          <TransferMembershipBalanceDialog
+            key={`transfer-${selected.id}`}
+            hideTrigger
+            membership={selected}
+            open={selection?.action === 'transfer'}
+            onOpenChange={closeDialog}
+            onTransfer={(payload) => transferBalance({ id: selected.id, ...payload })}
+          />
+          <SuspendMembershipDialog
+            key={`suspend-${selected.id}`}
+            hideTrigger
+            dialogId={selected.id}
+            open={selection?.action === 'suspend'}
+            onOpenChange={closeDialog}
+            onSubmit={(reason, endDate) =>
+              suspendTx({ id: selected.id, reason, endDate: endDate ?? undefined })
+            }
+          />
+          <TerminateAndRefundMembershipDialog
+            key={`terminate-${selected.id}`}
+            hideTrigger
+            dialogId={selected.id}
+            invoiceTotal={selected.invoice?.total || 0}
+            open={selection?.action === 'terminate'}
+            onOpenChange={closeDialog}
+            onSubmit={(payload) => terminateAndRefundTx({ id: selected.id, ...payload })}
+          />
+        </>
+      )}
     </div>
   );
 };
@@ -395,7 +399,7 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
   const refund = getMembershipRefund(transaction);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6 wrap-anywhere">
       {/* Customer Info */}
       <div className="border-b pb-4">
         <h3 className="mb-3 font-semibold">Informasi Pelanggan</h3>
@@ -688,13 +692,21 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
 export default MembershipTransactionTable;
 
 const SuspendMembershipDialog = ({
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
   dialogId,
   onSubmit
 }: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
   dialogId: string;
   onSubmit: (reason: string, endDate?: string | null) => void;
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [localOpen, setLocalOpen] = React.useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   const [reason, setReason] = React.useState('');
   const [endDate, setEndDate] = React.useState<Date | null | undefined>(undefined);
 
@@ -708,12 +720,14 @@ const SuspendMembershipDialog = ({
 
   return (
     <ManagedDialog id={`suspend-membership-${dialogId}`} open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          Tangguhkan Sementara
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline">
+            Tangguhkan Sementara
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Tangguhkan Membership Sementara</DialogTitle>
         </DialogHeader>
@@ -730,7 +744,7 @@ const SuspendMembershipDialog = ({
             <p className="mb-1 text-sm font-medium">Batas penangguhan (opsional)</p>
             <DatePickerInput value={endDate ?? null} onValueChange={setEndDate} />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Batal
             </Button>
@@ -745,10 +759,16 @@ const SuspendMembershipDialog = ({
 };
 
 const TerminateAndRefundMembershipDialog = ({
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false,
   dialogId,
   invoiceTotal,
   onSubmit
 }: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
   dialogId: string;
   invoiceTotal: number;
   onSubmit: (payload: {
@@ -757,7 +777,9 @@ const TerminateAndRefundMembershipDialog = ({
     refundAmount?: number;
   }) => void;
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [localOpen, setLocalOpen] = React.useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   const [reason, setReason] = React.useState('');
   const [refundType, setRefundType] = React.useState<'FULL' | 'PARTIAL'>('FULL');
   const [refundAmount, setRefundAmount] = React.useState('');
@@ -787,12 +809,14 @@ const TerminateAndRefundMembershipDialog = ({
       open={open}
       onOpenChange={setOpen}
     >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondaryDanger">
-          Hentikan & Refund
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="secondaryDanger">
+            Hentikan & Refund
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Hentikan Membership & Refund</DialogTitle>
         </DialogHeader>
@@ -846,7 +870,7 @@ const TerminateAndRefundMembershipDialog = ({
               placeholder="Contoh: refund atas permintaan pelanggan"
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setOpen(false)}>
               Batal
             </Button>

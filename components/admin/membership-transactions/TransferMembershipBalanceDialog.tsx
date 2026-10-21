@@ -22,12 +22,23 @@ import dayjs from 'dayjs';
 import * as React from 'react';
 
 type Props = {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
   membership: MembershipUser;
   onTransfer: (payload: { toUserId: string; hours: number; reason: string }) => Promise<unknown>;
 };
 
-export function TransferMembershipBalanceDialog({ membership, onTransfer }: Props) {
-  const [open, setOpen] = React.useState(false);
+export function TransferMembershipBalanceDialog({
+  membership,
+  onTransfer,
+  open: controlledOpen,
+  onOpenChange,
+  hideTrigger = false
+}: Props) {
+  const [localOpen, setLocalOpen] = React.useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [recipient, setRecipient] = React.useState<CustomerSearchResult | null>(null);
@@ -89,13 +100,15 @@ export function TransferMembershipBalanceDialog({ membership, onTransfer }: Prop
         if (!nextOpen && !isSubmitting) reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
-          <IconTransfer className="mr-1 size-4" />
-          Transfer Saldo
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button size="sm" variant="secondary">
+            <IconTransfer className="mr-1 size-4" />
+            Transfer Saldo
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Transfer Saldo Membership</DialogTitle>
         </DialogHeader>
@@ -183,7 +196,7 @@ export function TransferMembershipBalanceDialog({ membership, onTransfer }: Prop
             </div>
           )}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={isSubmitting}>
               Batal
             </Button>
