@@ -56,6 +56,11 @@ export default function MembershipBookingBenefits({
             <p className="mt-1 text-sm text-gray-600">
               Terpakai {benefit.hours} jam dari saldo membership
             </p>
+            {benefit.complimentaryHours > 0 && (
+              <p className="mt-1 text-sm text-gray-600">
+                Termasuk {benefit.complimentaryHours} jam complimentary (Rp0)
+              </p>
+            )}
             {benefit.usageValue !== null && (
               <dl className="mt-4 space-y-2 border-t border-gray-100 pt-3 text-sm">
                 <div className="flex justify-between gap-4">

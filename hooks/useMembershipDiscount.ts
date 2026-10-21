@@ -15,6 +15,8 @@ export interface ActiveMembership {
   startDate: string;
   endDate: string;
   remainingSessions: number;
+  remainingComplimentarySessions?: number;
+  totalComplimentarySessions?: number;
   remainingDuration: number;
   isExpired: boolean;
   isSuspended: boolean;

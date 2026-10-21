@@ -120,7 +120,8 @@ export default function MyMembershipPage() {
                 {activeMemberships.map((userMembership) => {
                   const membership = userMembership.membership;
                   const allocatedHours =
-                    userMembership.incomingTransfer?.transferredHours ?? membership.sessions;
+                    (userMembership.incomingTransfer?.transferredHours ?? membership.sessions) +
+                    (userMembership.totalComplimentarySessions ?? 0);
                   const remainingPercentage = Math.min(
                     100,
                     Math.max(
@@ -167,9 +168,18 @@ export default function MyMembershipPage() {
                               </p>
                             </div>
                             <p className="min-w-0 text-right text-xs leading-5 text-white/75">
-                              Kuota awal {allocatedHours} jam
+                              Total kuota {allocatedHours} jam
                             </p>
                           </div>
+                          {(userMembership.totalComplimentarySessions ?? 0) > 0 && (
+                            <p className="mt-2 text-xs text-white/80">
+                              Berbayar/transfer:{' '}
+                              {userMembership.remainingSessions -
+                                (userMembership.remainingComplimentarySessions ?? 0)}{' '}
+                              jam · Complimentary:{' '}
+                              {userMembership.remainingComplimentarySessions ?? 0} jam
+                            </p>
+                          )}
                           <Progress
                             value={remainingPercentage}
                             className="mt-3 h-2 bg-white/25"

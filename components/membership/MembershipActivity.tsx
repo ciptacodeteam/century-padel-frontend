@@ -229,6 +229,16 @@ export default function MembershipActivitySection({ activity }: { activity: Memb
                           ? `${new Set(event.items.map((item) => item.membershipUserId)).size} paket membership`
                           : `${packages.get(event.membershipUserId)?.name} · #${event.membershipUserId.slice(-6)}`}
                       </p>
+                      {event.items.some((item) => (item.complimentaryHours ?? 0) > 0) && (
+                        <p className="text-muted-foreground text-xs">
+                          Termasuk{' '}
+                          {event.items.reduce(
+                            (sum, item) => sum + (item.complimentaryHours ?? 0),
+                            0
+                          )}{' '}
+                          jam complimentary
+                        </p>
+                      )}
                       {event.type === 'BOOKING' && (
                         <p className="text-muted-foreground text-xs leading-5 [overflow-wrap:anywhere]">
                           {event.reference}

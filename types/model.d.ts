@@ -259,6 +259,15 @@ export type MembershipUser = {
   startDate: Date;
   endDate: Date | null;
   remainingSessions: number;
+  remainingComplimentarySessions?: number;
+  totalComplimentarySessions?: number;
+  complimentaryGrants?: Array<{
+    id: string;
+    hours: number;
+    reason: string;
+    createdAt: string;
+    admin: { id: string; name: string };
+  }>;
   remainingDuration: number; // in days
   acquisitionType: 'PURCHASE' | 'TRANSFER';
   isExpired: boolean;
@@ -514,6 +523,7 @@ export type BookingDetail = {
   price: number;
   discountPrice?: number | null;
   membershipUserId: string | null;
+  complimentaryMembershipHours?: number;
   membershipUser?: { membership?: Pick<Membership, 'name' | 'type'> | null } | null;
   complimentaryCreditMinutes: number;
   cancelledAt: Date | null;

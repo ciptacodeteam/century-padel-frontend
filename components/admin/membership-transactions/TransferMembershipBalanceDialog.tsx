@@ -44,12 +44,14 @@ export function TransferMembershipBalanceDialog({ membership, onTransfer }: Prop
     adminCustomerSearchQueryOptions({ q: debouncedSearch, limit: '10' })
   );
   const availableRecipients = searchResults.filter((item) => item.id !== membership.userId);
+  const availableHours =
+    membership.remainingSessions - (membership.remainingComplimentarySessions ?? 0);
   const numericHours = Number(hours);
   const isValid =
     !!recipient &&
     Number.isInteger(numericHours) &&
     numericHours > 0 &&
-    numericHours <= membership.remainingSessions &&
+    numericHours <= availableHours &&
     reason.trim().length >= 3;
 
   function reset() {
@@ -101,7 +103,7 @@ export function TransferMembershipBalanceDialog({ membership, onTransfer }: Prop
           <div className="bg-muted/50 rounded-lg border p-3 text-sm">
             <p className="font-medium">{membership.membership?.name}</p>
             <p className="text-muted-foreground mt-1">
-              Pemilik: {membership.user?.name} · Saldo tersedia: {membership.remainingSessions} jam
+              Pemilik: {membership.user?.name} · Saldo tersedia: {availableHours} jam
             </p>
             <p className="text-muted-foreground">
               Saldo penerima berakhir pada {dayjs(membership.endDate).format('DD MMM YYYY')} dan
@@ -154,11 +156,11 @@ export function TransferMembershipBalanceDialog({ membership, onTransfer }: Prop
             <Input
               type="number"
               min={1}
-              max={membership.remainingSessions}
+              max={availableHours}
               step={1}
               value={hours}
               onChange={(event) => setHours(event.target.value)}
-              placeholder={`Maksimal ${membership.remainingSessions} jam`}
+              placeholder={`Maksimal ${availableHours} jam`}
               disabled={isSubmitting}
             />
           </div>

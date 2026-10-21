@@ -63,3 +63,16 @@ describe('user invoice membership benefits', () => {
     expect(getMembershipBookingBenefits([detail({ price: 100_000 })])[0].savings).toBe(0);
   });
 });
+
+it('values complimentary usage at zero while retaining paid package usage', () => {
+  const [benefit] = getMembershipBookingBenefits([
+    detail({ complimentaryMembershipHours: 1 }),
+    detail()
+  ]);
+  expect(benefit).toMatchObject({
+    hours: 2,
+    complimentaryHours: 1,
+    usageValue: 200_000,
+    savings: 400_000
+  });
+});

@@ -34,6 +34,8 @@ export const myMembershipsQueryOptions = queryOptions({
         startDate: string;
         endDate: string;
         remainingSessions: number;
+        remainingComplimentarySessions?: number;
+        totalComplimentarySessions?: number;
         remainingDuration: number;
         isExpired: boolean;
         isSuspended: boolean;
@@ -58,6 +60,8 @@ export type UserActiveMembership = {
   startDate: string;
   endDate: string;
   remainingSessions: number;
+  remainingComplimentarySessions?: number;
+  totalComplimentarySessions?: number;
   remainingDuration: number;
   isExpired: boolean;
   isSuspended: boolean;

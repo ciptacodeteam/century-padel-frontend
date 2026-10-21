@@ -3,6 +3,7 @@ import { toLocalSlotDate } from './time-utils';
 export type MembershipBenefitDetail = {
   price: number;
   membershipUserId?: string | null;
+  complimentaryMembershipHours?: number;
   cancelledAt?: string | Date | null;
   slot?: { startAt?: string | Date; endAt?: string | Date };
   membershipUser?: {
@@ -19,6 +20,7 @@ export function getMembershipBookingBenefits(details: MembershipBenefitDetail[])
       name: string;
       type?: string;
       hours: number;
+      complimentaryHours: number;
       regularPrice: number;
       hourlyRate: number | null;
     }
@@ -51,18 +53,25 @@ export function getMembershipBookingBenefits(details: MembershipBenefitDetail[])
       name: membership?.name || 'Membership',
       type: membership?.type,
       hours: 0,
+      complimentaryHours: 0,
       regularPrice: 0,
       hourlyRate
     };
     // Match membership debit rules: every partial slot consumes a whole package hour.
     group.hours += Math.ceil((end.getTime() - start.getTime()) / 3_600_000);
+    group.complimentaryHours += Math.min(
+      Math.ceil((end.getTime() - start.getTime()) / 3_600_000),
+      Math.max(0, detail.complimentaryMembershipHours ?? 0)
+    );
     group.regularPrice += Math.max(0, detail.price);
     groups.set(group.id, group);
   }
 
   return Array.from(groups.values()).map((group) => {
     const usageValue =
-      group.hourlyRate === null ? null : Math.round(group.hours * group.hourlyRate);
+      group.hourlyRate === null
+        ? null
+        : Math.round((group.hours - group.complimentaryHours) * group.hourlyRate);
     return {
       ...group,
       usageValue,

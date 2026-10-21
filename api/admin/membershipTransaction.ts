@@ -80,3 +80,11 @@ export async function cancelAdminMembershipTransferApi(
   );
   return data;
 }
+
+export async function grantAdminMembershipComplimentaryApi(
+  id: string,
+  payload: { hours: number; reason: string; requestId: string }
+) {
+  const { data } = await adminApi.post(`/membership-transactions/${id}/complimentary`, payload);
+  return data;
+}

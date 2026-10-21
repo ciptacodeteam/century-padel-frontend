@@ -1,5 +1,6 @@
 import {
   approveAdminMembershipTransactionApi,
+  grantAdminMembershipComplimentaryApi,
   cancelAdminMembershipTransferApi,
   rejectAdminMembershipTransactionApi,
   suspendAdminMembershipTransactionApi,
@@ -166,5 +167,30 @@ export const useCancelMembershipTransferMutation = () => {
     },
     onError: (error: any) =>
       toast.error(error?.message || error?.msg || 'Gagal membatalkan transfer')
+  });
+};
+
+export const useGrantMembershipComplimentaryMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...payload
+    }: {
+      id: string;
+      hours: number;
+      reason: string;
+      requestId: string;
+    }) => grantAdminMembershipComplimentaryApi(id, payload),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin', 'membership-transactions'] }),
+        qc.invalidateQueries({ queryKey: ['admin', 'customers'] }),
+        qc.invalidateQueries({ queryKey: ['memberships', 'my'] })
+      ]);
+      toast.success('Kuota complimentary berhasil ditambahkan');
+    },
+    onError: (error: any) =>
+      toast.error(error?.message || error?.msg || 'Gagal menambah kuota complimentary')
   });
 };

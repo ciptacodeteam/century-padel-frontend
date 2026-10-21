@@ -392,8 +392,9 @@ export default function ProfilePage() {
                 <CardContent className="space-y-4">
                   {myMemberships.active.map((userMembership) => {
                     const allocatedHours =
-                      userMembership.incomingTransfer?.transferredHours ??
-                      userMembership.membership.sessions;
+                      (userMembership.incomingTransfer?.transferredHours ??
+                        userMembership.membership.sessions) +
+                      (userMembership.totalComplimentarySessions ?? 0);
 
                     return (
                       <div key={userMembership.id} className="rounded-lg border p-4">
@@ -438,7 +439,9 @@ export default function ProfilePage() {
                           <div className="bg-muted rounded-md p-3">
                             <p className="text-muted-foreground mb-1 text-xs">Sisa Jam</p>
                             <p className="font-semibold">
-                              {userMembership.remainingSessions} dari {allocatedHours} jam
+                              {userMembership.remainingSessions} dari {allocatedHours} jam ·
+                              Complimentary: {userMembership.remainingComplimentarySessions ?? 0}{' '}
+                              jam
                             </p>
                             <p className="text-muted-foreground text-xs">
                               {Math.round(

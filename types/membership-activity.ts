@@ -1,11 +1,12 @@
 export type MembershipActivityEvent = {
   id: string;
   membershipUserId: string;
-  type: 'PURCHASE' | 'BOOKING' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'RETURN';
+  type: 'PURCHASE' | 'BOOKING' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'RETURN' | 'COMPLIMENTARY';
   title: string;
   hours: number;
   occurredAt: string;
   reference: string;
+  complimentaryHours?: number;
   counterpart?: string;
   court?: string;
   startAt?: string;

@@ -45,6 +45,8 @@ import DatePickerInput from '@/components/ui/date-picker-input';
 import { adminProfileQueryOptions } from '@/queries/admin/auth';
 import { CancelMembershipTransferDialog } from './CancelMembershipTransferDialog';
 import { TransferMembershipBalanceDialog } from './TransferMembershipBalanceDialog';
+import { GrantMembershipComplimentaryDialog } from './GrantMembershipComplimentaryDialog';
+import { useGrantMembershipComplimentaryMutation } from '@/mutations/admin/membershipTransaction';
 import { useTransferMembershipBalanceMutation } from '@/mutations/admin/membershipTransaction';
 
 const columnHelper = createColumnHelper<MembershipUser>();
@@ -68,6 +70,7 @@ const MembershipTransactionTable = () => {
   const { mutate: suspendTx } = useSuspendMembershipTransactionMutation();
   const { confirmAndMutate: unsuspendTx } = useUnsuspendMembershipTransactionMutation();
   const { mutate: terminateAndRefundTx } = useTerminateAndRefundMembershipMutation();
+  const { mutateAsync: grantComplimentary } = useGrantMembershipComplimentaryMutation();
   const { mutateAsync: transferBalance } = useTransferMembershipBalanceMutation();
   const { mutate: exportExcel, isPending: exporting } = useExportMembershipTransactionsExcel();
 
@@ -165,6 +168,11 @@ const MembershipTransactionTable = () => {
           return (
             <div className="text-sm">
               <p>{info.getValue()} jam</p>
+              {(row.totalComplimentarySessions ?? 0) > 0 && (
+                <p className="text-muted-foreground text-xs">
+                  Complimentary: {row.remainingComplimentarySessions ?? 0} jam
+                </p>
+              )}
               <p className="text-muted-foreground text-xs">{row.remainingDuration} hari</p>
             </div>
           );
@@ -245,12 +253,20 @@ const MembershipTransactionTable = () => {
             transaction.invoice?.status === 'PAID' &&
             !transaction.isExpired &&
             !transaction.isSuspended &&
-            transaction.remainingSessions > 0 &&
+            transaction.remainingSessions - (transaction.remainingComplimentarySessions ?? 0) > 0 &&
             !refund &&
             dayjs(transaction.endDate).isAfter(dayjs());
 
+          const canGrant =
+            me?.role === ROLE.ADMIN &&
+            isFunded &&
+            !transaction.isSuspended &&
+            !refund &&
+            (!transaction.isExpired || transaction.remainingSessions === 0) &&
+            dayjs(transaction.startDate).valueOf() <= Date.now() &&
+            dayjs(transaction.endDate).isAfter(dayjs());
           return (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <ManagedDialog id={`membership-detail-${transaction.id}`}>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -304,6 +320,12 @@ const MembershipTransactionTable = () => {
                   onSubmit={(payload) => terminateAndRefundTx({ id: transaction.id, ...payload })}
                 />
               )}
+              {canGrant && (
+                <GrantMembershipComplimentaryDialog
+                  membership={transaction}
+                  onGrant={(payload) => grantComplimentary({ id: transaction.id, ...payload })}
+                />
+              )}
               {canTransfer && (
                 <TransferMembershipBalanceDialog
                   membership={transaction}
@@ -316,7 +338,16 @@ const MembershipTransactionTable = () => {
         size: 100
       })
     ],
-    [approveTx, me?.role, rejectTx, suspendTx, terminateAndRefundTx, transferBalance, unsuspendTx]
+    [
+      approveTx,
+      grantComplimentary,
+      me?.role,
+      rejectTx,
+      suspendTx,
+      terminateAndRefundTx,
+      transferBalance,
+      unsuspendTx
+    ]
   );
 
   return (
@@ -427,6 +458,26 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
         </div>
       </div>
 
+      {!!transaction.complimentaryGrants?.length && (
+        <div className="border-b pb-4">
+          <h3 className="mb-3 font-semibold">Riwayat Complimentary</h3>
+          <p className="text-muted-foreground mb-2 text-sm">
+            Total diberikan: {transaction.totalComplimentarySessions ?? 0} jam · Sisa:{' '}
+            {transaction.remainingComplimentarySessions ?? 0} jam · Tidak menambah revenue
+          </p>
+          {transaction.complimentaryGrants.map((grant) => (
+            <div key={grant.id} className="mb-2 rounded border p-3 text-sm">
+              <p className="font-medium">
+                +{grant.hours} jam · {grant.admin.name}
+              </p>
+              <p>{grant.reason}</p>
+              <p className="text-muted-foreground">
+                {dayjs(grant.createdAt).format('DD MMM YYYY HH:mm')}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
       {/* Transaction Info */}
       <div className="border-b pb-4">
         <h3 className="mb-3 font-semibold">Informasi Transaksi</h3>
@@ -444,6 +495,11 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
           <div>
             <p className="text-muted-foreground text-sm">Sisa Jam</p>
             <p className="font-medium">{transaction.remainingSessions} jam</p>
+            <p className="text-muted-foreground text-sm">
+              Berbayar/transfer:{' '}
+              {transaction.remainingSessions - (transaction.remainingComplimentarySessions ?? 0)}{' '}
+              jam · Complimentary: {transaction.remainingComplimentarySessions ?? 0} jam
+            </p>
           </div>
           <div>
             <p className="text-muted-foreground text-sm">Sisa Durasi</p>
