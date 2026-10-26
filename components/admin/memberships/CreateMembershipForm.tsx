@@ -13,6 +13,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { adminCreateMembershipMutationOptions } from '@/mutations/admin/membership';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,6 +38,7 @@ const formSchema = z.object({
     .min(1, { message: 'Visibilitas jadwal minimal 1 bulan' }),
   sequence: z.number().min(1, { message: 'Urutan minimal 1' }),
   isActive: z.boolean().optional(),
+  isPublic: z.boolean(),
   benefits: z.array(z.object({ value: z.string() }))
 });
 
@@ -57,6 +59,7 @@ const CreateMembershipForm = () => {
       scheduleVisibilityMonths: 1,
       sequence: 1,
       isActive: true,
+      isPublic: true,
       benefits: [{ value: '' }]
     }
   });
@@ -246,6 +249,29 @@ const CreateMembershipForm = () => {
                   )}
                 />
                 <FieldError>{form.formState.errors.sequence?.message}</FieldError>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="isPublic">Tampilkan di publik</FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="isPublic"
+                  render={({ field }) => (
+                    <div className="flex items-center gap-4">
+                      <Switch
+                        id="isPublic"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <label htmlFor="isPublic" className="text-sm">
+                        {field.value ? 'Publik' : 'Hanya admin'}
+                      </label>
+                    </div>
+                  )}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Jika dimatikan, paket hanya dapat dipesan melalui admin. Paket harus tetap aktif.
+                </p>
+                <FieldError>{form.formState.errors.isPublic?.message}</FieldError>
               </Field>
               <Field>
                 <FieldLabel htmlFor="content">Konten Membership</FieldLabel>

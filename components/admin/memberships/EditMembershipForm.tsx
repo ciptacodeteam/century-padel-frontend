@@ -40,6 +40,7 @@ const formSchema = z.object({
     .min(1, { message: 'Visibilitas jadwal minimal 1 bulan' }),
   sequence: z.number().min(1, { message: 'Urutan minimal 1' }),
   isActive: z.boolean().optional(),
+  isPublic: z.boolean(),
   benefits: z.array(z.object({ value: z.string() }))
 });
 
@@ -66,6 +67,7 @@ const EditMembershipForm = ({ membershipId }: Props) => {
       scheduleVisibilityMonths: data?.scheduleVisibilityMonths || 1,
       sequence: data?.sequence || 1,
       isActive: data?.isActive,
+      isPublic: data?.isPublic ?? true,
       benefits: data?.benefits
         ? data.benefits.map((b) => ({
             value: b.benefit
@@ -263,6 +265,29 @@ const EditMembershipForm = ({ membershipId }: Props) => {
                   )}
                 />
                 <FieldError>{form.formState.errors.sequence?.message}</FieldError>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="isPublic">Tampilkan di publik</FieldLabel>
+                <Controller
+                  control={form.control}
+                  name="isPublic"
+                  render={({ field }) => (
+                    <div className="flex items-center gap-4">
+                      <Switch
+                        id="isPublic"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <label htmlFor="isPublic" className="text-sm">
+                        {field.value ? 'Publik' : 'Hanya admin'}
+                      </label>
+                    </div>
+                  )}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Jika dimatikan, paket hanya dapat dipesan melalui admin. Paket harus tetap aktif.
+                </p>
+                <FieldError>{form.formState.errors.isPublic?.message}</FieldError>
               </Field>
               <Field>
                 <FieldLabel htmlFor="content">Konten Membership</FieldLabel>

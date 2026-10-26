@@ -60,6 +60,12 @@ const MembershipTable = () => {
           width: 100
         }
       }),
+      colHelper.accessor('isPublic', {
+        header: 'Visibilitas',
+        cell: (info) => (
+          <Badge variant="outline">{info.getValue() === false ? 'Hanya admin' : 'Publik'}</Badge>
+        )
+      }),
       colHelper.accessor('isActive', {
         header: 'Status',
         cell: (info) => (

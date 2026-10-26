@@ -234,6 +234,7 @@ export type Membership = {
   scheduleVisibilityMonths: number; // months of schedule visibility for buyers
   sequence: number;
   isActive: boolean;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
   features: [];
