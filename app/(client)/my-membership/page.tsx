@@ -46,6 +46,7 @@ export default function MyMembershipPage() {
     (membership) =>
       !data?.activity || data.activity.memberships.some((item) => item.id === membership.id)
   );
+  const upcomingMemberships = data?.upcoming ?? [];
   const hasMembershipHistory =
     (data?.activity?.memberships.length ?? data?.expired?.length ?? 0) > 0;
 
@@ -98,10 +99,57 @@ export default function MyMembershipPage() {
             </Card>
           )}
 
-          {hasSession && !isPending && !isError && activeMemberships.length === 0 && (
-            <MembershipEmptyState hasMembershipHistory={hasMembershipHistory} />
-          )}
+          {hasSession &&
+            !isPending &&
+            !isError &&
+            activeMemberships.length === 0 &&
+            upcomingMemberships.length === 0 && (
+              <MembershipEmptyState hasMembershipHistory={hasMembershipHistory} />
+            )}
 
+          {!isPending && !isError && upcomingMemberships.length > 0 && (
+            <section className="space-y-3" aria-label="Membership menunggu aktif">
+              <h2 className="text-xl font-bold">Membership Menunggu Aktif</h2>
+              {upcomingMemberships.map((item) => (
+                <Card key={item.id} className="border-neutral-200 bg-white">
+                  <CardContent className="space-y-3 p-5 sm:p-6">
+                    <Badge variant="lightInfo">Menunggu aktif</Badge>
+                    <h3 className="text-lg font-bold">{item.membership.name}</h3>
+                    <p className="text-sm">Kuota {item.remainingSessions} jam</p>
+                    <p className="text-sm">
+                      Mulai{' '}
+                      {new Date(item.startDate).toLocaleDateString('id-ID', {
+                        timeZone: 'Asia/Jakarta',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}{' '}
+                      pukul{' '}
+                      {new Date(item.startDate).toLocaleTimeString('id-ID', {
+                        timeZone: 'Asia/Jakarta',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}{' '}
+                      WIB.
+                    </p>
+                    <p className="text-sm">
+                      Berlaku hingga{' '}
+                      {new Date(item.endDate).toLocaleDateString('id-ID', {
+                        timeZone: 'Asia/Jakarta',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                      .
+                    </p>
+                    <p className="text-muted-foreground text-sm">
+                      Benefit membership dapat digunakan setelah tanggal mulai aktif.
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </section>
+          )}
           {!isPending && !isError && activeMemberships.length > 0 && (
             <>
               <div className="flex min-w-0 items-end justify-between gap-3 sm:gap-4">

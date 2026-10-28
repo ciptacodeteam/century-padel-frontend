@@ -16,7 +16,13 @@ export function getMembershipTransactionStatus(transaction: MembershipUser) {
       return { label: 'Menunggu Pembayaran', variant: 'lightWarning' } as const;
     }
   }
-  if (transaction.isExpired) return { label: 'Kedaluwarsa', variant: 'secondary' } as const;
+  if (
+    transaction.isExpired ||
+    (transaction.endDate && new Date(transaction.endDate).getTime() <= Date.now())
+  )
+    return { label: 'Kedaluwarsa', variant: 'secondary' } as const;
   if (transaction.isSuspended) return { label: 'Ditangguhkan', variant: 'destructive' } as const;
+  if (new Date(transaction.startDate).getTime() > Date.now())
+    return { label: 'Menunggu aktif', variant: 'lightInfo' } as const;
   return { label: 'Aktif', variant: 'success' } as const;
 }

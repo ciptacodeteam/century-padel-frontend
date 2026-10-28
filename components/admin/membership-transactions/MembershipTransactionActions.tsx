@@ -12,6 +12,7 @@ import {
 import { ROLE } from '@/lib/constants';
 import type { MembershipUser } from '@/types/model';
 import {
+  CalendarDays,
   Check,
   Eye,
   Gift,
@@ -26,6 +27,7 @@ import dayjs from 'dayjs';
 import { useRef } from 'react';
 
 export type MembershipAction =
+  | 'start-date'
   | 'detail'
   | 'complimentary'
   | 'transfer'
@@ -81,8 +83,23 @@ export function MembershipTransactionActions({
     !transaction.isExpired &&
     !refund &&
     !transaction.outgoingTransfers?.length;
+  const reschedule =
+    role === ROLE.ADMIN &&
+    transaction.acquisitionType === 'PURCHASE' &&
+    funded &&
+    !refund &&
+    !transaction.isExpired &&
+    !transaction.isSuspended &&
+    dayjs(transaction.endDate).isAfter(now) &&
+    transaction.remainingSessions ===
+      (transaction.membership?.sessions ?? 0) + (transaction.totalComplimentarySessions ?? 0) &&
+    (transaction.remainingComplimentarySessions ?? 0) ===
+      (transaction.totalComplimentarySessions ?? 0) &&
+    transaction._count?.bookingDetails === 0 &&
+    transaction._count?.outgoingTransfers === 0;
   const pending = transaction.invoice?.status === 'PENDING';
-  const hasActions = grant || transfer || suspend || unsuspend || terminate || pending;
+  const hasActions =
+    reschedule || grant || transfer || suspend || unsuspend || terminate || pending;
   return (
     <div className="flex shrink-0 items-center gap-2">
       <Button
@@ -114,6 +131,12 @@ export function MembershipTransactionActions({
               <DropdownMenuItem className="min-h-10" onSelect={() => choose('approve')}>
                 <Check />
                 Setujui Pembayaran
+              </DropdownMenuItem>
+            )}
+            {reschedule && (
+              <DropdownMenuItem className="min-h-10" onSelect={() => choose('start-date')}>
+                <CalendarDays />
+                Atur Tanggal Mulai
               </DropdownMenuItem>
             )}
             {grant && (

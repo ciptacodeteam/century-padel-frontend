@@ -48,6 +48,13 @@ export const myMembershipsQueryOptions = queryOptions({
         } | null;
         membership: Membership;
       }>;
+      upcoming?: Array<{
+        id: string;
+        startDate: string;
+        endDate: string;
+        remainingSessions: number;
+        membership: Membership;
+      }>;
       expired: Array<any>;
       suspended: Array<any>;
       total: number;

@@ -10,8 +10,9 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/kelola-pemesanan/membership',
   useSearchParams: () => new URLSearchParams()
 }));
-const { grant, approve, reject, unsuspend, transfer, suspend, terminate, exportExcel } = vi.hoisted(
-  () => ({
+const { reschedule, grant, approve, reject, unsuspend, transfer, suspend, terminate, exportExcel } =
+  vi.hoisted(() => ({
+    reschedule: vi.fn(),
     grant: vi.fn(),
     approve: vi.fn(),
     reject: vi.fn(),
@@ -20,9 +21,9 @@ const { grant, approve, reject, unsuspend, transfer, suspend, terminate, exportE
     suspend: vi.fn(),
     terminate: vi.fn(),
     exportExcel: vi.fn()
-  })
-);
+  }));
 vi.mock('@/mutations/admin/membershipTransaction', () => ({
+  useRescheduleMembershipStartMutation: () => ({ mutateAsync: reschedule }),
   useApproveMembershipTransactionMutation: () => ({ confirmAndMutate: approve }),
   useRejectMembershipTransactionMutation: () => ({ confirmAndMutate: reject }),
   useUnsuspendMembershipTransactionMutation: () => ({ confirmAndMutate: unsuspend }),
@@ -150,4 +151,46 @@ describe('membership responsive actions and cards', () => {
     await waitFor(() => expect(screen.queryByRole('article')).not.toBeInTheDocument());
     expect(screen.getByText('Tidak ada membership ditemukan.')).toBeInTheDocument();
   });
+});
+
+it('opens activation scheduling for an unused purchase and submits the date and reason', async () => {
+  const unused = {
+    ...membership(0),
+    remainingSessions: 100,
+    remainingComplimentarySessions: 0,
+    totalComplimentarySessions: 0,
+    _count: { bookingDetails: 0, outgoingTransfers: 0 }
+  };
+  show('ADMIN', [unused]);
+  fireEvent.click(within(await menu()).getByRole('menuitem', { name: 'Atur Tanggal Mulai' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  fireEvent.change(dialog.getByLabelText('Tanggal mulai aktif (WIB)'), {
+    target: { value: '2099-11-02' }
+  });
+  fireEvent.change(dialog.getByLabelText('Alasan perubahan'), {
+    target: { value: 'Permintaan pelanggan' }
+  });
+  fireEvent.click(dialog.getByRole('button', { name: 'Simpan Tanggal Mulai' }));
+  await waitFor(() =>
+    expect(reschedule).toHaveBeenCalledWith({
+      id: 'membership-0',
+      startDate: '2099-11-02',
+      reason: 'Permintaan pelanggan'
+    })
+  );
+});
+
+it('hides date scheduling when a restored balance still has booking history', async () => {
+  show('ADMIN', [
+    {
+      ...membership(0),
+      remainingSessions: 100,
+      totalComplimentarySessions: 0,
+      remainingComplimentarySessions: 0,
+      _count: { bookingDetails: 1, outgoingTransfers: 0 }
+    }
+  ]);
+  expect(
+    within(await menu()).queryByRole('menuitem', { name: 'Atur Tanggal Mulai' })
+  ).not.toBeInTheDocument();
 });

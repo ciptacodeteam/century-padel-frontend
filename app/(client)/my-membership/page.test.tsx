@@ -58,3 +58,31 @@ describe('membership customer page session and history', () => {
     expect(getProfile).not.toHaveBeenCalled();
   });
 });
+
+it('shows scheduled memberships without an empty-state purchase prompt or booking action', async () => {
+  useAuthStore.setState({ isAuth: true, token: 'test-token', user: null });
+  getProfile.mockResolvedValue({ data: { id: 'customer-1' } });
+  getMemberships.mockResolvedValue({
+    data: {
+      active: [],
+      expired: [],
+      suspended: [],
+      total: 1,
+      upcoming: [
+        {
+          id: 'scheduled',
+          membership: { name: 'Paket 10 Jam' },
+          remainingSessions: 10,
+          startDate: '2099-11-01T17:00:00Z',
+          endDate: '2099-12-01T17:00:00Z'
+        }
+      ]
+    }
+  });
+  show();
+  expect(await screen.findByText('Menunggu aktif')).toBeInTheDocument();
+  expect(screen.getByText(/Mulai 2 November 2099/)).toBeInTheDocument();
+  expect(screen.getByText(/Berlaku hingga 2 Desember 2099/)).toBeInTheDocument();
+  expect(screen.queryByText('Belum ada membership aktif')).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: /Booking Lapangan/ })).not.toBeInTheDocument();
+});

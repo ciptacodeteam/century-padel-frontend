@@ -50,6 +50,8 @@ import DatePickerInput from '@/components/ui/date-picker-input';
 import { adminProfileQueryOptions } from '@/queries/admin/auth';
 import { CancelMembershipTransferDialog } from './CancelMembershipTransferDialog';
 import { TransferMembershipBalanceDialog } from './TransferMembershipBalanceDialog';
+import { RescheduleMembershipStartDialog } from './RescheduleMembershipStartDialog';
+import { useRescheduleMembershipStartMutation } from '@/mutations/admin/membershipTransaction';
 import { GrantMembershipComplimentaryDialog } from './GrantMembershipComplimentaryDialog';
 import { useGrantMembershipComplimentaryMutation } from '@/mutations/admin/membershipTransaction';
 import { useTransferMembershipBalanceMutation } from '@/mutations/admin/membershipTransaction';
@@ -77,6 +79,7 @@ const MembershipTransactionTable = () => {
   const { confirmAndMutate: unsuspendTx } = useUnsuspendMembershipTransactionMutation();
   const { mutate: terminateAndRefundTx } = useTerminateAndRefundMembershipMutation();
   const { mutateAsync: grantComplimentary } = useGrantMembershipComplimentaryMutation();
+  const { mutateAsync: rescheduleStart } = useRescheduleMembershipStartMutation();
   const { mutateAsync: transferBalance } = useTransferMembershipBalanceMutation();
   const { mutate: exportExcel, isPending: exporting } = useExportMembershipTransactionsExcel();
 
@@ -360,6 +363,13 @@ const MembershipTransactionTable = () => {
       ))}
       {selected && (
         <>
+          <RescheduleMembershipStartDialog
+            key={`start-${selected.id}`}
+            membership={selected}
+            open={selection?.action === 'start-date'}
+            onOpenChange={closeDialog}
+            onSubmit={(payload) => rescheduleStart({ id: selected.id, ...payload })}
+          />
           <TransferMembershipBalanceDialog
             key={`transfer-${selected.id}`}
             hideTrigger
@@ -478,6 +488,25 @@ const MembershipTransactionDetail = ({ transaction }: { transaction: MembershipU
               <p className="text-muted-foreground">
                 {dayjs(grant.createdAt).format('DD MMM YYYY HH:mm')}
               </p>
+            </div>
+          ))}
+        </div>
+      )}
+      {!!transaction.startDateChanges?.length && (
+        <div className="border-b pb-4">
+          <h3 className="mb-3 font-semibold">Riwayat Tanggal Mulai</h3>
+          {transaction.startDateChanges.map((change) => (
+            <div key={change.id} className="mb-2 rounded border p-3 text-sm">
+              <p className="font-medium">
+                {change.admin.name} · {formatDate(change.createdAt)}
+              </p>
+              <p>
+                Mulai: {formatDate(change.previousStartDate)} → {formatDate(change.startDate)}
+              </p>
+              <p>
+                Berakhir: {formatDate(change.previousEndDate)} → {formatDate(change.endDate)}
+              </p>
+              <p>{change.reason}</p>
             </div>
           ))}
         </div>

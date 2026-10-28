@@ -88,3 +88,11 @@ export async function grantAdminMembershipComplimentaryApi(
   const { data } = await adminApi.post(`/membership-transactions/${id}/complimentary`, payload);
   return data;
 }
+
+export async function rescheduleAdminMembershipStartApi(
+  id: string,
+  payload: { startDate: string; reason: string }
+) {
+  const { data } = await adminApi.put(`/membership-transactions/${id}/start-date`, payload);
+  return data;
+}

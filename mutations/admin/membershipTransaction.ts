@@ -1,4 +1,5 @@
 import {
+  rescheduleAdminMembershipStartApi,
   approveAdminMembershipTransactionApi,
   grantAdminMembershipComplimentaryApi,
   cancelAdminMembershipTransferApi,
@@ -192,5 +193,23 @@ export const useGrantMembershipComplimentaryMutation = () => {
     },
     onError: (error: any) =>
       toast.error(error?.message || error?.msg || 'Gagal menambah kuota complimentary')
+  });
+};
+
+export const useRescheduleMembershipStartMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: { id: string; startDate: string; reason: string }) =>
+      rescheduleAdminMembershipStartApi(id, payload),
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['admin', 'membership-transactions'] }),
+        qc.invalidateQueries({ queryKey: ['admin', 'customers'] }),
+        qc.invalidateQueries({ queryKey: ['memberships', 'my'] })
+      ]);
+      toast.success('Tanggal mulai membership berhasil diatur');
+    },
+    onError: (error: any) =>
+      toast.error(error?.message || error?.msg || 'Gagal mengatur tanggal mulai')
   });
 };

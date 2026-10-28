@@ -59,3 +59,25 @@ describe('membership transaction status', () => {
     ).toBe('Dihentikan & Refund');
   });
 });
+
+it('shows a paid future membership as waiting for activation', () => {
+  expect(
+    getMembershipTransactionStatus(
+      transaction('PAID', {
+        startDate: new Date('2099-11-02'),
+        endDate: new Date('2099-12-02')
+      })
+    ).label
+  ).toBe('Menunggu aktif');
+});
+
+it('expires a membership by its actual end date even before the background job runs', () => {
+  expect(
+    getMembershipTransactionStatus(
+      transaction('PAID', {
+        startDate: new Date('2020-01-01'),
+        endDate: new Date('2020-02-01')
+      })
+    ).label
+  ).toBe('Kedaluwarsa');
+});

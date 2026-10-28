@@ -262,6 +262,17 @@ export type MembershipUser = {
   remainingSessions: number;
   remainingComplimentarySessions?: number;
   totalComplimentarySessions?: number;
+  _count?: { bookingDetails: number; outgoingTransfers: number };
+  startDateChanges?: Array<{
+    id: string;
+    previousStartDate: string;
+    previousEndDate: string;
+    startDate: string;
+    endDate: string;
+    reason: string;
+    createdAt: string;
+    admin: { id: string; name: string };
+  }>;
   complimentaryGrants?: Array<{
     id: string;
     hours: number;
