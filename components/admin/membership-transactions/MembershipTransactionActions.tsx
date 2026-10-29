@@ -56,16 +56,13 @@ export function MembershipTransactionActions({
       ? !transaction.incomingTransfer?.cancelledAt
       : transaction.invoice?.status === 'PAID';
   const now = dayjs();
-  const current =
-    dayjs(transaction.startDate).valueOf() <= now.valueOf() &&
-    dayjs(transaction.endDate).isAfter(now);
   const grant =
     role === ROLE.ADMIN &&
     funded &&
     !transaction.isSuspended &&
     !refund &&
     (!transaction.isExpired || transaction.remainingSessions === 0) &&
-    current;
+    dayjs(transaction.endDate).isAfter(now);
   const transfer =
     role === ROLE.ADMIN &&
     transaction.acquisitionType === 'PURCHASE' &&

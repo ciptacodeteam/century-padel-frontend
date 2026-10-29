@@ -118,6 +118,22 @@ describe('membership responsive actions and cards', () => {
     expect(await screen.findByText('Tindakan ini bersifat permanen.')).toBeInTheDocument();
     expect(terminate).not.toHaveBeenCalled();
   });
+  it('offers complimentary quota before a paid membership starts', async () => {
+    show('ADMIN', [{ ...membership(0), startDate: new Date('2098-01-01') }]);
+    expect(
+      within(await menu()).getByRole('menuitem', { name: 'Tambah Kuota Complimentary' })
+    ).toBeInTheDocument();
+  });
+  it.each([
+    { invoice: { status: 'PENDING' } },
+    { isSuspended: true },
+    { endDate: new Date('2020-01-01') }
+  ])('hides complimentary quota for an ineligible membership %j', async (change) => {
+    show('ADMIN', [{ ...membership(0), ...change } as MembershipUser]);
+    expect(
+      within(await menu()).queryByRole('menuitem', { name: 'Tambah Kuota Complimentary' })
+    ).not.toBeInTheDocument();
+  });
   it('does not offer quota or balance actions for a revoked transfer', () => {
     show('ADMIN', [
       {
