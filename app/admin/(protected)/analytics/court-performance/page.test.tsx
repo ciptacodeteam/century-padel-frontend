@@ -208,6 +208,45 @@ describe('Court Performance UI', () => {
       })
     );
   });
+  it('shows one complimentary invoice row with summed hours and every schedule', async () => {
+    const complimentary = fixture.details.map((d) => ({
+      ...d,
+      groupId: 'complimentary',
+      category: 'Complimentary',
+      customer: 'Andi',
+      invoiceId: 'i1',
+      invoiceNumber: 'INV-001'
+    }));
+    get.mockResolvedValue({
+      data: {
+        data: {
+          ...fixture,
+          rows: [
+            {
+              ...fixture.rows[0],
+              id: 'complimentary',
+              name: 'Complimentary',
+              kind: 'complimentary',
+              hours: 3
+            }
+          ],
+          details: complimentary
+        }
+      }
+    });
+    mount();
+    await screen.findByText('Andi');
+    fireEvent.click(screen.getByRole('button', { name: 'Lihat detail Complimentary' }));
+    const region = screen.getByRole('region', { name: 'Complimentary' });
+    expect(within(region).getAllByRole('link', { name: 'INV-001' })).toHaveLength(1);
+    const row = within(region).getByRole('link', { name: 'INV-001' }).closest('tr')!;
+    expect(within(row).getByText('3 jam')).toBeInTheDocument();
+    expect(within(row).getByText(/16:00–18:00 WIB/)).toBeInTheDocument();
+    expect(within(row).getByText(/10:00–11:00 WIB/)).toBeInTheDocument();
+    await selectOption('Filter peak dan non-peak', 'Peak saja');
+    expect(within(region).getByText('2 jam')).toBeInTheDocument();
+    expect(within(region).queryByText(/10:00–11:00 WIB/)).not.toBeInTheDocument();
+  });
   it('shows retry rather than a zero-usage report on API failure', async () => {
     get.mockRejectedValue(new Error('offline'));
     mount();

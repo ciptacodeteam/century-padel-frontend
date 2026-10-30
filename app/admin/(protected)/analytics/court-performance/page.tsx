@@ -18,6 +18,7 @@ import { adminApi } from '@/lib/adminApi';
 import { ROLE } from '@/lib/constants';
 import { useRoleAccess } from '@/hooks/useRoleAccess';
 import type { CourtPerformance } from '@/types/court-performance';
+import { groupComplimentaryInvoices } from '@/lib/court-performance';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -149,7 +150,7 @@ export default function CourtPerformancePage() {
     }
   }
   const selectedRow = data?.rows.find((row) => row.id === selected);
-  const details =
+  const details = groupComplimentaryInvoices(
     data?.details.filter(
       (d) =>
         (!selected || d.groupId === selected) &&
@@ -157,7 +158,8 @@ export default function CourtPerformancePage() {
         `${d.customer} ${d.invoiceNumber ?? ''} ${d.court}`
           .toLowerCase()
           .includes(search.toLowerCase())
-    ) ?? [];
+    ) ?? []
+  );
   const totalPages = Math.max(1, Math.ceil(details.length / 20));
   const currentPage = Math.min(page, totalPages);
   const filteredHours = details.reduce((sum, d) => sum + d.hours, 0);
@@ -569,10 +571,19 @@ export default function CourtPerformancePage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <p>{dateLabel(d.startAt)}</p>
-                        <p className="text-muted-foreground mt-1 text-xs">
-                          {d.startAt.slice(11, 16)}–{d.endAt.slice(11, 16)} WIB · {d.band}
-                        </p>
+                        <div className="space-y-2">
+                          {d.sessions.map((session) => (
+                            <div key={session.id}>
+                              <p>{dateLabel(session.startAt)}</p>
+                              <p className="text-muted-foreground mt-1 text-xs">
+                                {session.startAt.slice(11, 16)}–{session.endAt.slice(11, 16)} WIB ·{' '}
+                                {session.band}
+                                {d.sessions.length > 1 &&
+                                  ` · ${session.court} · ${number(session.hours)} jam`}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell>{d.court}</TableCell>
                       <TableCell>
@@ -640,7 +651,8 @@ export default function CourtPerformancePage() {
               <p>
                 Peak: Senin–Jumat mulai 16.00. Weekend non-peak. Harga normal adalah nilai slot
                 sebelum diskon / membership, bukan pendapatan. Rincian dipecah per jam agar peak dan
-                non-peak dapat diperiksa.
+                non-peak dapat diperiksa. Complimentary dengan invoice yang sama digabung dalam satu
+                baris; seluruh jadwalnya tetap ditampilkan.
               </p>
               <p>
                 Occupancy = jam dipesan ÷ kapasitas operasional. Kapasitas = jumlah lapangan dalam
