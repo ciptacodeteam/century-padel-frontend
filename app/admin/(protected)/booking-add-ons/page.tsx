@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
+import { useHasRole } from '@/hooks/useRoleAccess';
+import { ROLE } from '@/lib/constants';
 import { formatSlotTime, formatSlotTimeRange } from '@/lib/time-utils';
 import { cn } from '@/lib/utils';
 import { adminCheckoutMutationOptions } from '@/mutations/admin/checkout';
@@ -38,8 +40,11 @@ import { toast } from 'sonner';
 
 export default function BookingAddOns() {
   const router = useRouter();
+  const canBookWithMembership = useHasRole([ROLE.ADMIN, ROLE.ADMIN_VIEWER]);
   const {
     bookingItems,
+    useMembership,
+    setUseMembership,
     // selectedDate,
     selectedCustomerId,
     selectedCustomerName: storeCustomerName,
@@ -103,6 +108,10 @@ export default function BookingAddOns() {
     if (!canUseComplimentaryCredit) setUseComplimentaryCredit(false);
   }, [canUseComplimentaryCredit]);
 
+  useEffect(() => {
+    if (useMembership) setUseComplimentaryCredit(false);
+  }, [useMembership]);
+
   // Calculate membership discount for court bookings
   // Pass membership data from selected customer to avoid separate API call
   const membershipDiscount = useMembershipDiscount(
@@ -110,7 +119,7 @@ export default function BookingAddOns() {
     bookingItems,
     selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null,
     false,
-    false
+    canBookWithMembership && useMembership && !useComplimentaryCredit
   );
 
   // Update store with membership discount
@@ -577,7 +586,7 @@ export default function BookingAddOns() {
 
     const payload: AdminCheckoutPayload = {
       totalHours: Math.max(1, Math.round(totalHours * 100) / 100), // Round to 2 decimal places, minimum 1,
-      useMembership: false,
+      useMembership: canBookWithMembership && useMembership && !useComplimentaryCredit,
       useComplimentaryCredit,
       courtSlots: courtSlots.length > 0 ? courtSlots : undefined,
       coachSlots: coachSlots.length > 0 ? coachSlots : undefined,
@@ -1076,7 +1085,10 @@ export default function BookingAddOns() {
                 <Switch
                   checked={useComplimentaryCredit}
                   disabled={!canUseComplimentaryCredit}
-                  onCheckedChange={setUseComplimentaryCredit}
+                  onCheckedChange={(checked) => {
+                    setUseComplimentaryCredit(checked);
+                    if (checked) setUseMembership(false);
+                  }}
                 />
               </CardContent>
             </Card>
@@ -1118,7 +1130,7 @@ export default function BookingAddOns() {
             inventoryTotal={inventoryTotal}
             totalAmount={getTotalAmount() - (useComplimentaryCredit ? courtTotal : 0)}
             membershipDiscountDetails={membershipDiscount}
-            showMembershipInfo={false}
+            showMembershipInfo={canBookWithMembership}
             primaryAction={{
               label: isConfirming ? 'Processing...' : 'Confirm Booking',
               onClick: handleConfirmBooking,

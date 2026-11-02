@@ -7,6 +7,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useMembershipDiscount } from '@/hooks/useMembershipDiscount';
+import { useHasRole } from '@/hooks/useRoleAccess';
+import { ROLE } from '@/lib/constants';
 import { useBookingCutoffClock } from '@/hooks/useBookingCutoffClock';
 import { isHourlyBookingTimeVisible, isSlotBeforeBookingCutoff } from '@/lib/booking-slot-cutoff';
 import { formatSlotTime } from '@/lib/time-utils';
@@ -91,9 +93,11 @@ type SelectedBooking = {
 export default function BookingLapangan() {
   const bookingClock = useBookingCutoffClock();
   const router = useRouter();
+  const canBookWithMembership = useHasRole([ROLE.ADMIN, ROLE.ADMIN_VIEWER]);
   const queryClient = useQueryClient();
   const {
     bookingItems,
+    useMembership,
     selectedCustomerId,
     selectedCustomerName: storeCustomerName,
     selectedCustomerPhone: storeCustomerPhone,
@@ -168,7 +172,7 @@ export default function BookingLapangan() {
     bookingItemsForDiscount,
     selectedCustomer ? { activeMembership: selectedCustomer.activeMembership } : null,
     false,
-    false
+    canBookWithMembership && useMembership
   );
 
   // Update store with membership discount
@@ -1165,7 +1169,7 @@ export default function BookingLapangan() {
             courtTotal={membershipDiscount.originalTotal}
             totalAmount={totalPrice}
             membershipDiscountDetails={membershipDiscount}
-            showMembershipInfo={false}
+            showMembershipInfo={canBookWithMembership}
             onBookingRemove={(courtId, timeSlot, date) => {
               // Find the booking index
               const bookingIndex = bookings.findIndex(

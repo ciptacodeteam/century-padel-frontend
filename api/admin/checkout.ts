@@ -5,8 +5,8 @@ export type AdminCheckoutPayload = {
   name?: string;
   phone?: string;
   totalHours: number;
-  /** Admin checkout must always charge the regular court price. */
-  useMembership: false;
+  /** Membership usage is available to Super Admin and Manager. */
+  useMembership: boolean;
   useComplimentaryCredit?: boolean;
   courtSlots?: string[];
   coachSlots?: string[];
