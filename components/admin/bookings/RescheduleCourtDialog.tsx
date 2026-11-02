@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 
 import { rescheduleBookedCourtApi } from '@/api/admin/bookedCourt';
 import { formatSlotTime } from '@/lib/time-utils';
-import { CUSTOMER_RESCHEDULE_POLICY_TEXT } from '@/lib/reschedule-policy';
 import { cn } from '@/lib/utils';
 import { adminCourtsWithSlotsQueryOptions } from '@/queries/admin/court';
 import type { BookingDetail, Court, Slot } from '@/types/model';
@@ -31,7 +30,6 @@ export type BookingDetailWithSlot = BookingDetail & {
 
 type RescheduleCourtDialogProps = {
   detail: BookingDetailWithSlot;
-  canReschedule: boolean;
   onSuccess?: () => void;
 };
 
@@ -44,7 +42,6 @@ const formatCurrency = (value: number) =>
 
 export function RescheduleCourtDialog({
   detail,
-  canReschedule,
   onSuccess
 }: RescheduleCourtDialogProps) {
   const queryClient = useQueryClient();
@@ -148,6 +145,8 @@ export function RescheduleCourtDialog({
     mutation.mutate(selectedSlotId);
   };
 
+  const canReschedule = !!detail.slot?.startAt && dayjs(detail.slot.startAt).isAfter(dayjs());
+
   const dialogTrigger = (
     <Button size="sm" variant="outline" disabled={!canReschedule} className="text-xs">
       Reschedule
@@ -157,8 +156,10 @@ export function RescheduleCourtDialog({
   if (!canReschedule) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>{dialogTrigger}</TooltipTrigger>
-        <TooltipContent>{CUSTOMER_RESCHEDULE_POLICY_TEXT}</TooltipContent>
+        <TooltipTrigger asChild>
+          <span>{dialogTrigger}</span>
+        </TooltipTrigger>
+        <TooltipContent>Booking yang sudah mulai bermain tidak dapat di-reschedule.</TooltipContent>
       </Tooltip>
     );
   }

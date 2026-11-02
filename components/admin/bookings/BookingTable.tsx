@@ -39,7 +39,6 @@ import {
   BookingStatus,
   ROLE
 } from '@/lib/constants';
-import { canCustomerReschedule } from '@/lib/reschedule-policy';
 import { getMembershipLabel, isMembershipBooking } from '@/lib/booking-payment';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
@@ -443,11 +442,6 @@ const BookingTable = () => {
                         <p className="mb-2 text-sm font-medium">Detail Slot</p>
                         <div className="space-y-2">
                           {booking.details.map((detail) => {
-                            const slotStart = detail.slot?.startAt;
-                            const canReschedule =
-                              !detail.cancelledAt &&
-                              !!slotStart &&
-                              canCustomerReschedule(slotStart);
                             const maximumRefund = Math.max(
                               0,
                               (booking.invoice?.total || 0) -
@@ -483,7 +477,6 @@ const BookingTable = () => {
                                       status !== BookingStatus.CANCELLED && (
                                         <RescheduleCourtDialog
                                           detail={detail as BookingDetailWithSlot}
-                                          canReschedule={canReschedule}
                                           onSuccess={() =>
                                             queryClient.invalidateQueries({
                                               queryKey: ['admin', 'bookings']
