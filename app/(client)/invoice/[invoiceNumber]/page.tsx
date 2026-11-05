@@ -399,6 +399,18 @@ export default function InvoiceDetailPage() {
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Invoice Transaksi</h1>
         </div>
 
+        {canPay && (
+          <section aria-label="Instruksi pembayaran" className="mb-8 rounded-xl bg-white">
+            <PaymentActionCard
+              invoice={invoice as any}
+              canPay={canPay}
+              onChooseMethod={() => refetch()}
+              onExpired={handleExpired}
+              onPaid={() => refetch()}
+            />
+          </section>
+        )}
+
         <article className="relative overflow-visible rounded-t-2xl bg-white shadow-[0_18px_50px_rgba(51,32,26,0.16)]">
           <header className="px-5 pt-8 pb-6 text-center sm:px-8 sm:pt-10 sm:pb-8">
             <Image
@@ -545,18 +557,6 @@ export default function InvoiceDetailPage() {
           size="lg"
           className="mt-7 w-full bg-white shadow-sm"
         />
-
-        {canPay && (
-          <div className="mt-8">
-            <PaymentActionCard
-              invoice={invoice as any}
-              canPay={canPay}
-              onChooseMethod={() => refetch()}
-              onExpired={handleExpired}
-              onPaid={() => refetch()}
-            />
-          </div>
-        )}
       </main>
     </div>
   );
