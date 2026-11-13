@@ -40,6 +40,7 @@ import {
   ROLE
 } from '@/lib/constants';
 import { getMembershipLabel, isMembershipBooking } from '@/lib/booking-payment';
+import { getBookingSummaryDetails } from '@/lib/booking-summary';
 import { formatSlotTime } from '@/lib/time-utils';
 import { formatCurrency, formatPhone, getTwoWordName } from '@/lib/utils';
 import { adminBookingsQueryOptions } from '@/queries/admin/booking';
@@ -254,8 +255,9 @@ const BookingTable = () => {
       colHelper.accessor('details', {
         header: 'Lapangan & Waktu',
         cell: (info) => {
-          const details = info.getValue();
-          if (!details || details.length === 0) return '-';
+          const allDetails = info.getValue();
+          if (!allDetails || allDetails.length === 0) return '-';
+          const details = getBookingSummaryDetails(allDetails);
           const firstDetail = details[0];
           const court = firstDetail.court;
           const slot = firstDetail.slot;

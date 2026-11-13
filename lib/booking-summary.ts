@@ -1,5 +1,13 @@
 import { formatSlotTime, toLocalSlotDate } from './time-utils';
 
+// Keep cancellation history available when there are no active slots left.
+export function getBookingSummaryDetails<T extends { cancelledAt?: Date | string | null }>(
+  details: T[]
+): T[] {
+  const activeDetails = details.filter((detail) => !detail.cancelledAt);
+  return activeDetails.length > 0 ? activeDetails : details;
+}
+
 type SummaryDetail = {
   courtId?: string | null;
   court?: { id?: string; name?: string } | null;
