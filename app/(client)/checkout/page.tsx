@@ -744,21 +744,10 @@ export default function CheckoutPage() {
               // Show error to user
               toast.error(err.message || 'Card processing failed. Please try again.');
 
-              // Cancel booking and payment session
+              // Close the failed payment session; the booking expires at its payment deadline.
               void (async () => {
                 try {
-                  const invoiceId = response.data?.invoiceNumber || response.data?.invoiceId;
                   const sessionId = response.data?.paymentSessionId;
-
-                  // Cancel booking if invoice was created
-                  if (invoiceId) {
-                    console.log('Cancelling booking:', invoiceId);
-                    const { cancelBookingApi } = await import('@/api/booking');
-                    await cancelBookingApi(invoiceId, {
-                      reason: 'Card payment processing failed'
-                    });
-                    console.log('Booking cancelled successfully');
-                  }
 
                   // Cancel payment session
                   if (sessionId) {
@@ -768,7 +757,7 @@ export default function CheckoutPage() {
                     console.log('Payment session cancelled successfully');
                   }
                 } catch (cancelErr) {
-                  console.error('Failed to cancel booking/session:', cancelErr);
+                  console.error('Failed to cancel payment session:', cancelErr);
                   // Don't show error to user - the main error is already shown
                 }
               })();
