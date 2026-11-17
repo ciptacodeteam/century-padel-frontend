@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { rescheduleBookedCourtApi } from '@/api/admin/bookedCourt';
-import { formatSlotTime } from '@/lib/time-utils';
+import { formatSlotTime, toLocalSlotDate } from '@/lib/time-utils';
 import { cn } from '@/lib/utils';
 import { adminCourtsWithSlotsQueryOptions } from '@/queries/admin/court';
 import type { BookingDetail, Court, Slot } from '@/types/model';
@@ -40,10 +40,7 @@ const formatCurrency = (value: number) =>
     minimumFractionDigits: 0
   }).format(value);
 
-export function RescheduleCourtDialog({
-  detail,
-  onSuccess
-}: RescheduleCourtDialogProps) {
+export function RescheduleCourtDialog({ detail, onSuccess }: RescheduleCourtDialogProps) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -51,7 +48,7 @@ export function RescheduleCourtDialog({
     detail.slot?.court?.id ?? detail.slot?.courtId ?? (detail as any)?.courtId ?? null
   );
 
-  const defaultDate = detail.slot?.startAt ? new Date(detail.slot.startAt) : new Date();
+  const defaultDate = toLocalSlotDate(detail.slot?.startAt) ?? new Date();
   const [selectedDate, setSelectedDate] = useState<Date>(defaultDate);
 
   const selectedDateString = dayjs(selectedDate).format('YYYY-MM-DD');
@@ -62,7 +59,7 @@ export function RescheduleCourtDialog({
     enabled: open && !!selectedDateString
   });
 
-  const toDateKey = useCallback((value: string | Date) => dayjs(value).format('YYYY-MM-DD'), []);
+  const toDateKey = useCallback((value: string | Date) => formatSlotTime(value, 'YYYY-MM-DD'), []);
 
   const slotsForSelectedDate = useMemo(() => {
     if (!data) return [];
@@ -80,7 +77,10 @@ export function RescheduleCourtDialog({
       map.get(courtId)!.push(slot);
     });
     map.forEach((slots) =>
-      slots.sort((a, b) => dayjs(a.startAt).valueOf() - dayjs(b.startAt).valueOf())
+      slots.sort(
+        (a, b) =>
+          dayjs(toLocalSlotDate(a.startAt)).valueOf() - dayjs(toLocalSlotDate(b.startAt)).valueOf()
+      )
     );
     return map;
   }, [slotsForSelectedDate]);
@@ -111,7 +111,7 @@ export function RescheduleCourtDialog({
   const resetState = useCallback(() => {
     setSelectedSlotId(null);
     if (detail.slot?.startAt) {
-      setSelectedDate(new Date(detail.slot.startAt));
+      setSelectedDate(toLocalSlotDate(detail.slot.startAt) ?? new Date());
     }
     setSelectedCourtId(
       detail.slot?.court?.id ?? detail.slot?.courtId ?? (detail as any)?.courtId ?? null
@@ -145,7 +145,8 @@ export function RescheduleCourtDialog({
     mutation.mutate(selectedSlotId);
   };
 
-  const canReschedule = !!detail.slot?.startAt && dayjs(detail.slot.startAt).isAfter(dayjs());
+  const canReschedule =
+    !!detail.slot?.startAt && dayjs(toLocalSlotDate(detail.slot.startAt)).isAfter(dayjs());
 
   const dialogTrigger = (
     <Button size="sm" variant="outline" disabled={!canReschedule} className="text-xs">
@@ -192,8 +193,7 @@ export function RescheduleCourtDialog({
                     {detail.court?.name || detail.courtId || '-'}
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    {detail.slot?.startAt ? dayjs(detail.slot.startAt).format('DD MMM YYYY') : '-'}{' '}
-                    •{' '}
+                    {formatSlotTime(detail.slot?.startAt, 'DD MMM YYYY')} •{' '}
                     {detail.slot
                       ? `${formatSlotTime(detail.slot.startAt)} - ${formatSlotTime(detail.slot.endAt)}`
                       : '-'}
@@ -214,6 +214,7 @@ export function RescheduleCourtDialog({
                 <Calendar
                   mode="single"
                   selected={selectedDate}
+                  defaultMonth={selectedDate}
                   onSelect={(date) => date && setSelectedDate(date)}
                   disabled={(date) => dayjs(date).isBefore(dayjs(), 'day')}
                   className="mx-auto w-full max-w-md rounded-md"
@@ -240,7 +241,8 @@ export function RescheduleCourtDialog({
                           const courtSlots = slotsByCourt.get(court.id) || [];
                           const upcomingSlots = courtSlots.filter(
                             (slot) =>
-                              dayjs(slot.startAt).isAfter(dayjs()) && slot.id !== currentSlotId
+                              dayjs(toLocalSlotDate(slot.startAt)).isAfter(dayjs()) &&
+                              slot.id !== currentSlotId
                           );
                           const availableCount = upcomingSlots.filter(
                             (slot) => slot.isAvailable
@@ -324,7 +326,7 @@ export function RescheduleCourtDialog({
                         <div className="max-h-[500px] overflow-y-auto rounded-md border p-2">
                           <div className="grid grid-cols-3 gap-1.5">
                             {selectedCourtSlots.map((slot) => {
-                              const isPast = dayjs(slot.startAt).isBefore(dayjs());
+                              const isPast = dayjs(toLocalSlotDate(slot.startAt)).isBefore(dayjs());
                               const isSelectable =
                                 slot.id !== currentSlotId && slot.isAvailable && !isPast;
                               const isSelected = selectedSlotId === slot.id;
