@@ -12,15 +12,24 @@ import {
 import { adminSendCustomerResetPasswordMutationOptions } from '@/mutations/admin/customer';
 import { IconInfoCircle } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 type Props = {
   customerId: string;
 };
 
 const ResetCustomerPassword = ({ customerId }: Props) => {
-  const { mutate, isPending } = useMutation(adminSendCustomerResetPasswordMutationOptions());
+  const [recoveryUrl, setRecoveryUrl] = useState('');
+  const { mutate, isPending } = useMutation(
+    adminSendCustomerResetPasswordMutationOptions({
+      onSuccess: (response) => setRecoveryUrl(response.data?.recoveryUrl || '')
+    })
+  );
 
   const sendResetPasswordLinkMutate = (id: string) => {
+    setRecoveryUrl('');
     mutate(id);
   };
 
@@ -28,13 +37,15 @@ const ResetCustomerPassword = ({ customerId }: Props) => {
     <Section>
       <SectionHeader>
         <SectionTitle title="Reset Password Kustomer" />
-        <SectionDescription description="Kirim link untuk mereset kata sandi kustomer ini." />
+        <SectionDescription description="Bantu kustomer memulihkan akses akunnya." />
       </SectionHeader>
       <SectionContent>
         <Alert variant="info" className="mb-4">
           <IconInfoCircle />
           <AlertDescription>
-            Fitur ini akan mengirimkan link kepada kustomer untuk mereset kata sandi mereka.
+            Email terverifikasi akan menerima link reset. Untuk pemulihan melalui nomor telepon,
+            salin dan bagikan link kepada kustomer. Kustomer harus memasukkan OTP dari WhatsApp
+            untuk mengganti kata sandi.
           </AlertDescription>
         </Alert>
 
@@ -44,8 +55,36 @@ const ResetCustomerPassword = ({ customerId }: Props) => {
           onClick={() => sendResetPasswordLinkMutate(customerId)}
           loading={isPending}
         >
-          Kirim Link Reset Password
+          Siapkan Pemulihan Password
         </Button>
+        {recoveryUrl && (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm">
+              Bagikan link ini kepada kustomer. Link belum dikirim otomatis; OTP diminta oleh
+              kustomer setelah membuka link.
+            </p>
+            <Input
+              aria-label="Link pemulihan password"
+              value={recoveryUrl}
+              readOnly
+              onFocus={(event) => event.target.select()}
+            />
+            <Button
+              type="button"
+              variant="secondaryInfo"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(recoveryUrl);
+                  toast.success('Link pemulihan berhasil disalin.');
+                } catch {
+                  toast.error('Silakan pilih dan salin link secara manual.');
+                }
+              }}
+            >
+              Salin Link Pemulihan
+            </Button>
+          </div>
+        )}
       </SectionContent>
     </Section>
   );

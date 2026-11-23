@@ -80,7 +80,7 @@ export const adminSendCustomerResetPasswordMutationOptions = ({
   mutationOptions({
     mutationFn: sendResetPasswordLinkApi,
     onSuccess: (data) => {
-      toast.success('Link reset kata sandi berhasil dikirim!');
+      toast.success(data.msg || 'Pemulihan kata sandi siap.');
       onSuccess?.(data);
     },
     onError: (error) => {

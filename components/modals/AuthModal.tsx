@@ -77,6 +77,7 @@ const AuthModal = () => {
   };
 
   const handleLoginToVerifyPhone = () => {
+    setVerifyType('global');
     handleOpenChange(false);
     setOtpOpen(true);
   };

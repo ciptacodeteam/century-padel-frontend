@@ -4,7 +4,11 @@ import { ResendOtpButton } from '@/components/buttons/ResendOtpButton';
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { formatPhone } from '@/lib/utils';
-import { registerMutationOptions, verifyPhoneOtpMutationOptions } from '@/mutations/auth';
+import {
+  forgotPasswordMutationOptions,
+  registerMutationOptions,
+  verifyPhoneOtpMutationOptions
+} from '@/mutations/auth';
 import { sendPhoneOtpMutationOptions } from '@/mutations/phone';
 import { profileQueryOptions } from '@/queries/profile';
 import useAuthRedirectStore from '@/stores/useAuthRedirectStore';
@@ -88,11 +92,12 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
   );
 
   const { mutate: resendOtp, isPending: isResendOtpPending } = useMutation(
-    sendPhoneOtpMutationOptions({
+    (type === 'register' ? sendPhoneOtpMutationOptions : forgotPasswordMutationOptions)({
       onSuccess: (res) => {
         const requestId = res?.data?.requestId;
         if (requestId) {
           form.setValue('requestId', requestId);
+          form.setValue('otp', '');
           setRequestId(requestId);
         } else {
           toast.error('Failed to get Request ID. Please try again.');
@@ -208,7 +213,12 @@ const VerifyPhoneOtpForm = ({ onVerifySuccess, type = 'global' }: Props) => {
                     value={field.value}
                     onChange={(value) => {
                       field.onChange(value);
-                      if (value.length === maxLength && !isPending && !isRegisterPending) {
+                      if (
+                        value.length === maxLength &&
+                        !isPending &&
+                        !isRegisterPending &&
+                        !isResendOtpPending
+                      ) {
                         form.handleSubmit(onSubmit)();
                       }
                     }}
