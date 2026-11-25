@@ -83,9 +83,9 @@ export function CorrectComplimentaryMembershipDialog({ booking }: { booking: Boo
           Alihkan ke paket berbayar
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-cols-1 overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Koreksi Pemakaian Complimentary</DialogTitle>
+          <DialogTitle className="pr-6 leading-tight">Koreksi Pemakaian Complimentary</DialogTitle>
           <DialogDescription>
             Untuk jam gratis yang salah input. Booking tetap pada jadwal semula, lalu kuotanya
             dipotong dari paket berbayar pelanggan.
@@ -123,12 +123,19 @@ export function CorrectComplimentaryMembershipDialog({ booking }: { booking: Boo
                     onValueChange={setMembershipUserId}
                     disabled={correction.isPending}
                   >
-                    <SelectTrigger id={`correction-package-${booking.id}`}>
+                    <SelectTrigger
+                      id={`correction-package-${booking.id}`}
+                      className="h-auto min-h-9 w-full min-w-0 text-left whitespace-normal data-[size=default]:h-auto *:data-[slot=select-value]:line-clamp-none *:data-[slot=select-value]:block *:data-[slot=select-value]:break-words"
+                    >
                       <SelectValue placeholder="Pilih paket berbayar" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="w-(--radix-select-trigger-width) max-w-(--radix-select-content-available-width)">
                       {options.data.memberships.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
+                        <SelectItem
+                          key={m.id}
+                          value={m.id}
+                          className="whitespace-normal [&>span:last-child]:block [&>span:last-child]:min-w-0 [&>span:last-child]:break-words"
+                        >
                           {m.name} · {m.invoiceNumber} · {m.paidHours} jam berbayar
                         </SelectItem>
                       ))}
