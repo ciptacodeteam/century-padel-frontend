@@ -11,6 +11,7 @@ import {
   type BookingDetailWithSlot
 } from '@/components/admin/bookings/RescheduleCourtDialog';
 import { BookingPaymentSources } from '@/components/admin/bookings/BookingPaymentSources';
+import { CorrectComplimentaryMembershipDialog } from '@/components/admin/bookings/CorrectComplimentaryMembershipDialog';
 import { CorrectComplimentaryPaymentDialog } from '@/components/admin/bookings/CorrectComplimentaryPaymentDialog';
 import { CancelBookedCourtDialog } from '@/components/admin/bookings/CancelBookedCourtDialog';
 import { Badge } from '@/components/ui/badge';
@@ -420,6 +421,17 @@ const BookingTable = () => {
                       </div>
                       <div>
                         <BookingPaymentSources booking={booking} />
+                        {booking.membershipCorrection && (
+                          <p className="text-muted-foreground mt-2 text-xs">
+                            Dikoreksi ke paket berbayar: {booking.membershipCorrection.hours} jam.{' '}
+                            {booking.membershipCorrection.reason}
+                            {booking.membershipCorrection.admin?.name &&
+                              ` · ${booking.membershipCorrection.admin.name}`}
+                          </p>
+                        )}
+                        {me?.role === ROLE.ADMIN && status === BookingStatus.CONFIRMED && (
+                          <CorrectComplimentaryMembershipDialog booking={booking} />
+                        )}
                         {me?.role === ROLE.ADMIN && status === BookingStatus.CONFIRMED && (
                           <CorrectComplimentaryPaymentDialog
                             booking={booking}

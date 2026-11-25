@@ -503,6 +503,13 @@ export type Cashier = {
 };
 
 export type Booking = {
+  membershipCorrection?: {
+    hours: number;
+    reason: string;
+    createdAt: string;
+    targetMembershipUserId: string;
+    admin?: { name: string };
+  } | null;
   id: string;
   userId: string;
   status: BookingStatus;

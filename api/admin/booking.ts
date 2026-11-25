@@ -60,3 +60,30 @@ export async function exportBookingsApi(queryParams: SearchParamsData = {}) {
   const res = await adminApi.get(mergedUrl, { responseType: 'blob' });
   return res.data;
 }
+
+export type MembershipCorrectionOptions = {
+  hours: number;
+  memberships: Array<{
+    id: string;
+    name: string;
+    invoiceNumber: string;
+    paidHours: number;
+    remainingHours: number;
+    endDate: string;
+  }>;
+};
+
+export async function getMembershipCorrectionOptionsApi(
+  id: string
+): Promise<MembershipCorrectionOptions> {
+  const { data } = await adminApi.get(`/bookings/${id}/complimentary-membership-options`);
+  return data.data;
+}
+
+export async function correctComplimentaryMembershipApi(
+  id: string,
+  payload: { membershipUserId: string; reason: string }
+) {
+  const { data } = await adminApi.put(`/bookings/${id}/correct-complimentary-membership`, payload);
+  return data;
+}
